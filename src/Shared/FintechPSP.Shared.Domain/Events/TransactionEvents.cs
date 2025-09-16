@@ -1,0 +1,236 @@
+using System;
+using System.Text.Json.Serialization;
+using FintechPSP.Shared.Domain.Common;
+using FintechPSP.Shared.Domain.Enums;
+using FintechPSP.Shared.Domain.ValueObjects;
+
+namespace FintechPSP.Shared.Domain.Events;
+
+/// <summary>
+/// Evento disparado quando uma transação PIX é iniciada
+/// </summary>
+public class PixIniciado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+    
+    [JsonPropertyName("externalId")]
+    public string ExternalId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+    
+    [JsonPropertyName("pixKey")]
+    public string PixKey { get; set; } = string.Empty;
+    
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+    
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+    
+    [JsonPropertyName("webhookUrl")]
+    public string? WebhookUrl { get; set; }
+    
+    [JsonPropertyName("endToEndId")]
+    public string? EndToEndId { get; set; }
+
+    public PixIniciado() { }
+
+    public PixIniciado(Guid transactionId, string externalId, decimal amount, string pixKey, 
+        string bankCode, string description, string? webhookUrl = null, string? endToEndId = null)
+    {
+        TransactionId = transactionId;
+        ExternalId = externalId;
+        Amount = amount;
+        PixKey = pixKey;
+        BankCode = bankCode;
+        Description = description;
+        WebhookUrl = webhookUrl;
+        EndToEndId = endToEndId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando uma transação PIX é confirmada
+/// </summary>
+public class PixConfirmado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+    
+    [JsonPropertyName("endToEndId")]
+    public string EndToEndId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("txId")]
+    public string? TxId { get; set; }
+    
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    public PixConfirmado() { }
+
+    public PixConfirmado(Guid transactionId, string endToEndId, decimal amount, string? txId = null)
+    {
+        TransactionId = transactionId;
+        EndToEndId = endToEndId;
+        Amount = amount;
+        TxId = txId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando uma transação TED é iniciada
+/// </summary>
+public class TedIniciado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+    
+    [JsonPropertyName("externalId")]
+    public string ExternalId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+    
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+    
+    [JsonPropertyName("accountBranch")]
+    public string AccountBranch { get; set; } = string.Empty;
+    
+    [JsonPropertyName("accountNumber")]
+    public string AccountNumber { get; set; } = string.Empty;
+    
+    [JsonPropertyName("taxId")]
+    public string TaxId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    public TedIniciado() { }
+
+    public TedIniciado(Guid transactionId, string externalId, decimal amount, string bankCode,
+        string accountBranch, string accountNumber, string taxId, string? name = null)
+    {
+        TransactionId = transactionId;
+        ExternalId = externalId;
+        Amount = amount;
+        BankCode = bankCode;
+        AccountBranch = accountBranch;
+        AccountNumber = accountNumber;
+        TaxId = taxId;
+        Name = name;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um boleto é emitido
+/// </summary>
+public class BoletoEmitido : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+    
+    [JsonPropertyName("externalId")]
+    public string ExternalId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+    
+    [JsonPropertyName("dueDate")]
+    public DateTime DueDate { get; set; }
+    
+    [JsonPropertyName("payerTaxId")]
+    public string PayerTaxId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("payerName")]
+    public string PayerName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("instructions")]
+    public string Instructions { get; set; } = string.Empty;
+    
+    [JsonPropertyName("boletoId")]
+    public string? BoletoId { get; set; }
+
+    public BoletoEmitido() { }
+
+    public BoletoEmitido(Guid transactionId, string externalId, decimal amount, DateTime dueDate,
+        string payerTaxId, string payerName, string instructions, string? boletoId = null)
+    {
+        TransactionId = transactionId;
+        ExternalId = externalId;
+        Amount = amount;
+        DueDate = dueDate;
+        PayerTaxId = payerTaxId;
+        PayerName = payerName;
+        Instructions = instructions;
+        BoletoId = boletoId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando uma transação cripto é iniciada
+/// </summary>
+public class CriptoIniciado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+    
+    [JsonPropertyName("externalId")]
+    public string ExternalId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+    
+    [JsonPropertyName("cryptoType")]
+    public string CryptoType { get; set; } = string.Empty;
+    
+    [JsonPropertyName("walletAddress")]
+    public string WalletAddress { get; set; } = string.Empty;
+    
+    [JsonPropertyName("fiatCurrency")]
+    public string FiatCurrency { get; set; } = "BRL";
+
+    public CriptoIniciado() { }
+
+    public CriptoIniciado(Guid transactionId, string externalId, decimal amount, 
+        string cryptoType, string walletAddress, string fiatCurrency = "BRL")
+    {
+        TransactionId = transactionId;
+        ExternalId = externalId;
+        Amount = amount;
+        CryptoType = cryptoType;
+        WalletAddress = walletAddress;
+        FiatCurrency = fiatCurrency;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando o status de uma transação é alterado
+/// </summary>
+public class StatusTransacaoAlterado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+    
+    [JsonPropertyName("previousStatus")]
+    public TransactionStatus PreviousStatus { get; set; }
+    
+    [JsonPropertyName("newStatus")]
+    public TransactionStatus NewStatus { get; set; }
+    
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+
+    public StatusTransacaoAlterado() { }
+
+    public StatusTransacaoAlterado(Guid transactionId, TransactionStatus previousStatus, 
+        TransactionStatus newStatus, string? reason = null)
+    {
+        TransactionId = transactionId;
+        PreviousStatus = previousStatus;
+        NewStatus = newStatus;
+        Reason = reason;
+    }
+}

@@ -1,0 +1,6 @@
+@FintechPSP.BalanceService_HostAddress = http://localhost:5179
+
+GET {{FintechPSP.BalanceService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

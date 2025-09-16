@@ -1,0 +1,6 @@
+@FintechPSP.IntegrationService_HostAddress = http://localhost:5097
+
+GET {{FintechPSP.IntegrationService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

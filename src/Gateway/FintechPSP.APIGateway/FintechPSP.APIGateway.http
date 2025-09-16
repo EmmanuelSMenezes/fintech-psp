@@ -1,0 +1,6 @@
+@FintechPSP.APIGateway_HostAddress = http://localhost:5272
+
+GET {{FintechPSP.APIGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

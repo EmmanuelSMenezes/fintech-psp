@@ -1,0 +1,6 @@
+@FintechPSP.TransactionService_HostAddress = http://localhost:5097
+
+GET {{FintechPSP.TransactionService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

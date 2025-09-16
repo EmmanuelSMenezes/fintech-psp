@@ -1,0 +1,6 @@
+@FintechPSP.WebhookService_HostAddress = http://localhost:5124
+
+GET {{FintechPSP.WebhookService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
