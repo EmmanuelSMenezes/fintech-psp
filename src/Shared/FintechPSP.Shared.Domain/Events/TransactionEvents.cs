@@ -404,3 +404,139 @@ public class SaldoDesbloqueado : DomainEvent
         TransactionId = transactionId;
     }
 }
+
+/// <summary>
+/// Evento disparado quando um webhook é criado
+/// </summary>
+public class WebhookCriado : DomainEvent
+{
+    [JsonPropertyName("webhookId")]
+    public Guid WebhookId { get; set; }
+
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("url")]
+    public string Url { get; set; } = string.Empty;
+
+    [JsonPropertyName("events")]
+    public List<string> Events { get; set; } = new();
+
+    [JsonPropertyName("active")]
+    public bool Active { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    public WebhookCriado() { }
+
+    public WebhookCriado(Guid webhookId, Guid clientId, string url, List<string> events, bool active, string? description = null)
+    {
+        WebhookId = webhookId;
+        ClientId = clientId;
+        Url = url;
+        Events = events;
+        Active = active;
+        Description = description;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um webhook é atualizado
+/// </summary>
+public class WebhookAtualizado : DomainEvent
+{
+    [JsonPropertyName("webhookId")]
+    public Guid WebhookId { get; set; }
+
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("field")]
+    public string Field { get; set; } = string.Empty;
+
+    [JsonPropertyName("oldValue")]
+    public string OldValue { get; set; } = string.Empty;
+
+    [JsonPropertyName("newValue")]
+    public string NewValue { get; set; } = string.Empty;
+
+    public WebhookAtualizado() { }
+
+    public WebhookAtualizado(Guid webhookId, Guid clientId, string field, string oldValue, string newValue)
+    {
+        WebhookId = webhookId;
+        ClientId = clientId;
+        Field = field;
+        OldValue = oldValue;
+        NewValue = newValue;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um webhook é ativado
+/// </summary>
+public class WebhookAtivado : DomainEvent
+{
+    [JsonPropertyName("webhookId")]
+    public Guid WebhookId { get; set; }
+
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    public WebhookAtivado() { }
+
+    public WebhookAtivado(Guid webhookId, Guid clientId)
+    {
+        WebhookId = webhookId;
+        ClientId = clientId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um webhook é desativado
+/// </summary>
+public class WebhookDesativado : DomainEvent
+{
+    [JsonPropertyName("webhookId")]
+    public Guid WebhookId { get; set; }
+
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    public WebhookDesativado() { }
+
+    public WebhookDesativado(Guid webhookId, Guid clientId)
+    {
+        WebhookId = webhookId;
+        ClientId = clientId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um webhook é entregue
+/// </summary>
+public class WebhookEntregue : DomainEvent
+{
+    [JsonPropertyName("webhookId")]
+    public Guid WebhookId { get; set; }
+
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; }
+
+    public WebhookEntregue() { }
+
+    public WebhookEntregue(Guid webhookId, Guid clientId, bool success, string? errorMessage = null)
+    {
+        WebhookId = webhookId;
+        ClientId = clientId;
+        Success = success;
+        ErrorMessage = errorMessage;
+    }
+}
