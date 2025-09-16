@@ -48,5 +48,10 @@ public enum TransactionStatus
     /// <summary>
     /// Boleto emitido
     /// </summary>
-    ISSUED
+    ISSUED,
+
+    /// <summary>
+    /// Transação falhou
+    /// </summary>
+    FAILED
 }

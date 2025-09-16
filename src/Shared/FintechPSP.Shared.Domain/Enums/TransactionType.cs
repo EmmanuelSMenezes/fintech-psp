@@ -28,5 +28,5 @@ public enum TransactionType
     /// <summary>
     /// Transação com criptomoedas
     /// </summary>
-    CRIPTO
+    CRYPTO
 }
