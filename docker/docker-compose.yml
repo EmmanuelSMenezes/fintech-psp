@@ -40,6 +40,123 @@ services:
     networks:
       - fintech-network
 
+  # API Gateway (Ocelot)
+  api-gateway:
+    build:
+      context: ../src/Gateway/FintechPSP.APIGateway
+      dockerfile: Dockerfile
+    container_name: fintech-api-gateway
+    ports:
+      - "5000:8080"
+    depends_on:
+      - auth-service
+      - transaction-service
+      - balance-service
+      - webhook-service
+      - integration-service
+      - user-service
+      - config-service
+    networks:
+      - fintech-network
+
+  # AuthService
+  auth-service:
+    build:
+      context: ../src/Services/FintechPSP.AuthService
+      dockerfile: Dockerfile
+    container_name: fintech-auth-service
+    ports:
+      - "5001:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  # TransactionService
+  transaction-service:
+    build:
+      context: ../src/Services/FintechPSP.TransactionService
+      dockerfile: Dockerfile
+    container_name: fintech-transaction-service
+    ports:
+      - "5002:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  # BalanceService
+  balance-service:
+    build:
+      context: ../src/Services/FintechPSP.BalanceService
+      dockerfile: Dockerfile
+    container_name: fintech-balance-service
+    ports:
+      - "5003:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  # WebhookService
+  webhook-service:
+    build:
+      context: ../src/Services/FintechPSP.WebhookService
+      dockerfile: Dockerfile
+    container_name: fintech-webhook-service
+    ports:
+      - "5004:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  # IntegrationService
+  integration-service:
+    build:
+      context: ../src/Services/FintechPSP.IntegrationService
+      dockerfile: Dockerfile
+    container_name: fintech-integration-service
+    ports:
+      - "5005:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  # UserService
+  user-service:
+    build:
+      context: ../src/Services/FintechPSP.UserService
+      dockerfile: Dockerfile
+    container_name: fintech-user-service
+    ports:
+      - "5006:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
+  # ConfigService
+  config-service:
+    build:
+      context: ../src/Services/FintechPSP.ConfigService
+      dockerfile: Dockerfile
+    container_name: fintech-config-service
+    ports:
+      - "5007:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fintech-network
+
 volumes:
   postgres_data:
   rabbitmq_data:
