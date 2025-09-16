@@ -234,3 +234,173 @@ public class StatusTransacaoAlterado : DomainEvent
         Reason = reason;
     }
 }
+
+/// <summary>
+/// Evento disparado quando uma conta é criada
+/// </summary>
+public class ContaCriada : DomainEvent
+{
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("accountId")]
+    public string AccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("initialBalance")]
+    public decimal InitialBalance { get; set; }
+
+    public ContaCriada() { }
+
+    public ContaCriada(Guid clientId, string accountId, decimal initialBalance)
+    {
+        ClientId = clientId;
+        AccountId = accountId;
+        InitialBalance = initialBalance;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando saldo é creditado
+/// </summary>
+public class SaldoCreditado : DomainEvent
+{
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("accountId")]
+    public string AccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    [JsonPropertyName("oldBalance")]
+    public decimal OldBalance { get; set; }
+
+    [JsonPropertyName("newBalance")]
+    public decimal NewBalance { get; set; }
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("transactionId")]
+    public string TransactionId { get; set; } = string.Empty;
+
+    public SaldoCreditado() { }
+
+    public SaldoCreditado(Guid clientId, string accountId, decimal amount,
+        decimal oldBalance, decimal newBalance, string description, string transactionId)
+    {
+        ClientId = clientId;
+        AccountId = accountId;
+        Amount = amount;
+        OldBalance = oldBalance;
+        NewBalance = newBalance;
+        Description = description;
+        TransactionId = transactionId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando saldo é debitado
+/// </summary>
+public class SaldoDebitado : DomainEvent
+{
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("accountId")]
+    public string AccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    [JsonPropertyName("oldBalance")]
+    public decimal OldBalance { get; set; }
+
+    [JsonPropertyName("newBalance")]
+    public decimal NewBalance { get; set; }
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("transactionId")]
+    public string TransactionId { get; set; } = string.Empty;
+
+    public SaldoDebitado() { }
+
+    public SaldoDebitado(Guid clientId, string accountId, decimal amount,
+        decimal oldBalance, decimal newBalance, string description, string transactionId)
+    {
+        ClientId = clientId;
+        AccountId = accountId;
+        Amount = amount;
+        OldBalance = oldBalance;
+        NewBalance = newBalance;
+        Description = description;
+        TransactionId = transactionId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando saldo é bloqueado
+/// </summary>
+public class SaldoBloqueado : DomainEvent
+{
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("accountId")]
+    public string AccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    [JsonPropertyName("reason")]
+    public string Reason { get; set; } = string.Empty;
+
+    [JsonPropertyName("transactionId")]
+    public string TransactionId { get; set; } = string.Empty;
+
+    public SaldoBloqueado() { }
+
+    public SaldoBloqueado(Guid clientId, string accountId, decimal amount, string reason, string transactionId)
+    {
+        ClientId = clientId;
+        AccountId = accountId;
+        Amount = amount;
+        Reason = reason;
+        TransactionId = transactionId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando saldo é desbloqueado
+/// </summary>
+public class SaldoDesbloqueado : DomainEvent
+{
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("accountId")]
+    public string AccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    [JsonPropertyName("reason")]
+    public string Reason { get; set; } = string.Empty;
+
+    [JsonPropertyName("transactionId")]
+    public string TransactionId { get; set; } = string.Empty;
+
+    public SaldoDesbloqueado() { }
+
+    public SaldoDesbloqueado(Guid clientId, string accountId, decimal amount, string reason, string transactionId)
+    {
+        ClientId = clientId;
+        AccountId = accountId;
+        Amount = amount;
+        Reason = reason;
+        TransactionId = transactionId;
+    }
+}
