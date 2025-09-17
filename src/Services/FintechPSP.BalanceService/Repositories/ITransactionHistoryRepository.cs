@@ -44,4 +44,14 @@ public interface ITransactionHistoryRepository
     /// Adiciona transação ao histórico
     /// </summary>
     Task AddTransactionAsync(TransactionHistory transaction);
+
+    /// <summary>
+    /// Adiciona entrada no histórico de transações (versão genérica para QR Codes)
+    /// </summary>
+    Task AddTransactionHistoryAsync(object transactionHistory);
+
+    /// <summary>
+    /// Atualiza status de uma transação
+    /// </summary>
+    Task UpdateTransactionStatusAsync(Guid transactionId, string status, string? description = null);
 }

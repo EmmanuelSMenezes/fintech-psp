@@ -174,3 +174,129 @@ VALUES
     ('550e8400-e29b-41d4-a716-446655440001', 'CONTA_PRINCIPAL', gen_random_uuid(), 'PIX-002', 'PIX', 200.00, 'Pagamento PIX', 'COMPLETED', 'DEBIT'),
     ('550e8400-e29b-41d4-a716-446655440001', 'CONTA_PRINCIPAL', gen_random_uuid(), 'BOLETO-001', 'BOLETO', 300.00, 'Pagamento boleto', 'COMPLETED', 'CREDIT')
 ON CONFLICT DO NOTHING;
+
+-- =====================================================
+-- QR Code Support - Schema Updates
+-- =====================================================
+
+-- Adicionar colunas para suporte a QR Code na tabela transaction_history
+ALTER TABLE transaction_history
+ADD COLUMN IF NOT EXISTS sub_type VARCHAR(20),
+ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'BRL',
+ADD COLUMN IF NOT EXISTS pix_key VARCHAR(255),
+ADD COLUMN IF NOT EXISTS bank_code VARCHAR(10),
+ADD COLUMN IF NOT EXISTS qrcode_payload TEXT,
+ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ADD COLUMN IF NOT EXISTS metadata JSONB;
+
+-- Índices para consultas de QR Code
+CREATE INDEX IF NOT EXISTS idx_transaction_history_sub_type ON transaction_history(sub_type);
+CREATE INDEX IF NOT EXISTS idx_transaction_history_pix_key ON transaction_history(pix_key);
+CREATE INDEX IF NOT EXISTS idx_transaction_history_bank_code ON transaction_history(bank_code);
+CREATE INDEX IF NOT EXISTS idx_transaction_history_expires_at ON transaction_history(expires_at);
+CREATE INDEX IF NOT EXISTS idx_transaction_history_metadata ON transaction_history USING GIN(metadata);
+
+-- Função para expirar QR Codes dinâmicos automaticamente
+CREATE OR REPLACE FUNCTION expire_dynamic_qrcodes()
+RETURNS INTEGER AS $$
+DECLARE
+    expired_count INTEGER;
+BEGIN
+    UPDATE transaction_history
+    SET status = 'EXPIRED',
+        updated_at = NOW(),
+        metadata = COALESCE(metadata, '{}'::jsonb) || '{"expired_by": "automatic_job", "expired_at": "' || NOW()::text || '"}'::jsonb
+    WHERE type = 'QR_CODE_GENERATED'
+      AND sub_type = 'DYNAMIC'
+      AND status = 'ACTIVE'
+      AND expires_at IS NOT NULL
+      AND expires_at < NOW();
+
+    GET DIAGNOSTICS expired_count = ROW_COUNT;
+
+    RETURN expired_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- View para QR Codes ativos
+CREATE OR REPLACE VIEW v_active_qrcodes AS
+SELECT
+    th.id,
+    th.transaction_id,
+    th.external_id,
+    th.sub_type as qr_type,
+    th.amount,
+    th.pix_key,
+    th.bank_code,
+    th.qrcode_payload,
+    th.expires_at,
+    th.created_at,
+    th.updated_at,
+    th.metadata,
+    CASE
+        WHEN th.sub_type = 'STATIC' THEN true
+        WHEN th.sub_type = 'DYNAMIC' AND (th.expires_at IS NULL OR th.expires_at > NOW()) THEN true
+        ELSE false
+    END as is_active
+FROM transaction_history th
+WHERE th.type = 'QR_CODE_GENERATED'
+  AND th.status = 'ACTIVE';
+
+-- View para estatísticas de QR Code
+CREATE OR REPLACE VIEW v_qrcode_stats AS
+SELECT
+    DATE_TRUNC('day', created_at) as date,
+    sub_type as qr_type,
+    COUNT(*) as total_generated,
+    COUNT(CASE WHEN status = 'ACTIVE' THEN 1 END) as active_count,
+    COUNT(CASE WHEN status = 'EXPIRED' THEN 1 END) as expired_count,
+    COUNT(CASE WHEN status = 'USED' THEN 1 END) as used_count,
+    AVG(amount) as avg_amount,
+    SUM(amount) as total_amount
+FROM transaction_history
+WHERE type = 'QR_CODE_GENERATED'
+GROUP BY DATE_TRUNC('day', created_at), sub_type
+ORDER BY date DESC, qr_type;
+
+-- Inserir dados de teste para QR Codes
+INSERT INTO transaction_history (
+    client_id, account_id, transaction_id, external_id, type, sub_type,
+    amount, currency, status, description, pix_key, bank_code,
+    qrcode_payload, expires_at, metadata
+) VALUES
+    (
+        '550e8400-e29b-41d4-a716-446655440000',
+        'CONTA_PRINCIPAL',
+        gen_random_uuid(),
+        'QR-STATIC-001',
+        'QR_CODE_GENERATED',
+        'STATIC',
+        0.00,
+        'BRL',
+        'ACTIVE',
+        'QR Code estático para recebimentos',
+        '11999887766',
+        '001',
+        '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540510.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304A1B2',
+        NULL,
+        '{"qrCodeType": "static", "pixKey": "11999887766", "bankCode": "001", "hasImage": true}'::jsonb
+    ),
+    (
+        '550e8400-e29b-41d4-a716-446655440001',
+        'CONTA_PRINCIPAL',
+        gen_random_uuid(),
+        'QR-DYNAMIC-001',
+        'QR_CODE_GENERATED',
+        'DYNAMIC',
+        150.00,
+        'BRL',
+        'ACTIVE',
+        'QR Code dinâmico para pagamento específico',
+        'usuario@email.com',
+        '237',
+        '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540515.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304B2C3',
+        NOW() + INTERVAL '5 minutes',
+        '{"qrCodeType": "dynamic", "pixKey": "usuario@email.com", "bankCode": "237", "hasImage": true, "isExpirable": true}'::jsonb
+    )
+ON CONFLICT DO NOTHING;

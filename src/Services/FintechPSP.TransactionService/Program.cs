@@ -3,6 +3,7 @@ using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.Shared.Infrastructure.EventStore;
 using FintechPSP.Shared.Infrastructure.Messaging;
 using FintechPSP.TransactionService.Repositories;
+using FintechPSP.TransactionService.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -44,6 +45,9 @@ builder.Services.AddSingleton<IDbConnectionFactory, PostgreSqlConnectionFactory>
 // Repositories
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
+// Services
+builder.Services.AddScoped<IQrCodeService, QrCodeService>();
+
 // Event Store
 builder.Services.AddScoped<IEventStore, MartenEventStore>();
 
@@ -82,6 +86,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 "your-super-secret-key-that-should-be-at-least-256-bits"))
         };
     });
+
+// Authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("BankingScope", policy =>
+        policy.RequireClaim("scope", "banking"));
+});
 
 var app = builder.Build();
 

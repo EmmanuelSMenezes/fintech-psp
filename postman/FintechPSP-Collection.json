@@ -326,6 +326,150 @@
           }
         }
       ]
+    },
+    {
+      "name": "QR Code PIX",
+      "item": [
+        {
+          "name": "Gerar QR Code Estático",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('QR Code estático gerado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.transactionId).to.not.be.empty;",
+                  "    pm.expect(response.qrcodePayload).to.not.be.empty;",
+                  "    pm.expect(response.qrcodeImage).to.not.be.empty;",
+                  "    pm.expect(response.type).to.eql('static');",
+                  "    pm.expect(response.expiresAt).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalId\": \"QR-STATIC-{{$randomUUID}}\",\n  \"pixKey\": \"11999887766\",\n  \"bankCode\": \"001\",\n  \"description\": \"QR Code estático para recebimentos\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transacoes/pix/qrcode/estatico",
+              "host": ["{{base_url}}"],
+              "path": ["transacoes", "pix", "qrcode", "estatico"]
+            }
+          }
+        },
+        {
+          "name": "Gerar QR Code Dinâmico",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('QR Code dinâmico gerado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.transactionId).to.not.be.empty;",
+                  "    pm.expect(response.qrcodePayload).to.not.be.empty;",
+                  "    pm.expect(response.qrcodeImage).to.not.be.empty;",
+                  "    pm.expect(response.type).to.eql('dynamic');",
+                  "    pm.expect(response.amount).to.be.a('number');",
+                  "    pm.expect(response.expiresAt).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalId\": \"QR-DYNAMIC-{{$randomUUID}}\",\n  \"amount\": 150.00,\n  \"pixKey\": \"usuario@email.com\",\n  \"bankCode\": \"237\",\n  \"description\": \"Pagamento de produto XYZ\",\n  \"expiresIn\": 300\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transacoes/pix/qrcode/dinamico",
+              "host": ["{{base_url}}"],
+              "path": ["transacoes", "pix", "qrcode", "dinamico"]
+            }
+          }
+        },
+        {
+          "name": "Gerar QR Code Estático (Banking)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('QR Code estático banking gerado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.transactionId).to.not.be.empty;",
+                  "    pm.expect(response.type).to.eql('static');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalId\": \"QR-BANKING-{{$randomUUID}}\",\n  \"pixKey\": \"12345678901\",\n  \"bankCode\": \"341\",\n  \"description\": \"QR Code para internet banking\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/banking/transacoes/pix/qrcode/estatico",
+              "host": ["{{base_url}}"],
+              "path": ["banking", "transacoes", "pix", "qrcode", "estatico"]
+            }
+          }
+        },
+        {
+          "name": "Health Check QR Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/qrcode/health",
+              "host": ["{{base_url}}"],
+              "path": ["qrcode", "health"]
+            }
+          }
+        }
+      ]
     }
   ]
 }

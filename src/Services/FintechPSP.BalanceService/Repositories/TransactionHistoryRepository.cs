@@ -101,4 +101,49 @@ public class TransactionHistoryRepository : ITransactionHistoryRepository
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(sql, transaction);
     }
+
+    /// <summary>
+    /// Adiciona entrada no histórico de transações (versão genérica para QR Codes)
+    /// </summary>
+    public async Task AddTransactionHistoryAsync(object transactionHistory)
+    {
+        const string sql = @"
+            INSERT INTO transaction_history
+            (id, transaction_id, external_id, type, sub_type, amount, currency, status, description,
+             pix_key, bank_code, qrcode_payload, expires_at, created_at, updated_at, metadata)
+            VALUES
+            (@Id, @TransactionId, @ExternalId, @Type, @SubType, @Amount, @Currency, @Status, @Description,
+             @PixKey, @BankCode, @QrcodePayload, @ExpiresAt, @CreatedAt, @UpdatedAt, @Metadata::jsonb)";
+
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(sql, transactionHistory);
+    }
+
+    /// <summary>
+    /// Atualiza status de uma transação
+    /// </summary>
+    public async Task UpdateTransactionStatusAsync(Guid transactionId, string status, string? description = null)
+    {
+        var sql = @"
+            UPDATE transaction_history
+            SET status = @Status, updated_at = @UpdatedAt";
+
+        if (!string.IsNullOrEmpty(description))
+        {
+            sql += ", description = @Description";
+        }
+
+        sql += " WHERE transaction_id = @TransactionId";
+
+        var parameters = new
+        {
+            TransactionId = transactionId,
+            Status = status,
+            Description = description,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(sql, parameters);
+    }
 }

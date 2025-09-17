@@ -540,3 +540,81 @@ public class WebhookEntregue : DomainEvent
         ErrorMessage = errorMessage;
     }
 }
+
+/// <summary>
+/// Evento disparado quando um QR Code PIX é gerado
+/// </summary>
+public class QrCodeGerado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+
+    [JsonPropertyName("externalId")]
+    public string ExternalId { get; set; } = string.Empty;
+
+    [JsonPropertyName("pixKey")]
+    public string PixKey { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public decimal? Amount { get; set; }
+
+    [JsonPropertyName("qrcodePayload")]
+    public string QrcodePayload { get; set; } = string.Empty;
+
+    [JsonPropertyName("qrcodeImage")]
+    public string QrcodeImage { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty; // "static" ou "dynamic"
+
+    [JsonPropertyName("expiresAt")]
+    public DateTime? ExpiresAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    public QrCodeGerado() { }
+
+    public QrCodeGerado(Guid transactionId, string externalId, string pixKey, decimal? amount,
+        string qrcodePayload, string qrcodeImage, string type, DateTime? expiresAt,
+        string bankCode, string? description = null)
+    {
+        TransactionId = transactionId;
+        ExternalId = externalId;
+        PixKey = pixKey;
+        Amount = amount;
+        QrcodePayload = qrcodePayload;
+        QrcodeImage = qrcodeImage;
+        Type = type;
+        ExpiresAt = expiresAt;
+        BankCode = bankCode;
+        Description = description;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um QR Code dinâmico expira
+/// </summary>
+public class QrCodeExpirado : DomainEvent
+{
+    [JsonPropertyName("transactionId")]
+    public Guid TransactionId { get; set; }
+
+    [JsonPropertyName("externalId")]
+    public string ExternalId { get; set; } = string.Empty;
+
+    [JsonPropertyName("qrcodePayload")]
+    public string QrcodePayload { get; set; } = string.Empty;
+
+    public QrCodeExpirado() { }
+
+    public QrCodeExpirado(Guid transactionId, string externalId, string qrcodePayload)
+    {
+        TransactionId = transactionId;
+        ExternalId = externalId;
+        QrcodePayload = qrcodePayload;
+    }
+}

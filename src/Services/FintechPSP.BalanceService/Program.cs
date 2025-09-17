@@ -1,7 +1,9 @@
 using System.Text;
+using FintechPSP.BalanceService.Handlers;
 using FintechPSP.BalanceService.Repositories;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.Shared.Infrastructure.EventStore;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -26,6 +28,32 @@ builder.Services.AddScoped<ITransactionHistoryRepository, TransactionHistoryRepo
 
 // Event Store
 builder.Services.AddScoped<IEventStore, MartenEventStore>();
+
+// MassTransit para mensageria
+builder.Services.AddMassTransit(x =>
+{
+    // Registrar consumers
+    x.AddConsumer<QrCodeEventHandler>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+
+        // Configurar filas para eventos de QR Code
+        cfg.ReceiveEndpoint("balance-service-qrcode-events", e =>
+        {
+            e.ConfigureConsumer<QrCodeEventHandler>(context);
+            e.Durable = true;
+            e.AutoDelete = false;
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

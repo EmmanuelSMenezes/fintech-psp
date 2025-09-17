@@ -164,6 +164,111 @@ public class IntegrationController : ControllerBase
     }
 
     /// <summary>
+    /// Stark Bank - Gerar QR Code PIX (POST /brcodes)
+    /// </summary>
+    [HttpPost("stark-bank/brcodes")]
+    public async Task<IActionResult> StarkBankQrCode([FromBody] object request)
+    {
+        _logger.LogInformation("Gerando QR Code PIX via Stark Bank");
+
+        // Mock da integração Stark Bank QR Code
+        await Task.Delay(200); // Simular chamada API
+
+        return Ok(new {
+            success = true,
+            id = Guid.NewGuid().ToString(),
+            brcode = "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540510.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304A1B2",
+            qrCodeUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+            provider = "stark-bank",
+            type = "static"
+        });
+    }
+
+    /// <summary>
+    /// Sicoob - Gerar QR Code PIX (Cobrança V3)
+    /// </summary>
+    [HttpPost("sicoob/cobranca/v3/qrcode")]
+    public async Task<IActionResult> SicoobQrCode([FromBody] object request)
+    {
+        _logger.LogInformation("Gerando QR Code PIX via Sicoob Cobrança V3");
+
+        // Mock da integração Sicoob QR Code
+        await Task.Delay(250); // Simular chamada API
+
+        return Ok(new {
+            success = true,
+            txid = Guid.NewGuid().ToString("N")[..25],
+            pixCopiaECola = "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540510.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304B2C3",
+            qrcode = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+            provider = "sicoob",
+            type = "dynamic"
+        });
+    }
+
+    /// <summary>
+    /// Banco Genial - Gerar QR Code PIX (Open Finance)
+    /// </summary>
+    [HttpPost("banco-genial/openfinance/pix/qrcode")]
+    public async Task<IActionResult> BancoGenialQrCode([FromBody] object request)
+    {
+        _logger.LogInformation("Gerando QR Code PIX via Banco Genial Open Finance");
+
+        // Mock da integração Banco Genial QR Code
+        await Task.Delay(180); // Simular chamada API
+
+        return Ok(new {
+            success = true,
+            transactionId = Guid.NewGuid(),
+            emvCode = "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540510.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304C3D4",
+            qrCodeImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+            provider = "banco-genial",
+            expiresAt = DateTime.UtcNow.AddMinutes(5)
+        });
+    }
+
+    /// <summary>
+    /// Efí (ex-Gerencianet) - Gerar QR Code PIX
+    /// </summary>
+    [HttpPost("efi/pix/qrcode")]
+    public async Task<IActionResult> EfiQrCode([FromBody] object request)
+    {
+        _logger.LogInformation("Gerando QR Code PIX via Efí");
+
+        // Mock da integração Efí QR Code
+        await Task.Delay(220); // Simular chamada API
+
+        return Ok(new {
+            success = true,
+            txid = Guid.NewGuid().ToString("N")[..32],
+            qrcode = "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540510.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304D4E5",
+            imagemQrcode = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+            provider = "efi",
+            status = "ATIVA"
+        });
+    }
+
+    /// <summary>
+    /// Celcoin - Gerar QR Code PIX
+    /// </summary>
+    [HttpPost("celcoin/pix/qrcode")]
+    public async Task<IActionResult> CelcoinQrCode([FromBody] object request)
+    {
+        _logger.LogInformation("Gerando QR Code PIX via Celcoin");
+
+        // Mock da integração Celcoin QR Code
+        await Task.Delay(190); // Simular chamada API
+
+        return Ok(new {
+            success = true,
+            transactionId = Guid.NewGuid(),
+            emvqrcps = "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540510.005802BR5913FINTECH PSP6009SAO PAULO62070503***6304E5F6",
+            qrcodeImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+            provider = "celcoin",
+            createdAt = DateTime.UtcNow
+        });
+    }
+
+    /// <summary>
     /// Health check das integrações
     /// </summary>
     [HttpGet("health")]
@@ -172,19 +277,26 @@ public class IntegrationController : ControllerBase
     {
         var integrations = new Dictionary<string, object>
         {
-            ["stark-bank"] = new { status = "healthy", latency = "95ms" },
-            ["sicoob"] = new { status = "healthy", latency = "120ms" },
-            ["banco-genial"] = new { status = "healthy", latency = "110ms" },
-            ["efi"] = new { status = "healthy", latency = "105ms" },
-            ["celcoin"] = new { status = "healthy", latency = "125ms" },
-            ["crypto"] = new { status = "healthy", latency = "250ms" }
+            ["stark-bank"] = new { status = "healthy", latency = "95ms", qrCodeSupport = true },
+            ["sicoob"] = new { status = "healthy", latency = "120ms", qrCodeSupport = true },
+            ["banco-genial"] = new { status = "healthy", latency = "110ms", qrCodeSupport = true },
+            ["efi"] = new { status = "healthy", latency = "105ms", qrCodeSupport = true },
+            ["celcoin"] = new { status = "healthy", latency = "125ms", qrCodeSupport = true },
+            ["crypto"] = new { status = "healthy", latency = "250ms", qrCodeSupport = false }
         };
 
-        return Ok(new { 
-            status = "healthy", 
-            service = "IntegrationService", 
+        return Ok(new {
+            status = "healthy",
+            service = "IntegrationService",
             timestamp = DateTime.UtcNow,
-            integrations = integrations
+            integrations = integrations,
+            qrCodeEndpoints = new[] {
+                "stark-bank/brcodes",
+                "sicoob/cobranca/v3/qrcode",
+                "banco-genial/openfinance/pix/qrcode",
+                "efi/pix/qrcode",
+                "celcoin/pix/qrcode"
+            }
         });
     }
 }
