@@ -52,7 +52,8 @@ public class TransactionController : ControllerBase
                 request.BankCode,
                 request.Description,
                 request.WebhookUrl,
-                request.EndToEndId);
+                request.EndToEndId,
+                request.ContaId);
 
             var response = await _mediator.Send(command);
             return Ok(response);

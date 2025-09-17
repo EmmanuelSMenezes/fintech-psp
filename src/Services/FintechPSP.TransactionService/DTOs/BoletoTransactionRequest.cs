@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -8,6 +9,9 @@ namespace FintechPSP.TransactionService.DTOs;
 /// </summary>
 public class BoletoTransactionRequest
 {
+    [JsonPropertyName("contaId")]
+    public Guid? ContaId { get; set; }
+
     [JsonPropertyName("externalId")]
     [Required]
     public string ExternalId { get; set; } = string.Empty;

@@ -1,8 +1,10 @@
 using System.Text;
+using FintechPSP.BalanceService.Consumers;
 using FintechPSP.BalanceService.Handlers;
 using FintechPSP.BalanceService.Repositories;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.Shared.Infrastructure.EventStore;
+using Marten;
 using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,6 +28,13 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITransactionHistoryRepository, TransactionHistoryRepository>();
 
+// Marten para Event Store
+builder.Services.AddMarten(options =>
+{
+    options.Connection(builder.Configuration.GetConnectionString("DefaultConnection")!);
+    options.DatabaseSchemaName = "balance_events";
+});
+
 // Event Store
 builder.Services.AddScoped<IEventStore, MartenEventStore>();
 
@@ -34,23 +43,13 @@ builder.Services.AddMassTransit(x =>
 {
     // Registrar consumers
     x.AddConsumer<QrCodeEventHandler>();
+    x.AddConsumer<ContaBancariaEventConsumer>();
+    x.AddConsumer<PriorizacaoEventConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost", "/", h =>
-        {
-            h.Username("guest");
-            h.Password("guest");
-        });
-
-        // Configurar filas para eventos de QR Code
-        cfg.ReceiveEndpoint("balance-service-qrcode-events", e =>
-        {
-            e.ConfigureConsumer<QrCodeEventHandler>(context);
-            e.Durable = true;
-            e.AutoDelete = false;
-        });
-
+        var rabbitMqUri = builder.Configuration.GetConnectionString("RabbitMQ") ?? "amqp://guest:guest@localhost:5672";
+        cfg.Host(rabbitMqUri);
         cfg.ConfigureEndpoints(context);
     });
 });

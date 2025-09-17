@@ -4,6 +4,7 @@ using FintechPSP.Shared.Infrastructure.EventStore;
 using FintechPSP.Shared.Infrastructure.Messaging;
 using FintechPSP.TransactionService.Repositories;
 using FintechPSP.TransactionService.Services;
+using Marten;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -48,6 +49,13 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 // Services
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 
+// Marten para Event Store
+builder.Services.AddMarten(options =>
+{
+    options.Connection(builder.Configuration.GetConnectionString("DefaultConnection")!);
+    options.DatabaseSchemaName = "transaction_events";
+});
+
 // Event Store
 builder.Services.AddScoped<IEventStore, MartenEventStore>();
 
@@ -56,11 +64,19 @@ builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ") ?? "localhost", "/", h =>
+        var rabbitMqUri = builder.Configuration.GetConnectionString("RabbitMQ");
+        if (!string.IsNullOrEmpty(rabbitMqUri))
         {
-            h.Username("guest");
-            h.Password("guest");
-        });
+            cfg.Host(rabbitMqUri);
+        }
+        else
+        {
+            cfg.Host("localhost", "/", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+        }
 
         cfg.ConfigureEndpoints(context);
     });

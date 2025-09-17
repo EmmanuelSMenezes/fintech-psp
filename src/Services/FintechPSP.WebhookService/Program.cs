@@ -2,6 +2,7 @@ using System.Text;
 using FintechPSP.WebhookService.Repositories;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.Shared.Infrastructure.EventStore;
+using Marten;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -22,6 +23,13 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
 // Repositories
 builder.Services.AddScoped<IWebhookRepository, WebhookRepository>();
 builder.Services.AddScoped<IWebhookDeliveryRepository, WebhookDeliveryRepository>();
+
+// Marten para Event Store
+builder.Services.AddMarten(options =>
+{
+    options.Connection(builder.Configuration.GetConnectionString("DefaultConnection")!);
+    options.DatabaseSchemaName = "webhook_events";
+});
 
 // Event Store
 builder.Services.AddScoped<IEventStore, MartenEventStore>();

@@ -1,4 +1,8 @@
 using System.Text;
+using FintechPSP.Shared.Infrastructure.Database;
+using FintechPSP.UserService.Repositories;
+using FintechPSP.UserService.Services;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -7,6 +11,33 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+// Database
+builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
+    new NpgsqlConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Host=localhost;Database=fintech_psp_users;Username=postgres;Password=postgres"));
+
+// Repositories
+builder.Services.AddScoped<IContaBancariaRepository, ContaBancariaRepository>();
+builder.Services.AddScoped<ICredentialsTokenRepository, CredentialsTokenRepository>();
+builder.Services.AddScoped<IAcessoRepository, AcessoRepository>();
+
+// Services
+builder.Services.AddScoped<ICredentialsTokenService, CredentialsTokenService>();
+
+// MassTransit
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitMqUri = builder.Configuration.GetConnectionString("RabbitMQ") ?? "amqp://guest:guest@localhost:5672";
+        cfg.Host(rabbitMqUri);
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -33,6 +64,18 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
+});
+
+// Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("BankingScope", policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireClaim("scope", "banking"));
+
+    options.AddPolicy("AdminScope", policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireClaim("scope", "admin"));
 });
 
 // Swagger/OpenAPI

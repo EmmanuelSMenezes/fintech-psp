@@ -7,11 +7,36 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "https://localhost:7001",
+      "value": "http://localhost:5000",
       "type": "string"
     },
     {
       "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cliente_id",
+      "value": "123e4567-e89b-12d3-a456-426614174000",
+      "type": "string"
+    },
+    {
+      "key": "conta_stark_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conta_efi_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conta_sicoob_id",
       "value": "",
       "type": "string"
     }
@@ -54,7 +79,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"grant_type\": \"client_credentials\",\n  \"client_id\": \"fintech_web_app\",\n  \"client_secret\": \"web_app_secret_123\",\n  \"scope\": \"pix banking\"\n}"
+              "raw": "{\n  \"grant_type\": \"client_credentials\",\n  \"client_id\": \"integration_test\",\n  \"client_secret\": \"test_secret_000\",\n  \"scope\": \"pix banking\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/token",
@@ -72,6 +97,151 @@
               "raw": "{{base_url}}/auth/health",
               "host": ["{{base_url}}"],
               "path": ["auth", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "UserService - Account Management",
+      "item": [
+        {
+          "name": "Banking - Listar Contas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/banking/contas",
+              "host": ["{{base_url}}"],
+              "path": ["banking", "contas"]
+            }
+          }
+        },
+        {
+          "name": "Banking - Criar Conta Efí",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankCode\": \"EFI\",\n  \"accountNumber\": \"12345-6\",\n  \"description\": \"Conta Principal Efí\",\n  \"credentials\": {\n    \"clientId\": \"Client_Id_efi_001\",\n    \"clientSecret\": \"Client_Secret_efi_001\",\n    \"additionalData\": {\n      \"environment\": \"sandbox\",\n      \"version\": \"v1\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/banking/contas",
+              "host": ["{{base_url}}"],
+              "path": ["banking", "contas"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Criar Conta Stark para Cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{cliente_id}}\",\n  \"bankCode\": \"STARK\",\n  \"accountNumber\": \"98765-4\",\n  \"description\": \"Conta Stark Bank - Admin Created\",\n  \"credentials\": {\n    \"clientId\": \"Client_Id_stark_admin\",\n    \"clientSecret\": \"Client_Secret_stark_admin\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/contas",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "contas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ConfigService - Prioritization",
+      "item": [
+        {
+          "name": "Banking - Obter Configuração de Roteamento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/banking/configs/roteamento",
+              "host": ["{{base_url}}"],
+              "path": ["banking", "configs", "roteamento"]
+            }
+          }
+        },
+        {
+          "name": "Banking - Configurar Priorização (50% Stark, 20% Efí)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prioridades\": [\n    {\n      \"contaId\": \"{{conta_stark_id}}\",\n      \"percentual\": 50.0\n    },\n    {\n      \"contaId\": \"{{conta_efi_id}}\",\n      \"percentual\": 20.0\n    },\n    {\n      \"contaId\": \"{{conta_sicoob_id}}\",\n      \"percentual\": 30.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/banking/configs/roteamento",
+              "host": ["{{base_url}}"],
+              "path": ["banking", "configs", "roteamento"]
+            }
+          }
+        },
+        {
+          "name": "Banking - Listar Bancos Disponíveis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/banking/bancos",
+              "host": ["{{base_url}}"],
+              "path": ["banking", "bancos"]
             }
           }
         }
@@ -96,7 +266,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"pix-{{$randomUUID}}\",\n  \"amount\": 100.50,\n  \"pixKey\": \"11999887766\",\n  \"bankCode\": \"341\",\n  \"description\": \"Pagamento teste PIX\",\n  \"webhookUrl\": \"https://webhook.site/unique-id\"\n}"
+              "raw": "{\n  \"externalId\": \"pix-{{$randomUUID}}\",\n  \"amount\": 100.50,\n  \"pixKey\": \"11999887766\",\n  \"bankCode\": \"341\",\n  \"description\": \"Pagamento teste PIX\",\n  \"webhookUrl\": \"https://webhook.site/unique-id\",\n  \"contaId\": \"{{conta_stark_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/transacoes/pix",
@@ -121,7 +291,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"ted-{{$randomUUID}}\",\n  \"amount\": 500.00,\n  \"bankCode\": \"001\",\n  \"accountBranch\": \"1234\",\n  \"accountNumber\": \"567890\",\n  \"taxId\": \"12345678901\",\n  \"name\": \"João da Silva\"\n}"
+              "raw": "{\n  \"externalId\": \"ted-{{$randomUUID}}\",\n  \"amount\": 500.00,\n  \"bankCode\": \"001\",\n  \"accountBranch\": \"1234\",\n  \"accountNumber\": \"567890\",\n  \"taxId\": \"12345678901\",\n  \"name\": \"João da Silva\",\n  \"contaId\": \"{{conta_efi_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/transacoes/ted",
@@ -196,9 +366,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/clientes/{{$randomUUID}}/saldo",
+              "raw": "{{base_url}}/saldos/clientes/{{$randomUUID}}",
               "host": ["{{base_url}}"],
-              "path": ["clientes", "{{$randomUUID}}", "saldo"]
+              "path": ["saldos", "clientes", "{{$randomUUID}}"]
             }
           }
         }
@@ -277,9 +447,9 @@
               "raw": "{\n  \"userId\": \"{{$randomUUID}}\",\n  \"email\": \"usuario@exemplo.com\",\n  \"role\": \"cliente\",\n  \"accountId\": \"{{$randomUUID}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/admin/users",
+              "raw": "{{base_url}}/users",
               "host": ["{{base_url}}"],
-              "path": ["admin", "users"]
+              "path": ["users"]
             }
           }
         },
@@ -302,9 +472,9 @@
               "raw": "{\n  \"bankCode\": \"341\",\n  \"taxa\": 1.99,\n  \"type\": \"PIX\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/admin/configs/taxas",
+              "raw": "{{base_url}}/config/taxas",
               "host": ["{{base_url}}"],
-              "path": ["admin", "configs", "taxas"]
+              "path": ["config", "taxas"]
             }
           }
         },
@@ -319,9 +489,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/admin/configs/taxas",
+              "raw": "{{base_url}}/config/taxas",
               "host": ["{{base_url}}"],
-              "path": ["admin", "configs", "taxas"]
+              "path": ["config", "taxas"]
             }
           }
         }
@@ -364,7 +534,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"QR-STATIC-{{$randomUUID}}\",\n  \"pixKey\": \"11999887766\",\n  \"bankCode\": \"001\",\n  \"description\": \"QR Code estático para recebimentos\"\n}"
+              "raw": "{\n  \"chave\": \"user@example.com\",\n  \"descricao\": \"QR Code estático para pagamentos\",\n  \"cidade\": \"São Paulo\",\n  \"nomeRecebedor\": \"João Silva\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/transacoes/pix/qrcode/estatico",
@@ -408,7 +578,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"QR-DYNAMIC-{{$randomUUID}}\",\n  \"amount\": 150.00,\n  \"pixKey\": \"usuario@email.com\",\n  \"bankCode\": \"237\",\n  \"description\": \"Pagamento de produto XYZ\",\n  \"expiresIn\": 300\n}"
+              "raw": "{\n  \"chave\": \"user@example.com\",\n  \"valor\": 100.50,\n  \"descricao\": \"Pagamento de teste\",\n  \"cidade\": \"São Paulo\",\n  \"nomeRecebedor\": \"João Silva\",\n  \"expiracaoMinutos\": 30\n}"
             },
             "url": {
               "raw": "{{base_url}}/transacoes/pix/qrcode/dinamico",
@@ -448,7 +618,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"QR-BANKING-{{$randomUUID}}\",\n  \"pixKey\": \"12345678901\",\n  \"bankCode\": \"341\",\n  \"description\": \"QR Code para internet banking\"\n}"
+              "raw": "{\n  \"chave\": \"12345678901\",\n  \"descricao\": \"QR Code para internet banking\",\n  \"cidade\": \"São Paulo\",\n  \"nomeRecebedor\": \"Banco Exemplo\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/banking/transacoes/pix/qrcode/estatico",
@@ -470,6 +640,243 @@
           }
         }
       ]
+    },
+    {
+      "name": "IntegrationService - Routing",
+      "item": [
+        {
+          "name": "Selecionar Conta para Transação (Roteamento Ponderado)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankCode\": \"STARK\",\n  \"amount\": 1000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/integrations/routing/select-account",
+              "host": ["{{base_url}}"],
+              "path": ["integrations", "routing", "select-account"]
+            }
+          }
+        },
+        {
+          "name": "Listar Contas com Prioridades",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/integrations/routing/accounts-priority",
+              "host": ["{{base_url}}"],
+              "path": ["integrations", "routing", "accounts-priority"]
+            }
+          }
+        },
+        {
+          "name": "Health Check Integrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/integrations/health",
+              "host": ["{{base_url}}"],
+              "path": ["integrations", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Acessos RBAC",
+      "item": [
+        {
+          "name": "Banking - Criar Sub-usuário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subUserEmail\": \"subuser@cliente.com\",\n  \"role\": \"sub-cliente\",\n  \"permissions\": [\n    \"view_dashboard\",\n    \"view_transacoes\",\n    \"view_contas\",\n    \"view_extratos\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/acessos/banking",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acessos", "banking"]
+            }
+          }
+        },
+        {
+          "name": "Banking - Listar Meus Sub-usuários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/acessos/banking",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acessos", "banking"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Criar Acesso de Usuário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"33333333-3333-3333-3333-333333333333\",\n  \"role\": \"sub-admin\",\n  \"permissions\": [\n    \"view_dashboard\",\n    \"view_transacoes\",\n    \"view_contas\",\n    \"view_clientes\",\n    \"view_relatorios\",\n    \"view_extratos\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/acessos/admin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acessos", "admin"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Listar Todos os Acessos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/acessos/admin?role=cliente&isActive=true&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acessos", "admin"],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "cliente"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Validar Permissão",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"22222222-2222-2222-2222-222222222222\",\n  \"permission\": \"view_dashboard\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/acessos/validate-permission",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acessos", "validate-permission"]
+            }
+          }
+        },
+        {
+          "name": "Obter Permissões Disponíveis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/acessos/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acessos", "permissions"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "acesso_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "22222222-2222-2222-2222-222222222222",
+      "type": "string"
+    },
+    {
+      "key": "banking_token",
+      "value": "",
+      "type": "string"
     }
   ]
 }

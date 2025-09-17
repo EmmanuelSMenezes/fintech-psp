@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json.Serialization;
 
 namespace FintechPSP.TransactionService.DTOs;
@@ -7,6 +8,9 @@ namespace FintechPSP.TransactionService.DTOs;
 /// </summary>
 public class QrCodeEstaticoRequest
 {
+    [JsonPropertyName("contaId")]
+    public Guid? ContaId { get; set; }
+
     [JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = string.Empty;
     
@@ -25,6 +29,9 @@ public class QrCodeEstaticoRequest
 /// </summary>
 public class QrCodeDinamicoRequest
 {
+    [JsonPropertyName("contaId")]
+    public Guid? ContaId { get; set; }
+
     [JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = string.Empty;
     

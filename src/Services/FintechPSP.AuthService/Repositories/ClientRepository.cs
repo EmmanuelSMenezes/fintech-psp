@@ -21,42 +21,59 @@ public class ClientRepository : IClientRepository
     public async Task<Client?> GetByClientIdAsync(string clientId)
     {
         const string sql = @"
-            SELECT id, client_id as ClientId, client_secret as ClientSecret, 
-                   name, allowed_scopes as AllowedScopes, is_active as IsActive, 
-                   created_at as CreatedAt, updated_at as UpdatedAt
-            FROM clients 
+            SELECT id, client_id, client_secret,
+                   name, allowed_scopes, is_active,
+                   created_at, updated_at
+            FROM clients
             WHERE client_id = @ClientId AND is_active = true";
 
         using var connection = _connectionFactory.CreateConnection();
-        var client = await connection.QuerySingleOrDefaultAsync<Client>(sql, new { ClientId = clientId });
-        
-        if (client != null)
-        {
-            // Converter string JSON para array (simplificado)
-            client.AllowedScopes = client.AllowedScopes?.FirstOrDefault()?.Split(',') ?? Array.Empty<string>();
-        }
+        var result = await connection.QuerySingleOrDefaultAsync<dynamic>(sql, new { ClientId = clientId });
 
-        return client;
+        if (result == null) return null;
+
+        return new Client
+        {
+            Id = result.id,
+            ClientId = result.client_id,
+            ClientSecret = result.client_secret,
+            Name = result.name,
+            AllowedScopes = string.IsNullOrEmpty(result.allowed_scopes)
+                ? Array.Empty<string>()
+                : result.allowed_scopes.Split(',', StringSplitOptions.RemoveEmptyEntries),
+            IsActive = result.is_active,
+            CreatedAt = result.created_at,
+            UpdatedAt = result.updated_at
+        };
     }
 
     public async Task<Client?> GetByIdAsync(Guid id)
     {
         const string sql = @"
-            SELECT id, client_id as ClientId, client_secret as ClientSecret, 
-                   name, allowed_scopes as AllowedScopes, is_active as IsActive, 
-                   created_at as CreatedAt, updated_at as UpdatedAt
-            FROM clients 
+            SELECT id, client_id, client_secret,
+                   name, allowed_scopes, is_active,
+                   created_at, updated_at
+            FROM clients
             WHERE id = @Id";
 
         using var connection = _connectionFactory.CreateConnection();
-        var client = await connection.QuerySingleOrDefaultAsync<Client>(sql, new { Id = id });
-        
-        if (client != null)
-        {
-            client.AllowedScopes = client.AllowedScopes?.FirstOrDefault()?.Split(',') ?? Array.Empty<string>();
-        }
+        var result = await connection.QuerySingleOrDefaultAsync<dynamic>(sql, new { Id = id });
 
-        return client;
+        if (result == null) return null;
+
+        return new Client
+        {
+            Id = result.id,
+            ClientId = result.client_id,
+            ClientSecret = result.client_secret,
+            Name = result.name,
+            AllowedScopes = string.IsNullOrEmpty(result.allowed_scopes)
+                ? Array.Empty<string>()
+                : result.allowed_scopes.Split(',', StringSplitOptions.RemoveEmptyEntries),
+            IsActive = result.is_active,
+            CreatedAt = result.created_at,
+            UpdatedAt = result.updated_at
+        };
     }
 
     public async Task<Client> CreateAsync(Client client)
@@ -64,9 +81,9 @@ public class ClientRepository : IClientRepository
         const string sql = @"
             INSERT INTO clients (id, client_id, client_secret, name, allowed_scopes, is_active, created_at)
             VALUES (@Id, @ClientId, @ClientSecret, @Name, @AllowedScopes, @IsActive, @CreatedAt)
-            RETURNING id, client_id as ClientId, client_secret as ClientSecret, 
-                      name, allowed_scopes as AllowedScopes, is_active as IsActive, 
-                      created_at as CreatedAt, updated_at as UpdatedAt";
+            RETURNING id, client_id, client_secret,
+                      name, allowed_scopes, is_active,
+                      created_at, updated_at";
 
         client.Id = Guid.NewGuid();
         client.CreatedAt = DateTime.UtcNow;
@@ -84,22 +101,31 @@ public class ClientRepository : IClientRepository
         };
 
         using var connection = _connectionFactory.CreateConnection();
-        var result = await connection.QuerySingleAsync<Client>(sql, parameters);
-        
-        result.AllowedScopes = client.AllowedScopes;
-        return result;
+        var result = await connection.QuerySingleAsync<dynamic>(sql, parameters);
+
+        return new Client
+        {
+            Id = result.id,
+            ClientId = result.client_id,
+            ClientSecret = result.client_secret,
+            Name = result.name,
+            AllowedScopes = client.AllowedScopes, // Usar o array original
+            IsActive = result.is_active,
+            CreatedAt = result.created_at,
+            UpdatedAt = result.updated_at
+        };
     }
 
     public async Task<Client> UpdateAsync(Client client)
     {
         const string sql = @"
-            UPDATE clients 
-            SET client_secret = @ClientSecret, name = @Name, allowed_scopes = @AllowedScopes, 
+            UPDATE clients
+            SET client_secret = @ClientSecret, name = @Name, allowed_scopes = @AllowedScopes,
                 is_active = @IsActive, updated_at = @UpdatedAt
             WHERE id = @Id
-            RETURNING id, client_id as ClientId, client_secret as ClientSecret, 
-                      name, allowed_scopes as AllowedScopes, is_active as IsActive, 
-                      created_at as CreatedAt, updated_at as UpdatedAt";
+            RETURNING id, client_id, client_secret,
+                      name, allowed_scopes, is_active,
+                      created_at, updated_at";
 
         client.UpdatedAt = DateTime.UtcNow;
 
@@ -114,10 +140,19 @@ public class ClientRepository : IClientRepository
         };
 
         using var connection = _connectionFactory.CreateConnection();
-        var result = await connection.QuerySingleAsync<Client>(sql, parameters);
-        
-        result.AllowedScopes = client.AllowedScopes;
-        return result;
+        var result = await connection.QuerySingleAsync<dynamic>(sql, parameters);
+
+        return new Client
+        {
+            Id = result.id,
+            ClientId = result.client_id,
+            ClientSecret = result.client_secret,
+            Name = result.name,
+            AllowedScopes = client.AllowedScopes, // Usar o array original
+            IsActive = result.is_active,
+            CreatedAt = result.created_at,
+            UpdatedAt = result.updated_at
+        };
     }
 
     public async Task DeactivateAsync(Guid id)

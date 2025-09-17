@@ -1,5 +1,10 @@
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using FintechPSP.IntegrationService.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace FintechPSP.IntegrationService.Controllers;
 
@@ -12,10 +17,96 @@ namespace FintechPSP.IntegrationService.Controllers;
 public class IntegrationController : ControllerBase
 {
     private readonly ILogger<IntegrationController> _logger;
+    private readonly IRoutingService _routingService;
 
-    public IntegrationController(ILogger<IntegrationController> logger)
+    public IntegrationController(
+        ILogger<IntegrationController> logger,
+        IRoutingService routingService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _routingService = routingService ?? throw new ArgumentNullException(nameof(routingService));
+    }
+
+    /// <summary>
+    /// Seleciona a melhor conta para uma transação usando roteamento ponderado
+    /// </summary>
+    [HttpPost("routing/select-account")]
+    public async Task<IActionResult> SelectAccountForTransaction([FromBody] SelectAccountRequest request)
+    {
+        try
+        {
+            var clienteId = GetCurrentClientId();
+            if (clienteId == Guid.Empty)
+            {
+                return Unauthorized("Cliente não identificado");
+            }
+
+            var selectedAccount = await _routingService.SelectAccountForTransactionAsync(
+                clienteId,
+                request.BankCode,
+                request.Amount);
+
+            if (selectedAccount == null)
+            {
+                return NotFound(new { error = "no_account_available", message = "Nenhuma conta disponível para a transação" });
+            }
+
+            return Ok(new
+            {
+                selectedAccount = new
+                {
+                    contaId = selectedAccount.ContaId,
+                    bankCode = selectedAccount.BankCode,
+                    accountNumber = selectedAccount.AccountNumber,
+                    description = selectedAccount.Description,
+                    priority = selectedAccount.Priority,
+                    selectionReason = selectedAccount.SelectionReason
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao selecionar conta para transação");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Lista contas com suas prioridades configuradas
+    /// </summary>
+    [HttpGet("routing/accounts-priority")]
+    public async Task<IActionResult> GetAccountsWithPriority()
+    {
+        try
+        {
+            var clienteId = GetCurrentClientId();
+            if (clienteId == Guid.Empty)
+            {
+                return Unauthorized("Cliente não identificado");
+            }
+
+            var accounts = await _routingService.GetAccountsWithPriorityAsync(clienteId);
+
+            return Ok(new
+            {
+                clienteId = clienteId,
+                accounts = accounts.Select(a => new
+                {
+                    contaId = a.ContaId,
+                    bankCode = a.BankCode,
+                    accountNumber = a.AccountNumber,
+                    description = a.Description,
+                    isActive = a.IsActive,
+                    priority = a.Priority,
+                    hasPriorityConfig = a.HasPriorityConfig
+                })
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter contas com prioridade");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -299,4 +390,19 @@ public class IntegrationController : ControllerBase
             }
         });
     }
+
+    private Guid GetCurrentClientId()
+    {
+        var clientIdClaim = User.FindFirst("clienteId")?.Value ?? User.FindFirst("sub")?.Value;
+        return Guid.TryParse(clientIdClaim, out var clienteId) ? clienteId : Guid.Empty;
+    }
+}
+
+/// <summary>
+/// Request para seleção de conta
+/// </summary>
+public class SelectAccountRequest
+{
+    public string? BankCode { get; set; }
+    public decimal? Amount { get; set; }
 }

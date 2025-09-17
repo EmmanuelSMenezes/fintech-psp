@@ -1,4 +1,5 @@
 using System.Text;
+using FintechPSP.IntegrationService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -7,6 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// HTTP Client for service-to-service communication
+builder.Services.AddHttpClient();
+
+// Routing and Account Services
+builder.Services.AddScoped<IRoutingService, RoutingService>();
+builder.Services.AddScoped<IAccountDataService, AccountDataService>();
+builder.Services.AddScoped<IPriorityConfigService, PriorityConfigService>();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

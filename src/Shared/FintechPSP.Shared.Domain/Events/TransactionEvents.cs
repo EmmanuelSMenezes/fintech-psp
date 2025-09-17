@@ -260,6 +260,96 @@ public class ContaCriada : DomainEvent
 }
 
 /// <summary>
+/// Evento disparado quando uma conta bancária é criada
+/// </summary>
+public class ContaBancariaCriada : DomainEvent
+{
+    [JsonPropertyName("contaId")]
+    public Guid ContaId { get; set; }
+
+    [JsonPropertyName("clienteId")]
+    public Guid ClienteId { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    [JsonPropertyName("accountNumber")]
+    public string AccountNumber { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("credentialsTokenId")]
+    public string CredentialsTokenId { get; set; } = string.Empty;
+
+    public ContaBancariaCriada() { }
+
+    public ContaBancariaCriada(Guid contaId, Guid clienteId, string bankCode, string accountNumber,
+        string description, string credentialsTokenId)
+    {
+        ContaId = contaId;
+        ClienteId = clienteId;
+        BankCode = bankCode;
+        AccountNumber = accountNumber;
+        Description = description;
+        CredentialsTokenId = credentialsTokenId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando uma conta bancária é atualizada
+/// </summary>
+public class ContaBancariaAtualizada : DomainEvent
+{
+    [JsonPropertyName("contaId")]
+    public Guid ContaId { get; set; }
+
+    [JsonPropertyName("clienteId")]
+    public Guid ClienteId { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("credentialsTokenId")]
+    public string? CredentialsTokenId { get; set; }
+
+    public ContaBancariaAtualizada() { }
+
+    public ContaBancariaAtualizada(Guid contaId, Guid clienteId, string? description = null,
+        string? credentialsTokenId = null)
+    {
+        ContaId = contaId;
+        ClienteId = clienteId;
+        Description = description;
+        CredentialsTokenId = credentialsTokenId;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando uma conta bancária é removida
+/// </summary>
+public class ContaBancariaRemovida : DomainEvent
+{
+    [JsonPropertyName("contaId")]
+    public Guid ContaId { get; set; }
+
+    [JsonPropertyName("clienteId")]
+    public Guid ClienteId { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    public ContaBancariaRemovida() { }
+
+    public ContaBancariaRemovida(Guid contaId, Guid clienteId, string bankCode)
+    {
+        ContaId = contaId;
+        ClienteId = clienteId;
+        BankCode = bankCode;
+    }
+}
+
+/// <summary>
 /// Evento disparado quando saldo é creditado
 /// </summary>
 public class SaldoCreditado : DomainEvent
@@ -616,5 +706,120 @@ public class QrCodeExpirado : DomainEvent
         TransactionId = transactionId;
         ExternalId = externalId;
         QrcodePayload = qrcodePayload;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um acesso é criado
+/// </summary>
+public class AcessoCriado : DomainEvent
+{
+    [JsonPropertyName("acessoId")]
+    public Guid AcessoId { get; set; }
+
+    [JsonPropertyName("userId")]
+    public Guid UserId { get; set; }
+
+    [JsonPropertyName("parentUserId")]
+    public Guid? ParentUserId { get; set; }
+
+    [JsonPropertyName("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
+    public string Role { get; set; } = string.Empty;
+
+    [JsonPropertyName("permissions")]
+    public List<string> Permissions { get; set; } = new();
+
+    [JsonPropertyName("criadoPor")]
+    public Guid CriadoPor { get; set; }
+
+    public AcessoCriado() { }
+
+    public AcessoCriado(Guid acessoId, Guid userId, string email, string role,
+        List<string> permissions, Guid criadoPor, Guid? parentUserId = null)
+    {
+        AcessoId = acessoId;
+        UserId = userId;
+        ParentUserId = parentUserId;
+        Email = email;
+        Role = role;
+        Permissions = permissions;
+        CriadoPor = criadoPor;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um acesso é atualizado
+/// </summary>
+public class AcessoAtualizado : DomainEvent
+{
+    [JsonPropertyName("acessoId")]
+    public Guid AcessoId { get; set; }
+
+    [JsonPropertyName("userId")]
+    public Guid UserId { get; set; }
+
+    [JsonPropertyName("role")]
+    public string Role { get; set; } = string.Empty;
+
+    [JsonPropertyName("permissions")]
+    public List<string> Permissions { get; set; } = new();
+
+    [JsonPropertyName("permissoesAnteriores")]
+    public List<string> PermissoesAnteriores { get; set; } = new();
+
+    [JsonPropertyName("atualizadoPor")]
+    public Guid AtualizadoPor { get; set; }
+
+    public AcessoAtualizado() { }
+
+    public AcessoAtualizado(Guid acessoId, Guid userId, string role,
+        List<string> permissions, List<string> permissoesAnteriores, Guid atualizadoPor)
+    {
+        AcessoId = acessoId;
+        UserId = userId;
+        Role = role;
+        Permissions = permissions;
+        PermissoesAnteriores = permissoesAnteriores;
+        AtualizadoPor = atualizadoPor;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um acesso é removido
+/// </summary>
+public class AcessoRemovido : DomainEvent
+{
+    [JsonPropertyName("acessoId")]
+    public Guid AcessoId { get; set; }
+
+    [JsonPropertyName("userId")]
+    public Guid UserId { get; set; }
+
+    [JsonPropertyName("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
+    public string Role { get; set; } = string.Empty;
+
+    [JsonPropertyName("motivo")]
+    public string Motivo { get; set; } = string.Empty;
+
+    [JsonPropertyName("removidoPor")]
+    public Guid RemovidoPor { get; set; }
+
+    public AcessoRemovido() { }
+
+    public AcessoRemovido(Guid acessoId, Guid userId, string email, string role,
+        string motivo, Guid removidoPor)
+    {
+        AcessoId = acessoId;
+        UserId = userId;
+        Email = email;
+        Role = role;
+        Motivo = motivo;
+        RemovidoPor = removidoPor;
     }
 }

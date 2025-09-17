@@ -1,3 +1,4 @@
+using System;
 using FintechPSP.TransactionService.DTOs;
 using MediatR;
 
@@ -8,6 +9,7 @@ namespace FintechPSP.TransactionService.Commands;
 /// </summary>
 public class IniciarTransacaoTedCommand : IRequest<TransactionResponse>
 {
+    public Guid? ContaId { get; set; }
     public string ExternalId { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string BankCode { get; set; } = string.Empty;
