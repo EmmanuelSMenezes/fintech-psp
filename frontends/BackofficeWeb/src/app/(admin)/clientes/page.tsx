@@ -9,37 +9,67 @@ import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ConfirmModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Pagination from '@/components/Pagination';
+import FormField from '@/components/FormField';
+import { formatDate, formatDocument, formatPhone, getInitials, getColorFromString } from '@/utils/formatters';
 
 // Esquemas de validação
 const createUserSchema = Yup.object().shape({
   email: Yup.string()
     .email('Email inválido')
-    .required('Email é obrigatório'),
+    .required('Email é obrigatório')
+    .max(255, 'Email muito longo'),
   name: Yup.string()
     .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .required('Nome é obrigatório'),
+    .max(100, 'Nome muito longo')
+    .required('Nome é obrigatório')
+    .matches(/^[a-zA-ZÀ-ÿ\s]+$/, 'Nome deve conter apenas letras e espaços'),
   role: Yup.string()
     .oneOf(['cliente', 'admin', 'sub-admin'], 'Role inválido')
     .required('Role é obrigatório'),
   document: Yup.string()
-    .matches(/^\d{11}$|^\d{14}$/, 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos'),
+    .matches(/^(\d{11}|\d{14})?$/, 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos')
+    .test('cpf-cnpj', 'CPF ou CNPJ inválido', function(value) {
+      if (!value) return true; // Campo opcional
+      if (value.length === 11) {
+        // Validação básica de CPF
+        return /^\d{11}$/.test(value) && value !== '00000000000';
+      } else if (value.length === 14) {
+        // Validação básica de CNPJ
+        return /^\d{14}$/.test(value) && value !== '00000000000000';
+      }
+      return false;
+    }),
   phone: Yup.string()
-    .matches(/^\+?[\d\s\-\(\)]+$/, 'Telefone inválido'),
+    .matches(/^(\+?55)?[\s\-]?(\(?\d{2}\)?)?[\s\-]?9?\d{4}[\s\-]?\d{4}$/, 'Telefone inválido (formato: +5511999887766)'),
   password: Yup.string()
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
+    .max(50, 'Senha muito longa')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter ao menos: 1 minúscula, 1 maiúscula e 1 número')
 });
 
 const updateUserSchema = Yup.object().shape({
   email: Yup.string()
-    .email('Email inválido'),
+    .email('Email inválido')
+    .max(255, 'Email muito longo'),
   name: Yup.string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres'),
+    .min(2, 'Nome deve ter pelo menos 2 caracteres')
+    .max(100, 'Nome muito longo')
+    .matches(/^[a-zA-ZÀ-ÿ\s]*$/, 'Nome deve conter apenas letras e espaços'),
   role: Yup.string()
     .oneOf(['cliente', 'admin', 'sub-admin'], 'Role inválido'),
   document: Yup.string()
-    .matches(/^\d{11}$|^\d{14}$/, 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos'),
+    .matches(/^(\d{11}|\d{14})?$/, 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos')
+    .test('cpf-cnpj', 'CPF ou CNPJ inválido', function(value) {
+      if (!value) return true; // Campo opcional
+      if (value.length === 11) {
+        return /^\d{11}$/.test(value) && value !== '00000000000';
+      } else if (value.length === 14) {
+        return /^\d{14}$/.test(value) && value !== '00000000000000';
+      }
+      return false;
+    }),
   phone: Yup.string()
-    .matches(/^\+?[\d\s\-\(\)]+$/, 'Telefone inválido')
+    .matches(/^(\+?55)?[\s\-]?(\(?\d{2}\)?)?[\s\-]?9?\d{4}[\s\-]?\d{4}$/, 'Telefone inválido (formato: +5511999887766)')
 });
 
 const ClientesPage: React.FC = () => {
@@ -147,12 +177,18 @@ const ClientesPage: React.FC = () => {
       console.error('❌ Erro ao criar cliente:', error);
 
       if (error.response?.status === 400) {
-        const errorMsg = error.response.data?.message || 'Dados inválidos';
+        const errorMsg = error.response.data?.message || error.response.data?.error || 'Dados inválidos';
         toast.error(`Erro de validação: ${errorMsg}`);
       } else if (error.response?.status === 409) {
         toast.error('Email já está em uso por outro usuário');
+      } else if (error.response?.status === 422) {
+        const validationErrors = error.response.data?.errors || {};
+        const errorMessages = Object.values(validationErrors).flat().join(', ');
+        toast.error(`Erro de validação: ${errorMessages}`);
+      } else if (error.response?.status >= 500) {
+        toast.error('Erro interno do servidor. Tente novamente mais tarde.');
       } else {
-        toast.error('Erro ao criar cliente');
+        toast.error('Erro ao criar cliente. Verifique os dados e tente novamente.');
       }
     } finally {
       setIsCreating(false);
@@ -177,12 +213,20 @@ const ClientesPage: React.FC = () => {
       console.error('❌ Erro ao atualizar cliente:', error);
 
       if (error.response?.status === 400) {
-        const errorMsg = error.response.data?.message || 'Dados inválidos';
+        const errorMsg = error.response.data?.message || error.response.data?.error || 'Dados inválidos';
         toast.error(`Erro de validação: ${errorMsg}`);
       } else if (error.response?.status === 404) {
         toast.error('Cliente não encontrado');
+      } else if (error.response?.status === 409) {
+        toast.error('Email já está em uso por outro usuário');
+      } else if (error.response?.status === 422) {
+        const validationErrors = error.response.data?.errors || {};
+        const errorMessages = Object.values(validationErrors).flat().join(', ');
+        toast.error(`Erro de validação: ${errorMessages}`);
+      } else if (error.response?.status >= 500) {
+        toast.error('Erro interno do servidor. Tente novamente mais tarde.');
       } else {
-        toast.error('Erro ao atualizar cliente');
+        toast.error('Erro ao atualizar cliente. Verifique os dados e tente novamente.');
       }
     } finally {
       setIsUpdating(false);
@@ -380,11 +424,29 @@ const ClientesPage: React.FC = () => {
                   {clientes.map((cliente) => (
                     <tr key={cliente.id || cliente.userId} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {cliente.name || 'N/A'}
+                        <div className="flex items-center">
+                          <div
+                            className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                            style={{ backgroundColor: getColorFromString(cliente.email) }}
+                          >
+                            {getInitials(cliente.name || cliente.email)}
                           </div>
-                          <div className="text-sm text-gray-500">{cliente.email}</div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {cliente.name || 'N/A'}
+                            </div>
+                            <div className="text-sm text-gray-500">{cliente.email}</div>
+                            {cliente.document && (
+                              <div className="text-xs text-gray-400">
+                                {formatDocument(cliente.document)}
+                              </div>
+                            )}
+                            {cliente.phone && (
+                              <div className="text-xs text-gray-400">
+                                {formatPhone(cliente.phone)}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -397,7 +459,7 @@ const ClientesPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {cliente.lastLogin ? new Date(cliente.lastLogin).toLocaleDateString('pt-BR') : 'Nunca'}
+                        {cliente.lastLogin ? formatDate(cliente.lastLogin) : 'Nunca'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -459,89 +521,54 @@ const ClientesPage: React.FC = () => {
             >
               {({ isSubmitting }) => (
                 <Form className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nome *
-                    </label>
-                    <Field
-                      name="name"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nome completo"
-                    />
-                    <ErrorMessage name="name" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="name"
+                    label="Nome"
+                    placeholder="Nome completo"
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email *
-                    </label>
-                    <Field
-                      name="email"
-                      type="email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="email@exemplo.com"
-                    />
-                    <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="email"
+                    label="Email"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role *
-                    </label>
-                    <Field
-                      name="role"
-                      as="select"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="cliente">Cliente</option>
-                      <option value="admin">Admin</option>
-                      <option value="sub-admin">Sub-Admin</option>
-                    </Field>
-                    <ErrorMessage name="role" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="role"
+                    label="Role"
+                    as="select"
+                    required
+                    options={[
+                      { value: 'cliente', label: 'Cliente' },
+                      { value: 'admin', label: 'Admin' },
+                      { value: 'sub-admin', label: 'Sub-Admin' }
+                    ]}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Documento (CPF/CNPJ)
-                    </label>
-                    <Field
-                      name="document"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="12345678901 ou 12345678000123"
-                    />
-                    <ErrorMessage name="document" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="document"
+                    label="Documento (CPF/CNPJ)"
+                    mask="document"
+                    helpText="Informe apenas números"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Telefone
-                    </label>
-                    <Field
-                      name="phone"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+5511999887766"
-                    />
-                    <ErrorMessage name="phone" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="phone"
+                    label="Telefone"
+                    mask="phone"
+                    helpText="Formato: (11) 99999-9999"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Senha (opcional)
-                    </label>
-                    <Field
-                      name="password"
-                      type="password"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Deixe vazio para gerar automaticamente"
-                    />
-                    <ErrorMessage name="password" component="div" className="text-red-500 text-sm mt-1" />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Se não informada, será gerada automaticamente e enviada por email
-                    </p>
-                  </div>
+                  <FormField
+                    name="password"
+                    label="Senha"
+                    type="password"
+                    placeholder="Deixe vazio para gerar automaticamente"
+                    helpText="Se não informada, será gerada automaticamente e enviada por email"
+                  />
 
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
@@ -593,73 +620,43 @@ const ClientesPage: React.FC = () => {
             >
               {({ isSubmitting }) => (
                 <Form className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nome
-                    </label>
-                    <Field
-                      name="name"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nome completo"
-                    />
-                    <ErrorMessage name="name" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="name"
+                    label="Nome"
+                    placeholder="Nome completo"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <Field
-                      name="email"
-                      type="email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="email@exemplo.com"
-                    />
-                    <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="email"
+                    label="Email"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
-                    </label>
-                    <Field
-                      name="role"
-                      as="select"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="cliente">Cliente</option>
-                      <option value="admin">Admin</option>
-                      <option value="sub-admin">Sub-Admin</option>
-                    </Field>
-                    <ErrorMessage name="role" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="role"
+                    label="Role"
+                    as="select"
+                    options={[
+                      { value: 'cliente', label: 'Cliente' },
+                      { value: 'admin', label: 'Admin' },
+                      { value: 'sub-admin', label: 'Sub-Admin' }
+                    ]}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Documento (CPF/CNPJ)
-                    </label>
-                    <Field
-                      name="document"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="12345678901 ou 12345678000123"
-                    />
-                    <ErrorMessage name="document" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="document"
+                    label="Documento (CPF/CNPJ)"
+                    mask="document"
+                    helpText="Informe apenas números"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Telefone
-                    </label>
-                    <Field
-                      name="phone"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+5511999887766"
-                    />
-                    <ErrorMessage name="phone" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
+                  <FormField
+                    name="phone"
+                    label="Telefone"
+                    mask="phone"
+                    helpText="Formato: (11) 99999-9999"
+                  />
 
                   <div>
                     <label className="flex items-center">
