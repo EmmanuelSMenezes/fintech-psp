@@ -2,6 +2,7 @@ using System.Text;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.UserService.Repositories;
 using FintechPSP.UserService.Services;
+using Marten;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,16 +18,25 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Progr
 
 // Database
 builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
-    new NpgsqlConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")
+    new PostgreSqlConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Host=localhost;Database=fintech_psp_users;Username=postgres;Password=postgres"));
 
 // Repositories
 builder.Services.AddScoped<IContaBancariaRepository, ContaBancariaRepository>();
 builder.Services.AddScoped<ICredentialsTokenRepository, CredentialsTokenRepository>();
 builder.Services.AddScoped<IAcessoRepository, AcessoRepository>();
+builder.Services.AddScoped<ISystemUserRepository>(provider =>
+    new SystemUserRepository(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 // Services
 builder.Services.AddScoped<ICredentialsTokenService, CredentialsTokenService>();
+
+// Marten para Event Store
+builder.Services.AddMarten(options =>
+{
+    options.Connection(builder.Configuration.GetConnectionString("DefaultConnection")!);
+    options.DatabaseSchemaName = "user_events";
+});
 
 // MassTransit
 builder.Services.AddMassTransit(x =>
@@ -40,31 +50,22 @@ builder.Services.AddMassTransit(x =>
 });
 
 // JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? "fintech_psp_super_secret_key_2024_very_long_key";
-var key = Encoding.ASCII.GetBytes(secretKey);
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"] ?? "FintechPSP",
-        ValidateAudience = true,
-        ValidAudience = jwtSettings["Audience"] ?? "FintechPSP.API",
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP",
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
+                "your-super-secret-key-that-should-be-at-least-256-bits"))
+        };
+    });
 
 // Authorization Policies
 builder.Services.AddAuthorization(options =>

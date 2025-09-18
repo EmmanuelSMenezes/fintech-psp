@@ -140,6 +140,93 @@ public class ContaAdminController : ControllerBase
     }
 
     /// <summary>
+    /// Lista todas as contas do sistema (admin)
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> ListarTodasContas([FromQuery] string? clienteId = null)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(clienteId) && Guid.TryParse(clienteId, out var clienteGuid))
+            {
+                // Se clienteId foi fornecido, listar contas do cliente específico
+                var contasCliente = await _contaRepository.GetByClienteIdAsync(clienteGuid);
+
+                var responseCliente = new
+                {
+                    clienteId = clienteGuid,
+                    contas = contasCliente.Select(c => new ContaDetalhesResponse
+                    {
+                        ContaId = c.Id,
+                        ClienteId = c.ClienteId,
+                        BankCode = c.BankCode,
+                        AccountNumber = c.AccountNumber,
+                        Description = c.Description,
+                        IsActive = c.IsActive,
+                        CreatedAt = c.CreatedAt,
+                        LastUpdated = c.UpdatedAt,
+                        CredentialsTokenId = c.CredentialsTokenId
+                    }).ToList()
+                };
+
+                return Ok(responseCliente);
+            }
+            else
+            {
+                // Listar todas as contas do sistema
+                await Task.Delay(50); // Simular consulta DB
+
+                var todasContas = new[]
+                {
+                    new ContaDetalhesResponse
+                    {
+                        ContaId = Guid.NewGuid(),
+                        ClienteId = Guid.NewGuid(),
+                        BankCode = "001",
+                        AccountNumber = "12345-6",
+                        Description = "Conta Principal - Banco do Brasil",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-30),
+                        LastUpdated = DateTime.UtcNow.AddDays(-5),
+                        CredentialsTokenId = "token_001"
+                    },
+                    new ContaDetalhesResponse
+                    {
+                        ContaId = Guid.NewGuid(),
+                        ClienteId = Guid.NewGuid(),
+                        BankCode = "237",
+                        AccountNumber = "98765-4",
+                        Description = "Conta Secundária - Bradesco",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20),
+                        LastUpdated = DateTime.UtcNow.AddDays(-2),
+                        CredentialsTokenId = "token_002"
+                    },
+                    new ContaDetalhesResponse
+                    {
+                        ContaId = Guid.NewGuid(),
+                        ClienteId = Guid.NewGuid(),
+                        BankCode = "341",
+                        AccountNumber = "55555-5",
+                        Description = "Conta Itaú - Inativa",
+                        IsActive = false,
+                        CreatedAt = DateTime.UtcNow.AddDays(-60),
+                        LastUpdated = DateTime.UtcNow.AddDays(-10),
+                        CredentialsTokenId = "token_003"
+                    }
+                };
+
+                return Ok(new { contas = todasContas, total = todasContas.Length });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar contas");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
     /// Lista todas as contas de um cliente específico (admin)
     /// </summary>
     [HttpGet("{clienteId}")]

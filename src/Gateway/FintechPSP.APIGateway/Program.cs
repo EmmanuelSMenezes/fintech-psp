@@ -13,8 +13,8 @@ var ocelotFile = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ==
 builder.Configuration.AddJsonFile(ocelotFile, optional: false, reloadOnChange: true);
 
 // JWT Authentication
-var secretKey = "fintech_psp_super_secret_key_2024_very_long_key";
-var key = Encoding.ASCII.GetBytes(secretKey);
+var secretKey = builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-should-be-at-least-256-bits";
+var key = Encoding.UTF8.GetBytes(secretKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer("Bearer", options =>
@@ -26,9 +26,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
             ValidateIssuer = true,
-            ValidIssuer = "FintechPSP",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP",
             ValidateAudience = true,
-            ValidAudience = "FintechPSP.API",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP",
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
@@ -53,6 +53,14 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseCors("AllowAll");
 app.UseAuthentication();
+
+// Add health check endpoint
+app.MapGet("/health", () => new {
+    status = "healthy",
+    service = "APIGateway",
+    timestamp = DateTime.UtcNow,
+    version = "1.0.0"
+});
 
 // Use Ocelot middleware
 await app.UseOcelot();

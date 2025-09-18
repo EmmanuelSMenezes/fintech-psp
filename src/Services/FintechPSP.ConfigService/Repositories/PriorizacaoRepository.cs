@@ -62,7 +62,7 @@ public class PriorizacaoRepository : IPriorizacaoRepository
         {
             Id = result.id,
             ClienteId = result.cliente_id,
-            Prioridades = JsonSerializer.Deserialize<List<PrioridadeConta>>(result.prioridades_json) ?? new(),
+            Prioridades = JsonSerializer.Deserialize<List<Models.PrioridadeConta>>(result.prioridades_json) ?? new List<Models.PrioridadeConta>(),
             TotalPercentual = result.total_percentual,
             IsValid = result.is_valid,
             CreatedAt = result.created_at,
@@ -86,7 +86,7 @@ public class PriorizacaoRepository : IPriorizacaoRepository
         {
             Id = result.id,
             ClienteId = result.cliente_id,
-            Prioridades = JsonSerializer.Deserialize<List<PrioridadeConta>>(result.prioridades_json) ?? new(),
+            Prioridades = JsonSerializer.Deserialize<List<Models.PrioridadeConta>>(result.prioridades_json) ?? new List<Models.PrioridadeConta>(),
             TotalPercentual = result.total_percentual,
             IsValid = result.is_valid,
             CreatedAt = result.created_at,

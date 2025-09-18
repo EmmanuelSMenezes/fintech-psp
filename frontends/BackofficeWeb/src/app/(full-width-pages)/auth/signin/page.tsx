@@ -2,79 +2,44 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
-// Schema de validação
-const loginSchema = yup.object({
-  client_id: yup.string().required('Client ID é obrigatório'),
-  client_secret: yup.string().required('Client Secret é obrigatório'),
-  scope: yup.string().oneOf(['admin', 'sub-admin'], 'Scope deve ser admin ou sub-admin').required('Scope é obrigatório'),
-});
-
-type LoginFormData = yup.InferType<typeof loginSchema>;
-
 const SignInPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { loginWithCredentials, isAuthenticated } = useAuth();
   const router = useRouter();
-  const { login, isAuthenticated, isLoading } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-  } = useForm<LoginFormData>({
-    resolver: yupResolver(loginSchema),
-    defaultValues: {
-      scope: 'admin',
-    },
-  });
 
   // Redirecionar se já estiver autenticado
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated) {
       router.push('/');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, router]);
 
-  const onSubmit = async (data: LoginFormData) => {
-    setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos');
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const success = await login(data);
-      if (success) {
-        router.push('/');
-      }
-    } catch (error) {
+      await loginWithCredentials(email, password);
+      toast.success('Login realizado com sucesso!');
+      router.push('/');
+    } catch (error: any) {
       console.error('Erro no login:', error);
+      toast.error(error.message || 'Erro ao fazer login');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-
-  // Função para preencher credenciais de exemplo
-  const fillExampleCredentials = (type: 'admin' | 'sub-admin') => {
-    if (type === 'admin') {
-      setValue('client_id', 'admin_client');
-      setValue('client_secret', 'admin_secret_000');
-      setValue('scope', 'admin');
-    } else {
-      setValue('client_id', 'sub_admin_client');
-      setValue('client_secret', 'sub_admin_secret_000');
-      setValue('scope', 'sub-admin');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -91,81 +56,59 @@ const SignInPage: React.FC = () => {
             <p className="text-gray-600 mt-2">Backoffice - Painel Administrativo</p>
           </div>
 
-          {/* Botões de exemplo */}
-          <div className="mb-6 space-y-2">
-            <p className="text-sm text-gray-600 text-center">Credenciais de exemplo:</p>
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={() => fillExampleCredentials('admin')}
-                className="flex-1 px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => fillExampleCredentials('sub-admin')}
-                className="flex-1 px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Sub-Admin
-              </button>
+          {/* Credenciais padrão */}
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">Credenciais Padrão:</h3>
+            <div className="text-sm text-blue-700">
+              <p><strong>Email:</strong> admin@fintechpsp.com</p>
+              <p><strong>Senha:</strong> admin123</p>
             </div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">
-                Client ID
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
               </label>
               <input
-                {...register('client_id')}
-                type="text"
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Digite o Client ID"
+                placeholder="Digite seu email"
+                disabled={isLoading}
               />
-              {errors.client_id && (
-                <p className="mt-1 text-sm text-red-600">{errors.client_id.message}</p>
-              )}
             </div>
 
             <div>
-              <label htmlFor="client_secret" className="block text-sm font-medium text-gray-700 mb-2">
-                Client Secret
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Senha
               </label>
               <input
-                {...register('client_secret')}
+                id="password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Digite o Client Secret"
+                placeholder="Digite sua senha"
+                disabled={isLoading}
               />
-              {errors.client_secret && (
-                <p className="mt-1 text-sm text-red-600">{errors.client_secret.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="scope" className="block text-sm font-medium text-gray-700 mb-2">
-                Nível de Acesso
-              </label>
-              <select
-                {...register('scope')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              >
-                <option value="admin">Administrador</option>
-                <option value="sub-admin">Sub-Administrador</option>
-              </select>
-              {errors.scope && (
-                <p className="mt-1 text-sm text-red-600">{errors.scope.message}</p>
-              )}
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isLoading}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   Entrando...

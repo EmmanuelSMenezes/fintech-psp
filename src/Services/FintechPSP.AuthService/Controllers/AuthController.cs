@@ -63,6 +63,43 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Login de usuário com email e senha
+    /// </summary>
+    /// <param name="request">Dados de login</param>
+    /// <returns>Token de acesso e dados do usuário</returns>
+    /// <response code="200">Login realizado com sucesso</response>
+    /// <response code="400">Dados inválidos</response>
+    /// <response code="401">Credenciais inválidas</response>
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var command = new LoginCommand(request.Email, request.Password);
+            var response = await _mediator.Send(command);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = "invalid_credentials", error_description = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = "invalid_request", error_description = ex.Message });
+        }
+    }
+
+
+
+    /// <summary>
     /// Health check do serviço
     /// </summary>
     [HttpGet("health")]

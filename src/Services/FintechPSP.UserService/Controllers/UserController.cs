@@ -152,27 +152,33 @@ public class UserResponse
 {
     [JsonPropertyName("id")]
     public Guid Id { get; set; }
-    
+
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
-    
+
     [JsonPropertyName("email")]
     public string Email { get; set; } = string.Empty;
-    
+
     [JsonPropertyName("document")]
     public string Document { get; set; } = string.Empty;
-    
+
     [JsonPropertyName("phone")]
     public string? Phone { get; set; }
-    
+
     [JsonPropertyName("address")]
     public string? Address { get; set; }
-    
+
     [JsonPropertyName("active")]
     public bool Active { get; set; }
-    
+
     [JsonPropertyName("createdAt")]
     public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("role")]
+    public string? Role { get; set; }
+
+    [JsonPropertyName("lastLoginAt")]
+    public DateTime? LastLoginAt { get; set; }
 }
 
 public class CreateUserRequest

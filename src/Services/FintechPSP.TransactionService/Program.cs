@@ -106,8 +106,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Authorization policies
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("AdminScope", policy =>
+        policy.RequireClaim("scope", "admin"));
+
+    options.AddPolicy("ClientScope", policy =>
+        policy.RequireClaim("scope", "client", "admin"));
+
     options.AddPolicy("BankingScope", policy =>
-        policy.RequireClaim("scope", "banking"));
+        policy.RequireClaim("scope", "banking", "admin"));
 });
 
 var app = builder.Build();

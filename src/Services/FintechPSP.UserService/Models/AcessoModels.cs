@@ -150,13 +150,21 @@ public static class RolePermissions
     /// </summary>
     public static List<string> GetDefaultPermissions(string role)
     {
-        if (Enum.TryParse<SystemRole>(role, true, out var systemRole) && 
+        if (Enum.TryParse<SystemRole>(role, true, out var systemRole) &&
             DefaultPermissions.TryGetValue(systemRole, out var permissions))
         {
             return permissions.Select(p => p.ToString()).ToList();
         }
-        
+
         return new List<string>();
+    }
+
+    /// <summary>
+    /// Obtém as permissões para um role (alias para GetDefaultPermissions)
+    /// </summary>
+    public static List<string> GetPermissionsForRole(string role)
+    {
+        return GetDefaultPermissions(role);
     }
     
     /// <summary>

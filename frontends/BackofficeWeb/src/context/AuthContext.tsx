@@ -17,6 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: Omit<LoginRequest, 'grant_type'>) => Promise<boolean>;
+  loginWithCredentials: (email: string, password: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
@@ -34,21 +35,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Verificar se há token salvo no localStorage ao inicializar
   useEffect(() => {
+    console.log('🔍 Verificando token salvo...');
     const token = localStorage.getItem('access_token');
     const userData = localStorage.getItem('user_data');
-    
+
+    console.log('🎫 Token encontrado:', token ? 'Sim' : 'Não');
+    console.log('👤 Dados do usuário encontrados:', userData ? 'Sim' : 'Não');
+
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
+        console.log('✅ Usuário restaurado:', parsedUser);
         setUser(parsedUser);
       } catch (error) {
-        console.error('Erro ao parsear dados do usuário:', error);
+        console.error('❌ Erro ao parsear dados do usuário:', error);
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_data');
       }
     }
-    
+
     setIsLoading(false);
+    console.log('🏁 Inicialização do AuthContext concluída');
   }, []);
 
   const login = async (credentials: Omit<LoginRequest, 'grant_type'>): Promise<boolean> => {
@@ -90,6 +97,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithCredentials = async (email: string, password: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      console.log('🔐 Iniciando login com:', { email });
+
+      const response = await fetch('http://localhost:5001/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      console.log('📡 Resposta da API:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erro na resposta:', errorData);
+        throw new Error(errorData.error_description || 'Credenciais inválidas');
+      }
+
+      const data = await response.json();
+      console.log('📦 Dados recebidos:', data);
+
+      const { accessToken, user: userInfo } = data;
+      console.log('🎫 Token:', accessToken ? 'Presente' : 'Ausente');
+      console.log('👤 User Info:', userInfo);
+
+      // Criar objeto de usuário
+      const userData: User = {
+        id: userInfo?.id || 'unknown',
+        email: userInfo?.email || email,
+        role: userInfo?.role || 'admin',
+        permissions: getPermissionsByRole(userInfo?.role || 'admin'),
+        scope: 'admin', // Todos os usuários do backoffice têm scope admin
+      };
+
+      console.log('💾 Salvando dados do usuário:', userData);
+
+      // Salvar token e dados do usuário
+      localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('user_data', JSON.stringify(userData));
+
+      setUser(userData);
+      console.log('✅ Login concluído com sucesso!');
+    } catch (error: any) {
+      console.error('❌ Erro no login:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
@@ -113,6 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     isAuthenticated,
     login,
+    loginWithCredentials,
     logout,
     hasPermission,
     hasRole,
@@ -166,6 +227,45 @@ function getPermissionsByScope(scope: string): string[] {
   };
 
   return permissionMap[scope] || [];
+}
+
+// Função auxiliar para mapear roles para permissões
+function getPermissionsByRole(role: string): string[] {
+  const permissionMap: Record<string, string[]> = {
+    Admin: [
+      'view_dashboard',
+      'view_transacoes',
+      'view_contas',
+      'view_clientes',
+      'view_relatorios',
+      'view_extratos',
+      'edit_contas',
+      'edit_clientes',
+      'edit_configuracoes',
+      'edit_acessos',
+      'manage_users',
+      'manage_permissions',
+      'manage_system',
+      'manage_webhooks',
+      'manage_system_config',
+      'view_audit_logs',
+      'configurar_priorizacao',
+      'configurar_bancos',
+      'configurar_integracoes',
+    ],
+    SubAdmin: [
+      'view_dashboard',
+      'view_transacoes',
+      'view_contas',
+      'view_clientes',
+      'view_relatorios',
+      'view_extratos',
+      'edit_contas',
+      'edit_clientes',
+    ],
+  };
+
+  return permissionMap[role] || [];
 }
 
 // Hook para proteção de rotas

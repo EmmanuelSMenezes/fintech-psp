@@ -50,7 +50,7 @@ public class ConfigurarPriorizacaoCommandHandler : IRequestHandler<ConfigurarPri
             }
 
             // Converter para modelo de domínio
-            var prioridades = request.Prioridades.Select(p => new PrioridadeConta
+            var prioridades = request.Prioridades.Select(p => new Models.PrioridadeConta
             {
                 ContaId = p.ContaId,
                 BankCode = p.BankCode,
@@ -72,7 +72,7 @@ public class ConfigurarPriorizacaoCommandHandler : IRequestHandler<ConfigurarPri
             var configuracaoSalva = await _priorizacaoRepository.UpsertAsync(configuracao);
 
             // Publicar evento
-            var eventoPrioridades = prioridades.Select(p => new PrioridadeConta(p.ContaId, p.BankCode, p.Percentual)).ToList();
+            var eventoPrioridades = prioridades.Select(p => new Shared.Domain.Events.PrioridadeConta(p.ContaId, p.BankCode, p.Percentual)).ToList();
             var evento = new PriorizacaoAtualizada(
                 configuracaoSalva.ClienteId,
                 configuracaoSalva.Id,

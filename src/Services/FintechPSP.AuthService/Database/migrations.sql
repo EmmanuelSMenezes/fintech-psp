@@ -50,10 +50,37 @@ CREATE INDEX IF NOT EXISTS idx_auth_audit_client_id ON auth_audit(client_id);
 CREATE INDEX IF NOT EXISTS idx_auth_audit_created_at ON auth_audit(created_at);
 CREATE INDEX IF NOT EXISTS idx_auth_audit_success ON auth_audit(success);
 
+-- Tabela de usuários do sistema
+CREATE TABLE IF NOT EXISTS system_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'Admin',
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    is_master BOOLEAN NOT NULL DEFAULT false,
+    last_login_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Índices para usuários
+CREATE INDEX IF NOT EXISTS idx_system_users_email ON system_users(email);
+CREATE INDEX IF NOT EXISTS idx_system_users_is_active ON system_users(is_active);
+CREATE INDEX IF NOT EXISTS idx_system_users_role ON system_users(role);
+
+-- Inserir usuário master padrão
+-- Senha: admin123 (hash bcrypt com workfactor 10)
+INSERT INTO system_users (email, password_hash, name, role, is_active, is_master) VALUES
+('admin@fintechpsp.com', '$2b$10$N9qo8uLOickgx2ZMRZoMye.IjPeGvGzjYwjUxcHjRMA4nAFPiO/Xi', 'Administrador Master', 'Admin', true, true)
+ON CONFLICT (email) DO NOTHING;
+
 -- Inserir clientes de exemplo
 INSERT INTO clients (client_id, client_secret, name, allowed_scopes) VALUES
 ('fintech_web_app', 'web_app_secret_123', 'Fintech Web Application', 'pix,banking'),
 ('fintech_mobile_app', 'mobile_app_secret_456', 'Fintech Mobile Application', 'pix,banking'),
 ('fintech_admin', 'admin_secret_789', 'Fintech Admin Panel', 'pix,banking,admin'),
-('integration_test', 'test_secret_000', 'Integration Test Client', 'pix,banking,admin')
+('integration_test', 'test_secret_000', 'Integration Test Client', 'pix,banking,admin'),
+('admin_backoffice', 'admin_secret_000', 'Admin Backoffice', 'admin'),
+('cliente_banking', 'cliente_secret_000', 'Cliente Banking', 'banking')
 ON CONFLICT (client_id) DO NOTHING;

@@ -60,16 +60,40 @@ export interface LoginResponse {
 // Tipos para usuários
 export interface User {
   id: string;
+  userId?: string;
   email: string;
+  name?: string;
   role: string;
-  permissions: string[];
+  permissions?: string[];
+  lastLogin?: string;
+  isActive?: boolean;
   createdAt: string;
+  updatedAt?: string;
+  document?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface CreateUserRequest {
   email: string;
   role: string;
+  name?: string;
+  password?: string;
   permissions?: string[];
+  document?: string;
+  phone?: string;
+  address?: string;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  role?: string;
+  name?: string;
+  permissions?: string[];
+  isActive?: boolean;
+  document?: string;
+  phone?: string;
+  address?: string;
 }
 
 // Tipos para contas bancárias
@@ -212,17 +236,36 @@ export const authService = {
 };
 
 export const userService = {
-  getUsers: (): Promise<AxiosResponse<User[]>> =>
-    api.get('/admin/users'),
-  
-  createUser: (data: CreateUserRequest): Promise<AxiosResponse<User>> =>
-    api.post('/admin/users', data),
-  
-  updateUser: (id: string, data: Partial<CreateUserRequest>): Promise<AxiosResponse<User>> =>
-    api.put(`/admin/users/${id}`, data),
-  
-  deleteUser: (id: string): Promise<AxiosResponse<void>> =>
-    api.delete(`/admin/users/${id}`),
+  getUsers: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+  }): Promise<AxiosResponse<{
+    users: User[];
+    total: number;
+    page: number;
+    limit: number;
+  }>> =>
+    api.get('/admin/users', { params }),
+
+  getUserById: (id: string): Promise<AxiosResponse<User>> =>
+    api.get(`/admin/users/${id}`),
+
+  createUser: (data: CreateUserRequest): Promise<AxiosResponse<User>> => {
+    console.log('🚀 Criando usuário:', data);
+    return api.post('/admin/users', data);
+  },
+
+  updateUser: (id: string, data: UpdateUserRequest): Promise<AxiosResponse<User>> => {
+    console.log('✏️ Atualizando usuário:', id, data);
+    return api.put(`/admin/users/${id}`, data);
+  },
+
+  deleteUser: (id: string): Promise<AxiosResponse<void>> => {
+    console.log('🗑️ Deletando usuário:', id);
+    return api.delete(`/admin/users/${id}`);
+  },
 };
 
 export const bankAccountService = {
@@ -282,15 +325,64 @@ export const reportService = {
 export const accessService = {
   getAccesses: (userId?: string): Promise<AxiosResponse<AccessControl[]>> =>
     api.get(`/admin/acessos${userId ? `/${userId}` : ''}`),
-  
+
   createAccess: (data: CreateAccessRequest): Promise<AxiosResponse<AccessControl>> =>
     api.post('/admin/acessos', data),
-  
+
   updateAccess: (id: string, data: Partial<CreateAccessRequest>): Promise<AxiosResponse<AccessControl>> =>
     api.put(`/admin/acessos/${id}`, data),
-  
+
   deleteAccess: (id: string): Promise<AxiosResponse<void>> =>
     api.delete(`/admin/acessos/${id}`),
+};
+
+// Novos serviços para as páginas adicionais
+export const systemConfigService = {
+  getConfig: (): Promise<AxiosResponse<any>> =>
+    api.get('/admin/config/system'),
+
+  updateConfig: (data: any): Promise<AxiosResponse<any>> =>
+    api.put('/admin/config/system', data),
+
+  testSmtp: (data: any): Promise<AxiosResponse<any>> =>
+    api.post('/admin/config/system/test-smtp', data),
+};
+
+export const integrationService = {
+  getBankStatus: (): Promise<AxiosResponse<any[]>> =>
+    api.get('/admin/integrations/banks/status'),
+
+  testBankConnection: (bankId: string): Promise<AxiosResponse<any>> =>
+    api.post(`/admin/integrations/banks/${bankId}/test`),
+
+  getWebhooks: (): Promise<AxiosResponse<any[]>> =>
+    api.get('/admin/integrations/webhooks'),
+
+  createWebhook: (data: any): Promise<AxiosResponse<any>> =>
+    api.post('/admin/integrations/webhooks', data),
+
+  updateWebhook: (id: string, data: any): Promise<AxiosResponse<any>> =>
+    api.put(`/admin/integrations/webhooks/${id}`, data),
+
+  deleteWebhook: (id: string): Promise<AxiosResponse<void>> =>
+    api.delete(`/admin/integrations/webhooks/${id}`),
+
+  testWebhook: (id: string): Promise<AxiosResponse<any>> =>
+    api.post(`/admin/integrations/webhooks/${id}/test`),
+
+  getWebhookLogs: (webhookId: string): Promise<AxiosResponse<any[]>> =>
+    api.get(`/admin/integrations/webhooks/${webhookId}/logs`),
+};
+
+export const auditService = {
+  getUserActivity: (params?: any): Promise<AxiosResponse<any[]>> =>
+    api.get('/admin/audit/activity', { params }),
+
+  getUserStats: (): Promise<AxiosResponse<any>> =>
+    api.get('/admin/audit/users/stats'),
+
+  bulkUserAction: (action: string, userIds: string[]): Promise<AxiosResponse<any>> =>
+    api.post('/admin/audit/users/bulk', { action, userIds }),
 };
 
 export default api;

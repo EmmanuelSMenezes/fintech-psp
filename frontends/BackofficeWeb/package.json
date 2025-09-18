@@ -40,7 +40,8 @@
     "yup": "^1.4.0",
     "@hookform/resolvers": "^3.3.2",
     "react-hot-toast": "^2.4.1",
-    "date-fns": "^3.0.6"
+    "date-fns": "^3.0.6",
+    "formik": "^2.4.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -68,6 +69,10 @@
       "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
     },
     "@react-jvectormap/world": {
+      "react": "^16.8.0 || ^17 || ^18 || ^19",
+      "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
+    },
+    "@testing-library/react": {
       "react": "^16.8.0 || ^17 || ^18 || ^19",
       "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
     }

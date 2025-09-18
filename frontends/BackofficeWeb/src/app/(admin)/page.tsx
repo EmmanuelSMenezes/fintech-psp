@@ -2,16 +2,98 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth, useRequireAuth } from '@/context/AuthContext';
+import { reportService, userService, bankAccountService, transactionService } from '@/services/api';
+import toast from 'react-hot-toast';
+
+interface DashboardData {
+  totalClientes: number;
+  totalContas: number;
+  totalTransacoes: number;
+  volumeTransacoes: number;
+  transacoesHoje: number;
+  volumeHoje: number;
+  taxaSucesso: number;
+}
 
 const DashboardPage: React.FC = () => {
   useRequireAuth('view_dashboard');
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalClientes: 0,
+    totalContas: 0,
+    totalTransacoes: 0,
+    volumeTransacoes: 0,
+    transacoesHoje: 0,
+    volumeHoje: 0,
+    taxaSucesso: 0,
+  });
 
   useEffect(() => {
-    // Simular carregamento
-    setTimeout(() => setIsLoading(false), 1000);
+    loadDashboardData();
   }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Carregar dados do dashboard
+      const [reportResponse, usersResponse, accountsResponse, transactionsResponse] = await Promise.allSettled([
+        reportService.getDashboardReport(),
+        userService.getUsers(),
+        bankAccountService.getAccounts(),
+        transactionService.getTransactions({ page: 1, limit: 1 })
+      ]);
+
+      const newData: DashboardData = {
+        totalClientes: 0,
+        totalContas: 0,
+        totalTransacoes: 0,
+        volumeTransacoes: 0,
+        transacoesHoje: 0,
+        volumeHoje: 0,
+        taxaSucesso: 98.5,
+      };
+
+      // Processar dados do relatório
+      if (reportResponse.status === 'fulfilled') {
+        const report = reportResponse.value.data;
+        newData.totalTransacoes = report.totalTransacoes || 0;
+        newData.volumeTransacoes = report.volumeTotal || 0;
+        newData.transacoesHoje = report.transacoesHoje || 0;
+        newData.volumeHoje = report.volumeHoje || 0;
+        newData.taxaSucesso = report.taxaSucesso || 98.5;
+      }
+
+      // Processar dados de usuários
+      if (usersResponse.status === 'fulfilled') {
+        newData.totalClientes = usersResponse.value.data.length;
+      }
+
+      // Processar dados de contas
+      if (accountsResponse.status === 'fulfilled') {
+        newData.totalContas = accountsResponse.value.data.length;
+      }
+
+      setDashboardData(newData);
+    } catch (error) {
+      console.error('Erro ao carregar dados do dashboard:', error);
+      toast.error('Erro ao carregar dados do dashboard');
+
+      // Usar dados de fallback
+      setDashboardData({
+        totalClientes: 1250,
+        totalContas: 320,
+        totalTransacoes: 45678,
+        volumeTransacoes: 12500000,
+        transacoesHoje: 234,
+        volumeHoje: 125000,
+        taxaSucesso: 98.5,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -26,15 +108,21 @@ const DashboardPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Visão geral do sistema PSP</p>
+          <h1 className="text-3xl font-bold text-gray-900">Backoffice PSP</h1>
+          <p className="text-gray-600 mt-1">Painel administrativo do sistema</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-500">Bem-vindo,</p>
+          <p className="text-sm text-gray-500">Olá,</p>
           <p className="font-semibold text-gray-900">{user?.email}</p>
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             {user?.role}
           </span>
+          <button
+            onClick={loadDashboardData}
+            className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+          >
+            Atualizar dados
+          </button>
         </div>
       </div>
 
@@ -48,8 +136,8 @@ const DashboardPage: React.FC = () => {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Clientes</p>
-              <p className="text-2xl font-bold text-gray-900">1,250</p>
+              <p className="text-sm font-medium text-gray-600">Total de Clientes</p>
+              <p className="text-2xl font-bold text-gray-900">{(dashboardData.totalClientes || 0).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -62,9 +150,8 @@ const DashboardPage: React.FC = () => {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Transações</p>
-              <p className="text-2xl font-bold text-gray-900">45,678</p>
-              <p className="text-xs text-green-600">+234 hoje</p>
+              <p className="text-sm font-medium text-gray-600">Total de Contas</p>
+              <p className="text-2xl font-bold text-gray-900">{(dashboardData.totalContas || 0).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -77,9 +164,9 @@ const DashboardPage: React.FC = () => {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Volume Total</p>
-              <p className="text-2xl font-bold text-gray-900">R$ 12.5M</p>
-              <p className="text-xs text-yellow-600">+R$ 125K hoje</p>
+              <p className="text-sm font-medium text-gray-600">Transações Hoje</p>
+              <p className="text-2xl font-bold text-gray-900">{(dashboardData.transacoesHoje || 0).toLocaleString()}</p>
+              <p className="text-xs text-yellow-600">R$ {((dashboardData.volumeHoje || 0) / 1000).toFixed(0)}K</p>
             </div>
           </div>
         </div>
@@ -92,9 +179,9 @@ const DashboardPage: React.FC = () => {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Taxa de Sucesso</p>
-              <p className="text-2xl font-bold text-gray-900">98.5%</p>
-              <p className="text-xs text-purple-600">Últimas 24h</p>
+              <p className="text-sm font-medium text-gray-600">Volume Total</p>
+              <p className="text-2xl font-bold text-gray-900">R$ {((dashboardData.volumeTransacoes || 0) / 1000000).toFixed(1)}M</p>
+              <p className="text-xs text-purple-600">{(dashboardData.totalTransacoes || 0).toLocaleString()} transações</p>
             </div>
           </div>
         </div>

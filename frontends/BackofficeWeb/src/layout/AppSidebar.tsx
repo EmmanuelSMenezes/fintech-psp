@@ -30,66 +30,58 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
+    path: "/",
   },
   {
     icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
+    name: "Clientes",
+    path: "/clientes",
   },
-
   {
-    name: "Forms",
+    name: "Contas Bancárias",
     icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+    path: "/contas",
   },
   {
-    name: "Tables",
+    name: "Transações",
     icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    path: "/transacoes",
   },
   {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
+    name: "Priorização",
+    icon: <PieChartIcon />,
+    path: "/priorizacao",
+  },
+  {
+    name: "Controle de Acesso",
+    icon: <BoxCubeIcon />,
+    path: "/acessos",
   },
 ];
 
 const othersItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
-    name: "Charts",
+    name: "Relatórios",
     subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
+      { name: "Dashboard Financeiro", path: "/relatorios/financeiro", pro: false },
+      { name: "Extrato de Transações", path: "/relatorios/extrato", pro: false },
     ],
   },
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    name: "Integrações",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
+      { name: "Status dos Bancos", path: "/integracoes/status", pro: false },
+      { name: "Webhooks", path: "/integracoes/webhooks", pro: false },
+    ],
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Configurações",
+    subItems: [
+      { name: "Sistema", path: "/configuracoes/sistema", pro: false },
+      { name: "Usuários", path: "/configuracoes/usuarios", pro: false },
     ],
   },
 ];
@@ -348,7 +340,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  "PSP Principal"
                 ) : (
                   <HorizontaLDots />
                 )}
@@ -365,7 +357,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  "Avançado"
                 ) : (
                   <HorizontaLDots />
                 )}
