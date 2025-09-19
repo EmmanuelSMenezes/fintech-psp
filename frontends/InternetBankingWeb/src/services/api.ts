@@ -34,9 +34,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expirado ou inválido
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_data');
-      window.location.href = '/auth/signin';
+      // localStorage.removeItem('access_token');
+      // localStorage.removeItem('user_data');
+      // window.location.href = '/auth/signin';
     }
     return Promise.reject(error);
   }

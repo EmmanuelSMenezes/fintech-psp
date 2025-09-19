@@ -41,6 +41,27 @@ const SignInPage: React.FC = () => {
     }
   };
 
+  const handleTestLogin = async () => {
+    console.log('🧪 Teste de login iniciado...');
+    setEmail('admin@fintechpsp.com');
+    setPassword('admin123');
+
+    // Aguardar um pouco para o estado atualizar
+    setTimeout(async () => {
+      try {
+        setIsLoading(true);
+        await loginWithCredentials('admin@fintechpsp.com', 'admin123');
+        toast.success('Login de teste realizado com sucesso!');
+        router.push('/');
+      } catch (error: any) {
+        console.error('Erro no login de teste:', error);
+        toast.error(error.message || 'Erro ao fazer login de teste');
+      } finally {
+        setIsLoading(false);
+      }
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
@@ -118,6 +139,18 @@ const SignInPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Botão de teste */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handleTestLogin}
+              disabled={isLoading}
+              className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              🧪 Teste Rápido (admin@fintechpsp.com)
+            </button>
+          </div>
 
           {/* Footer */}
           <div className="mt-8 text-center">

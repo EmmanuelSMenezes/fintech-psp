@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Configuração base da API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:7000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
 // Instância do axios
 const api: AxiosInstance = axios.create({
@@ -12,19 +12,50 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+console.log('🔧 API Service inicializado com baseURL:', API_BASE_URL);
+
 // Interceptor para adicionar token JWT automaticamente
 api.interceptors.request.use(
   (config) => {
+    console.log('🚀 Interceptor executado para:', config.method?.toUpperCase(), config.url);
+
     // Só acessar localStorage no lado do cliente
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('access_token');
+      console.log('🔑 Interceptor - Token encontrado:', token ? 'SIM' : 'NÃO');
+
       if (token) {
+        // Garantir que headers existe
+        if (!config.headers) {
+          config.headers = {};
+        }
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('✅ Interceptor - Authorization header adicionado');
+        console.log('🎫 Token (primeiros 20 chars):', token.substring(0, 20) + '...');
+
+        // Log detalhado dos headers finais
+        console.log('📋 Headers finais:', {
+          'Content-Type': config.headers['Content-Type'],
+          'Authorization': config.headers.Authorization ? 'Bearer [TOKEN]' : 'AUSENTE'
+        });
+      } else {
+        console.log('❌ Interceptor - Nenhum token para adicionar');
+        // Verificar se há dados no localStorage
+        const keys = Object.keys(localStorage);
+        console.log('🗂️ Chaves no localStorage:', keys);
       }
+    } else {
+      console.log('🖥️ Interceptor - Executando no servidor (sem localStorage)');
     }
+
+    // Log final da configuração
+    console.log('🔧 Config final - URL:', config.url);
+    console.log('🔧 Config final - Headers Authorization:', config.headers?.Authorization ? 'PRESENTE' : 'AUSENTE');
+
     return config;
   },
   (error) => {
+    console.error('❌ Erro no interceptor de request:', error);
     return Promise.reject(error);
   }
 );
@@ -32,34 +63,59 @@ api.interceptors.request.use(
 // Interceptor para tratar respostas e erros
 api.interceptors.response.use(
   (response: AxiosResponse) => {
+    console.log('✅ Resposta recebida:', response.status, response.config.method?.toUpperCase(), response.config.url);
     return response;
   },
   (error) => {
+    console.log('❌ Erro na resposta:', error.response?.status, error.config?.method?.toUpperCase(), error.config?.url);
+
     if (error.response?.status === 401) {
+      console.log('🚫 Erro 401 - Token inválido ou ausente');
+      console.log('🔍 Headers enviados na requisição:', error.config?.headers?.Authorization ? 'Authorization PRESENTE' : 'Authorization AUSENTE');
+
       // Token expirado ou inválido - só executar no cliente
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
-        window.location.href = '/auth/signin';
-      }
+      // if (typeof window !== 'undefined') {
+      //   localStorage.removeItem('access_token');
+      //   localStorage.removeItem('user_data');
+      //   window.location.href = '/auth/signin';
+      // }
     }
     return Promise.reject(error);
   }
 );
 
-// Tipos para autenticação
-export interface LoginRequest {
+// Tipos para autenticação OAuth2 (client credentials)
+export interface TokenRequest {
   grant_type: 'client_credentials';
   client_id: string;
   client_secret: string;
   scope: string;
 }
 
-export interface LoginResponse {
+export interface TokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
   scope: string;
+}
+
+// Tipos para login de usuário
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    isMaster: boolean;
+  };
 }
 
 // Tipos para usuários
@@ -231,9 +287,14 @@ export interface CreateSubUserRequest {
 
 // Serviços da API
 export const authService = {
+  // Login de usuário com email/senha
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
+    api.post('/auth/login', data),
+
+  // Obter token OAuth2 (para aplicações)
+  getToken: (data: TokenRequest): Promise<AxiosResponse<TokenResponse>> =>
     api.post('/auth/token', data),
-  
+
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('access_token');
@@ -273,6 +334,234 @@ export const userService = {
     console.log('🗑️ Deletando usuário:', id);
     return api.delete(`/admin/users/${id}`);
   },
+};
+
+// ===== COMPANY SERVICE (EMPRESAS CLIENTES) =====
+
+export interface Company {
+  id: string;
+  razaoSocial: string;
+  nomeFantasia?: string;
+  cnpj: string;
+  inscricaoEstadual?: string;
+  inscricaoMunicipal?: string;
+  address: CompanyAddress;
+  telefone?: string;
+  email?: string;
+  website?: string;
+  contractData: ContractData;
+  status: CompanyStatus;
+  createdAt: string;
+  updatedAt?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  observacoes?: string;
+}
+
+export interface CompanyAddress {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  pais: string;
+}
+
+export interface ContractData {
+  numeroContrato?: string;
+  dataContrato?: string;
+  juntaComercial?: string;
+  nire?: string;
+  capitalSocial?: number;
+  atividadePrincipal?: string;
+  atividadesSecundarias: string[];
+}
+
+export enum CompanyStatus {
+  PendingDocuments = 'PendingDocuments',
+  UnderReview = 'UnderReview',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
+  Active = 'Active',
+  Suspended = 'Suspended',
+  Inactive = 'Inactive'
+}
+
+export interface CreateCompanyRequest {
+  company: CompanyData;
+  applicant: ApplicantData;
+  legalRepresentatives: LegalRepresentativeData[];
+}
+
+export interface CompanyData {
+  razaoSocial: string;
+  nomeFantasia?: string;
+  cnpj: string;
+  inscricaoEstadual?: string;
+  inscricaoMunicipal?: string;
+  address: CompanyAddress;
+  telefone?: string;
+  email?: string;
+  website?: string;
+  contractData: ContractData;
+  observacoes?: string;
+}
+
+export interface ApplicantData {
+  nomeCompleto: string;
+  cpf: string;
+  rg?: string;
+  orgaoExpedidor?: string;
+  dataNascimento?: string;
+  estadoCivil?: string;
+  nacionalidade?: string;
+  profissao?: string;
+  email?: string;
+  telefone?: string;
+  celular?: string;
+  address: ApplicantAddress;
+  rendaMensal?: number;
+  cargo?: string;
+  isMainRepresentative: boolean;
+}
+
+export interface ApplicantAddress {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  pais: string;
+}
+
+export interface LegalRepresentativeData {
+  nomeCompleto: string;
+  cpf: string;
+  rg?: string;
+  orgaoExpedidor?: string;
+  dataNascimento?: string;
+  estadoCivil?: string;
+  nacionalidade?: string;
+  profissao?: string;
+  email?: string;
+  telefone?: string;
+  celular?: string;
+  address: RepresentativeAddress;
+  cargo: string;
+  type: RepresentationType;
+  percentualParticipacao?: number;
+  poderesRepresentacao?: string;
+  podeAssinarSozinho: boolean;
+  limiteAlcada?: number;
+}
+
+export interface RepresentativeAddress {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  pais: string;
+}
+
+export enum RepresentationType {
+  Administrator = 'Administrator',
+  PartnerAdministrator = 'PartnerAdministrator',
+  Director = 'Director',
+  President = 'President',
+  VicePresident = 'VicePresident',
+  Attorney = 'Attorney',
+  Partner = 'Partner',
+  Other = 'Other'
+}
+
+export interface LegalRepresentative {
+  id: string;
+  companyId: string;
+  nomeCompleto: string;
+  cpf: string;
+  rg?: string;
+  orgaoExpedidor?: string;
+  dataNascimento?: string;
+  estadoCivil?: string;
+  nacionalidade?: string;
+  profissao?: string;
+  email?: string;
+  telefone?: string;
+  celular?: string;
+  address: RepresentativeAddress;
+  cargo: string;
+  type: RepresentationType;
+  percentualParticipacao?: number;
+  poderesRepresentacao?: string;
+  podeAssinarSozinho: boolean;
+  limiteAlcada?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export const companyService = {
+  getCompanies: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: CompanyStatus;
+  }): Promise<AxiosResponse<{
+    companies: Company[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>> =>
+    api.get('/admin/companies', { params }),
+
+  getCompanyById: (id: string): Promise<AxiosResponse<Company>> =>
+    api.get(`/admin/companies/${id}`),
+
+  createCompany: (data: CreateCompanyRequest): Promise<AxiosResponse<Company>> => {
+    console.log('🚀 Criando empresa:', data);
+    return api.post('/admin/companies', data);
+  },
+
+  updateCompany: (id: string, data: CompanyData): Promise<AxiosResponse<Company>> => {
+    console.log('✏️ Atualizando empresa:', id, data);
+    return api.put(`/admin/companies/${id}`, data);
+  },
+
+  updateCompanyStatus: (id: string, status: CompanyStatus, observacoes?: string): Promise<AxiosResponse<Company>> => {
+    console.log('📊 Atualizando status da empresa:', id, status);
+    return api.patch(`/admin/companies/${id}/status`, { status, observacoes });
+  },
+
+  deleteCompany: (id: string): Promise<AxiosResponse<void>> =>
+    api.delete(`/admin/companies/${id}`),
+
+  // Representantes Legais
+  getRepresentatives: (companyId: string): Promise<AxiosResponse<LegalRepresentative[]>> =>
+    api.get(`/admin/companies/${companyId}/representatives`),
+
+  getRepresentativeById: (companyId: string, representativeId: string): Promise<AxiosResponse<LegalRepresentative>> =>
+    api.get(`/admin/companies/${companyId}/representatives/${representativeId}`),
+
+  createRepresentative: (companyId: string, data: LegalRepresentativeData): Promise<AxiosResponse<LegalRepresentative>> => {
+    console.log('🚀 Criando representante legal:', companyId, data);
+    return api.post(`/admin/companies/${companyId}/representatives`, data);
+  },
+
+  updateRepresentative: (companyId: string, representativeId: string, data: LegalRepresentativeData): Promise<AxiosResponse<LegalRepresentative>> => {
+    console.log('✏️ Atualizando representante legal:', companyId, representativeId, data);
+    return api.put(`/admin/companies/${companyId}/representatives/${representativeId}`, data);
+  },
+
+  deleteRepresentative: (companyId: string, representativeId: string): Promise<AxiosResponse<void>> =>
+    api.delete(`/admin/companies/${companyId}/representatives/${representativeId}`),
 };
 
 export const bankAccountService = {

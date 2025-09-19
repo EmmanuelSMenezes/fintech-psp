@@ -165,6 +165,7 @@ export const useRequireAuth = (requiredPermission?: string) => {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
+      debugger;
       window.location.href = '/auth/signin';
     }
   }, [isAuthenticated, isLoading]);

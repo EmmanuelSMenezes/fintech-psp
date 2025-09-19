@@ -7,16 +7,19 @@ import toast from 'react-hot-toast';
 interface User {
   id: string;
   email: string;
+  name: string;
   role: string;
-  permissions: string[];
-  scope: string;
+  isMaster: boolean;
+  // Campos opcionais para compatibilidade
+  permissions?: string[];
+  scope?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: Omit<LoginRequest, 'grant_type'>) => Promise<boolean>;
+  login: (credentials: LoginRequest) => Promise<boolean>;
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
@@ -29,84 +32,105 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  console.log('🚀 AuthProvider renderizado');
-
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // Marcar como montado
+  console.log('🚀 AuthProvider renderizado');
+  console.log('📊 Estado atual:', { user: !!user, isLoading, mounted });
+
+  const isAuthenticated = !!user;
+
+  // useEffect para restaurar usuário - execução única
   useEffect(() => {
-    console.log('🔧 useEffect 1: Marcando como montado');
-    setMounted(true);
-  }, []);
+    console.log('🔧 useEffect: Iniciando restauração...');
 
-  // Verificar se há token salvo no localStorage ao inicializar
-  useEffect(() => {
-    console.log('🔧 useEffect 2: mounted =', mounted);
-    if (!mounted) return;
+    const initAuth = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('access_token');
+          const userData = localStorage.getItem('user_data');
 
-    console.log('🔄 AuthProvider montado, verificando token...');
+          console.log('🎫 Token no localStorage:', token ? 'SIM' : 'NÃO');
+          console.log('👤 UserData no localStorage:', userData ? 'SIM' : 'NÃO');
 
-    try {
-      const token = localStorage.getItem('access_token');
-      const userData = localStorage.getItem('user_data');
-
-      console.log('🎫 Token encontrado:', token ? 'Sim' : 'Não');
-      console.log('👤 Dados do usuário encontrados:', userData ? 'Sim' : 'Não');
-
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        console.log('✅ Usuário restaurado:', parsedUser);
-        setUser(parsedUser);
-      } else {
-        console.log('ℹ️ Nenhum token encontrado, usuário não autenticado');
+          if (token && userData) {
+            const parsedUser = JSON.parse(userData);
+            console.log('✅ RESTAURANDO USUÁRIO:', parsedUser);
+            setUser(parsedUser);
+          } else {
+            console.log('ℹ️ Nenhum usuário para restaurar');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao restaurar usuário:', error);
+        // Limpar dados corrompidos
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user_data');
+        }
+      } finally {
+        console.log('🏁 Finalizando loading...');
+        setIsLoading(false);
+        setMounted(true);
       }
-    } catch (error) {
-      console.error('❌ Erro ao restaurar usuário:', error);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
-      }
-    } finally {
+    };
+
+    // Executar imediatamente se já estamos no cliente
+    if (typeof window !== 'undefined') {
+      initAuth();
+    } else {
+      // Se estamos no servidor, apenas finalizar o loading
       setIsLoading(false);
-      console.log('🏁 Inicialização do AuthContext concluída');
+      setMounted(true);
     }
-  }, [mounted]);
+  }, []); // Array vazio - executar apenas uma vez
 
-  const login = async (credentials: Omit<LoginRequest, 'grant_type'>): Promise<boolean> => {
+  const login = async (credentials: LoginRequest): Promise<boolean> => {
     try {
+      console.log('🔐 Iniciando login...');
+      console.log('📧 Email:', credentials.email);
       setIsLoading(true);
-      
-      const loginData: LoginRequest = {
-        grant_type: 'client_credentials',
-        ...credentials,
-      };
 
-      const response = await authService.login(loginData);
-      const { access_token, scope } = response.data;
+      const response = await authService.login(credentials);
 
-      // Decodificar o JWT para extrair informações do usuário (simulado)
-      // Em produção, você pode decodificar o JWT real ou fazer uma chamada para /me
-      const userData: User = {
-        id: credentials.client_id,
-        email: credentials.client_id + '@fintech.com',
-        role: credentials.scope === 'admin' ? 'admin' : 'sub-admin',
-        permissions: getPermissionsByScope(credentials.scope),
-        scope: scope || credentials.scope,
-      };
+      console.log('📨 Resposta da API recebida!');
+      console.log('📊 Status:', response.status);
+      console.log('📊 StatusText:', response.statusText);
+      console.log('📊 Dados recebidos:', response.data ? 'SIM' : 'NÃO');
 
-      // Salvar token e dados do usuário
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      setUser(userData);
-      toast.success('Login realizado com sucesso!');
-      
-      return true;
+      if (response.data) {
+        // A API retorna accessToken e user (conforme LoginResponse.cs do backend)
+        const { accessToken, user } = response.data;
+        console.log('🎫 Token:', accessToken ? 'Presente' : 'Ausente');
+        console.log('👤 User Info:', user ? 'Presente' : 'Ausente');
+
+        // Log da estrutura completa para debug
+        console.log('📋 Estrutura completa da resposta:', Object.keys(response.data));
+        console.log('👤 Dados do usuário:', user);
+
+        // Salvar no localStorage
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('user_data', JSON.stringify(user));
+
+        // Verificar se salvou
+        const savedToken = localStorage.getItem('access_token');
+        const savedUserData = localStorage.getItem('user_data');
+        console.log('🎫 Token salvo:', savedToken ? 'SIM' : 'NÃO');
+        console.log('👤 UserData salvo:', savedUserData ? 'SIM' : 'NÃO');
+
+        // Atualizar estado
+        setUser(user);
+        console.log('✅ Login concluído com sucesso!');
+
+        toast.success('Login realizado com sucesso!');
+        return true;
+      }
+
+      return false;
     } catch (error: any) {
-      console.error('Erro no login:', error);
+      console.error('❌ Erro no login:', error);
       toast.error(error.response?.data?.error_description || 'Erro ao fazer login');
       return false;
     } finally {
@@ -115,67 +139,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithCredentials = async (email: string, password: string): Promise<void> => {
-    try {
-      setIsLoading(true);
-      console.log('🔐 Iniciando login com:', { email });
-
-      const response = await fetch('http://localhost:5001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      console.log('📡 Resposta da API:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ Erro na resposta:', errorData);
-        throw new Error(errorData.error_description || 'Credenciais inválidas');
-      }
-
-      const data = await response.json();
-      console.log('📦 Dados recebidos:', data);
-
-      const { accessToken, user: userInfo } = data;
-      console.log('🎫 Token:', accessToken ? 'Presente' : 'Ausente');
-      console.log('👤 User Info:', userInfo);
-
-      // Criar objeto de usuário
-      const userData: User = {
-        id: userInfo?.id || 'unknown',
-        email: userInfo?.email || email,
-        role: userInfo?.role || 'admin',
-        permissions: getPermissionsByRole(userInfo?.role || 'admin'),
-        scope: 'admin', // Todos os usuários do backoffice têm scope admin
-      };
-
-      console.log('💾 Salvando dados do usuário:', userData);
-
-      // Salvar token e dados do usuário
-      localStorage.setItem('access_token', accessToken);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-
-      setUser(userData);
-      console.log('✅ Login concluído com sucesso!');
-    } catch (error: any) {
-      console.error('❌ Erro no login:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+    const success = await login({ email, password });
+    if (!success) {
+      throw new Error('Falha no login');
     }
   };
 
   const logout = () => {
-    authService.logout();
+    console.log('🚪 Fazendo logout...');
     setUser(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
+    }
+    console.log('✅ Logout concluído');
     toast.success('Logout realizado com sucesso!');
   };
 
   const hasPermission = (permission: string): boolean => {
-    if (!user) return false;
-    return user.permissions.includes(permission) || user.role === 'admin';
+    if (!user || !user.permissions) return false;
+    return user.permissions.includes(permission);
   };
 
   const hasRole = (role: string): boolean => {
@@ -183,9 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user.role === role;
   };
 
-  const isAuthenticated = !!user;
-
-  // Debug logs (only on client side)
+  // Debug do AuthContext State
   if (typeof window !== 'undefined') {
     console.log('🔍 AuthContext State:', {
       user: user ? { id: user.id, email: user.email, role: user.role } : null,
@@ -216,137 +197,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-// Função auxiliar para mapear scopes para permissões
-function getPermissionsByScope(scope: string): string[] {
-  const permissionMap: Record<string, string[]> = {
-    admin: [
-      'view_dashboard',
-      'view_transacoes',
-      'view_contas',
-      'view_clientes',
-      'view_relatorios',
-      'view_extratos',
-      'edit_contas',
-      'edit_clientes',
-      'edit_configuracoes',
-      'edit_acessos',
-      'manage_users',
-      'manage_permissions',
-      'manage_system',
-      'view_audit_logs',
-      'configurar_priorizacao',
-      'configurar_bancos',
-      'configurar_integracoes',
-    ],
-    'sub-admin': [
-      'view_dashboard',
-      'view_transacoes',
-      'view_contas',
-      'view_clientes',
-      'view_relatorios',
-      'view_extratos',
-    ],
-  };
-
-  return permissionMap[scope] || [];
-}
-
-// Função auxiliar para mapear roles para permissões
-function getPermissionsByRole(role: string): string[] {
-  const permissionMap: Record<string, string[]> = {
-    Admin: [
-      'view_dashboard',
-      'view_transacoes',
-      'view_contas',
-      'view_clientes',
-      'view_relatorios',
-      'view_extratos',
-      'edit_contas',
-      'edit_clientes',
-      'edit_configuracoes',
-      'edit_acessos',
-      'manage_users',
-      'manage_permissions',
-      'manage_system',
-      'manage_webhooks',
-      'manage_system_config',
-      'view_audit_logs',
-      'configurar_priorizacao',
-      'configurar_bancos',
-      'configurar_integracoes',
-    ],
-    SubAdmin: [
-      'view_dashboard',
-      'view_transacoes',
-      'view_contas',
-      'view_clientes',
-      'view_relatorios',
-      'view_extratos',
-      'edit_contas',
-      'edit_clientes',
-    ],
-  };
-
-  return permissionMap[role] || [];
-}
-
-// Hook para proteção de rotas
+// Hook para verificar autenticação e permissões
 export const useRequireAuth = (requiredPermission?: string) => {
-  const { isAuthenticated, hasPermission, isLoading } = useAuth();
+  const { user, isLoading, hasPermission } = useAuth();
+
+  const isAuthenticated = !!user;
+  const hasRequiredPermission = requiredPermission ? hasPermission(requiredPermission) : true;
 
   console.log('🛡️ useRequireAuth:', {
     requiredPermission,
     isAuthenticated,
     isLoading,
-    hasPermission: requiredPermission ? hasPermission(requiredPermission) : 'N/A'
+    hasPermission: hasRequiredPermission
   });
 
-  useEffect(() => {
-    console.log('🔄 useRequireAuth useEffect - Auth check:', { isLoading, isAuthenticated });
-    if (!isLoading && !isAuthenticated) {
-      console.log('❌ Redirecionando para login - usuário não autenticado');
-      window.location.href = '/auth/signin';
-    }
-  }, [isAuthenticated, isLoading]);
-
-  useEffect(() => {
-    if (requiredPermission && !isLoading && isAuthenticated && !hasPermission(requiredPermission)) {
-      toast.error('Você não tem permissão para acessar esta página');
-      window.location.href = '/';
-    }
-  }, [requiredPermission, hasPermission, isLoading, isAuthenticated]);
-
-  return { isAuthenticated, hasPermission, isLoading };
-};
-
-// Componente para proteção de elementos baseado em permissões
-interface ProtectedElementProps {
-  permission?: string;
-  role?: string;
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-export const ProtectedElement: React.FC<ProtectedElementProps> = ({
-  permission,
-  role,
-  children,
-  fallback = null,
-}) => {
-  const { hasPermission, hasRole } = useAuth();
-
-  const hasAccess = () => {
-    if (permission && !hasPermission(permission)) return false;
-    if (role && !hasRole(role)) return false;
-    return true;
+  return {
+    user,
+    isLoading,
+    isAuthenticated,
+    hasPermission: hasRequiredPermission,
+    shouldRedirect: !isLoading && (!isAuthenticated || !hasRequiredPermission)
   };
-
-  return hasAccess() ? <>{children}</> : <>{fallback}</>;
 };
-
-export default AuthContext;
