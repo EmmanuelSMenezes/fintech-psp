@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Configuração base da API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:7000';
 
 // Instância do axios
 const api: AxiosInstance = axios.create({
@@ -15,9 +15,12 @@ const api: AxiosInstance = axios.create({
 // Interceptor para adicionar token JWT automaticamente
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Só acessar localStorage no lado do cliente
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -33,10 +36,12 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expirado ou inválido
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_data');
-      window.location.href = '/auth/signin';
+      // Token expirado ou inválido - só executar no cliente
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_data');
+        window.location.href = '/auth/signin';
+      }
     }
     return Promise.reject(error);
   }
@@ -230,8 +235,10 @@ export const authService = {
     api.post('/auth/token', data),
   
   logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
+    }
   },
 };
 

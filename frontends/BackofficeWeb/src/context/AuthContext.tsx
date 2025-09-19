@@ -30,33 +30,50 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  console.log('🚀 AuthProvider renderizado');
+
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Marcar como montado
+  useEffect(() => {
+    console.log('🔧 useEffect 1: Marcando como montado');
+    setMounted(true);
+  }, []);
 
   // Verificar se há token salvo no localStorage ao inicializar
   useEffect(() => {
-    console.log('🔍 Verificando token salvo...');
-    const token = localStorage.getItem('access_token');
-    const userData = localStorage.getItem('user_data');
+    console.log('🔧 useEffect 2: mounted =', mounted);
+    if (!mounted) return;
 
-    console.log('🎫 Token encontrado:', token ? 'Sim' : 'Não');
-    console.log('👤 Dados do usuário encontrados:', userData ? 'Sim' : 'Não');
+    console.log('🔄 AuthProvider montado, verificando token...');
 
-    if (token && userData) {
-      try {
+    try {
+      const token = localStorage.getItem('access_token');
+      const userData = localStorage.getItem('user_data');
+
+      console.log('🎫 Token encontrado:', token ? 'Sim' : 'Não');
+      console.log('👤 Dados do usuário encontrados:', userData ? 'Sim' : 'Não');
+
+      if (token && userData) {
         const parsedUser = JSON.parse(userData);
         console.log('✅ Usuário restaurado:', parsedUser);
         setUser(parsedUser);
-      } catch (error) {
-        console.error('❌ Erro ao parsear dados do usuário:', error);
+      } else {
+        console.log('ℹ️ Nenhum token encontrado, usuário não autenticado');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao restaurar usuário:', error);
+      if (typeof window !== 'undefined') {
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_data');
       }
+    } finally {
+      setIsLoading(false);
+      console.log('🏁 Inicialização do AuthContext concluída');
     }
-
-    setIsLoading(false);
-    console.log('🏁 Inicialização do AuthContext concluída');
-  }, []);
+  }, [mounted]);
 
   const login = async (credentials: Omit<LoginRequest, 'grant_type'>): Promise<boolean> => {
     try {
@@ -168,6 +185,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAuthenticated = !!user;
 
+  // Debug logs (only on client side)
+  if (typeof window !== 'undefined') {
+    console.log('🔍 AuthContext State:', {
+      user: user ? { id: user.id, email: user.email, role: user.role } : null,
+      isLoading,
+      isAuthenticated,
+      hasToken: !!localStorage.getItem('access_token')
+    });
+  }
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -272,8 +299,17 @@ function getPermissionsByRole(role: string): string[] {
 export const useRequireAuth = (requiredPermission?: string) => {
   const { isAuthenticated, hasPermission, isLoading } = useAuth();
 
+  console.log('🛡️ useRequireAuth:', {
+    requiredPermission,
+    isAuthenticated,
+    isLoading,
+    hasPermission: requiredPermission ? hasPermission(requiredPermission) : 'N/A'
+  });
+
   useEffect(() => {
+    console.log('🔄 useRequireAuth useEffect - Auth check:', { isLoading, isAuthenticated });
     if (!isLoading && !isAuthenticated) {
+      console.log('❌ Redirecionando para login - usuário não autenticado');
       window.location.href = '/auth/signin';
     }
   }, [isAuthenticated, isLoading]);

@@ -6,7 +6,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 5001
+          "Port": 6001
         }
       ],
       "UpstreamPathTemplate": "/auth/{everything}",
@@ -18,7 +18,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 5001
+          "Port": 6001
         }
       ],
       "UpstreamPathTemplate": "/health/auth",
@@ -30,7 +30,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/transacoes/{everything}",
@@ -46,7 +46,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/health/transacoes",
@@ -58,7 +58,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/transacoes/pix/qrcode/estatico",
@@ -74,7 +74,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/transacoes/pix/qrcode/dinamico",
@@ -90,7 +90,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/banking/transacoes/pix/qrcode/estatico",
@@ -106,7 +106,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/banking/transacoes/pix/qrcode/dinamico",
@@ -122,7 +122,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/qrcode/health",
@@ -134,7 +134,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6004
+          "Port": 5003
         }
       ],
       "UpstreamPathTemplate": "/saldos/{everything}",
@@ -150,7 +150,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6004
+          "Port": 5003
         }
       ],
       "UpstreamPathTemplate": "/health/saldos",
@@ -162,7 +162,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6005
+          "Port": 5004
         }
       ],
       "UpstreamPathTemplate": "/webhooks/{everything}",
@@ -178,7 +178,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6005
+          "Port": 5004
         }
       ],
       "UpstreamPathTemplate": "/health/webhooks",
@@ -190,7 +190,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6006
+          "Port": 5005
         }
       ],
       "UpstreamPathTemplate": "/integrations/{everything}",
@@ -206,7 +206,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6006
+          "Port": 5005
         }
       ],
       "UpstreamPathTemplate": "/health/integrations",
@@ -218,7 +218,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/users/{everything}",
@@ -234,7 +234,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/health/users",
@@ -246,7 +246,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/banking/contas/{everything}",
@@ -262,7 +262,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/banking/contas",
@@ -278,7 +278,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/admin/users/{everything}",
@@ -294,7 +294,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/admin/users",
@@ -310,7 +310,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/admin/acessos/{everything}",
@@ -326,7 +326,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/admin/acessos",
@@ -342,7 +342,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/admin/transacoes/{everything}",
@@ -358,7 +358,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6003
+          "Port": 5002
         }
       ],
       "UpstreamPathTemplate": "/admin/transacoes",
@@ -374,7 +374,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/admin/contas/{everything}",
@@ -390,7 +390,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6007
+          "Port": 5006
         }
       ],
       "UpstreamPathTemplate": "/admin/contas",
@@ -406,7 +406,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6002
+          "Port": 5007
         }
       ],
       "UpstreamPathTemplate": "/config/{everything}",
@@ -422,7 +422,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6002
+          "Port": 5007
         }
       ],
       "UpstreamPathTemplate": "/banking/configs/roteamento/{everything}",
@@ -438,7 +438,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6002
+          "Port": 5007
         }
       ],
       "UpstreamPathTemplate": "/banking/configs/roteamento",
@@ -454,7 +454,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6002
+          "Port": 5007
         }
       ],
       "UpstreamPathTemplate": "/banking/bancos/{everything}",
@@ -470,7 +470,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6002
+          "Port": 5007
         }
       ],
       "UpstreamPathTemplate": "/banking/bancos",
@@ -486,7 +486,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 6002
+          "Port": 5007
         }
       ],
       "UpstreamPathTemplate": "/health/config",
