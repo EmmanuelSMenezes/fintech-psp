@@ -1,10 +1,10 @@
 'use client';
 
 import React, { forwardRef } from 'react';
-import { formatDocument, formatPhone, unformatDocument, unformatPhone } from '@/utils/formatters';
+import { formatDocument, formatPhone, formatCEP, unformatDocument, unformatPhone, unformatCEP, formatBankAccount, formatBankAgency, unformatBankAccount, unformatBankAgency } from '@/utils/formatters';
 
 interface MaskedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  mask: 'document' | 'phone';
+  mask: 'document' | 'phone' | 'cep' | 'bankAccount' | 'bankAgency' | 'bankCode';
   onChange: (value: string) => void;
   value: string;
 }
@@ -25,6 +25,22 @@ const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
           formattedValue = formatPhone(inputValue);
           unformattedValue = unformatPhone(inputValue);
           break;
+        case 'cep':
+          formattedValue = formatCEP(inputValue);
+          unformattedValue = unformatCEP(inputValue);
+          break;
+        case 'bankAccount':
+          formattedValue = formatBankAccount(inputValue);
+          unformattedValue = unformatBankAccount(inputValue);
+          break;
+        case 'bankAgency':
+          formattedValue = formatBankAgency(inputValue);
+          unformattedValue = unformatBankAgency(inputValue);
+          break;
+        case 'bankCode':
+          formattedValue = inputValue.replace(/\D/g, '').slice(0, 3);
+          unformattedValue = formattedValue;
+          break;
         default:
           break;
       }
@@ -42,6 +58,14 @@ const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
           return formatDocument(value);
         case 'phone':
           return formatPhone(value);
+        case 'cep':
+          return formatCEP(value);
+        case 'bankAccount':
+          return formatBankAccount(value);
+        case 'bankAgency':
+          return formatBankAgency(value);
+        case 'bankCode':
+          return value.replace(/\D/g, '').slice(0, 3);
         default:
           return value;
       }
@@ -53,6 +77,14 @@ const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
           return 18; // 00.000.000/0000-00
         case 'phone':
           return 15; // (00) 00000-0000
+        case 'cep':
+          return 9; // 00000-000
+        case 'bankAccount':
+          return 12; // 00000000-0
+        case 'bankAgency':
+          return 5; // 0000-0
+        case 'bankCode':
+          return 3; // 000
         default:
           return undefined;
       }
@@ -60,12 +92,20 @@ const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
 
     const getPlaceholder = () => {
       if (props.placeholder) return props.placeholder;
-      
+
       switch (mask) {
         case 'document':
           return '000.000.000-00 ou 00.000.000/0000-00';
         case 'phone':
           return '(11) 99999-9999';
+        case 'cep':
+          return '00000-000';
+        case 'bankAccount':
+          return '00000000-0';
+        case 'bankAgency':
+          return '0000-0';
+        case 'bankCode':
+          return '000';
         default:
           return '';
       }

@@ -68,6 +68,9 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres:5432;Database=fintech_psp;Username=postgres;Password=postgres
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - Redis__ConnectionString=redis:6379
+      - Jwt__Key=your-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=FintechPSP
+      - Jwt__Audience=FintechPSP
     depends_on:
       postgres:
         condition: service_healthy
@@ -188,6 +191,9 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres:5432;Database=fintech_psp;Username=postgres;Password=postgres
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - Redis__ConnectionString=redis:6379
+      - Jwt__Key=your-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=FintechPSP
+      - Jwt__Audience=FintechPSP
     depends_on:
       postgres:
         condition: service_healthy
@@ -233,6 +239,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:8080
+      - Jwt__Key=your-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=FintechPSP
+      - Jwt__Audience=FintechPSP
     depends_on:
       - auth-service
       - transaction-service

@@ -96,6 +96,11 @@ public class Company
     /// Observações
     /// </summary>
     public string? Observacoes { get; set; }
+
+    /// <summary>
+    /// Dados do solicitante (opcional para empresas existentes)
+    /// </summary>
+    public ApplicantData? Applicant { get; set; }
 }
 
 /// <summary>
@@ -235,6 +240,7 @@ public class CompanyData
     public string? Website { get; set; }
     public ContractData ContractData { get; set; } = new();
     public string? Observacoes { get; set; }
+    public ApplicantData? Applicant { get; set; }
 }
 
 /// <summary>

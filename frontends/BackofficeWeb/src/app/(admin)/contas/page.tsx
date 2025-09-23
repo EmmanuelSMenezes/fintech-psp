@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuth, useRequireAuth } from '@/context/AuthContext';
 import { bankAccountService, userService, BankAccount, User } from '@/services/api';
 import toast from 'react-hot-toast';
+import CustomModal from '@/components/CustomModal';
+import MaskedInputField from '@/components/MaskedInputField';
 
 const ContasPage: React.FC = () => {
   useRequireAuth('manage_bank_accounts');
@@ -20,20 +22,30 @@ const ContasPage: React.FC = () => {
     agencia: '',
     conta: '',
     tipoConta: 'corrente' as 'corrente' | 'poupanca',
+    bankCode: '',
+    accountNumber: '',
+    description: '',
     credentials: {
       clientId: '',
       clientSecret: '',
       apiKey: '',
-      environment: 'sandbox' as 'sandbox' | 'production'
+      environment: 'sandbox' as 'sandbox' | 'production',
+      mtlsCert: '',
+      additionalData: {}
     }
   });
 
   const bancos = [
-    { value: 'stark_bank', label: 'Stark Bank' },
-    { value: 'sicoob', label: 'Sicoob' },
-    { value: 'banco_genial', label: 'Banco Genial' },
-    { value: 'efi', label: 'Efí (Gerencianet)' },
-    { value: 'celcoin', label: 'Celcoin' }
+    { code: '001', name: 'Banco do Brasil' },
+    { code: '033', name: 'Santander' },
+    { code: '104', name: 'Caixa Econômica Federal' },
+    { code: '237', name: 'Bradesco' },
+    { code: '341', name: 'Itaú' },
+    { code: '260', name: 'Nu Pagamentos' },
+    { code: '077', name: 'Banco Inter' },
+    { code: '212', name: 'Banco Original' },
+    { code: '336', name: 'Banco C6' },
+    { code: '290', name: 'PagSeguro' }
   ];
 
   useEffect(() => {
@@ -55,8 +67,23 @@ const ContasPage: React.FC = () => {
         bankAccountService.getAccounts(),
         userService.getUsers()
       ]);
-      setContas(contasResponse.data);
-      setClientes(clientesResponse.data);
+
+      // Ajustar estrutura de dados baseada na resposta do backend
+      if (contasResponse.data && typeof contasResponse.data === 'object') {
+        if ('contas' in contasResponse.data) {
+          setContas(contasResponse.data.contas);
+        } else if (Array.isArray(contasResponse.data)) {
+          setContas(contasResponse.data);
+        }
+      }
+
+      if (clientesResponse.data && typeof clientesResponse.data === 'object') {
+        if ('users' in clientesResponse.data) {
+          setClientes(clientesResponse.data.users);
+        } else if (Array.isArray(clientesResponse.data)) {
+          setClientes(clientesResponse.data);
+        }
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
@@ -68,7 +95,13 @@ const ContasPage: React.FC = () => {
   const loadContas = async () => {
     try {
       const response = await bankAccountService.getAccounts();
-      setContas(response.data);
+      if (response.data && typeof response.data === 'object') {
+        if ('contas' in response.data) {
+          setContas(response.data.contas);
+        } else if (Array.isArray(response.data)) {
+          setContas(response.data);
+        }
+      }
     } catch (error) {
       console.error('Erro ao carregar contas:', error);
       toast.error('Erro ao carregar contas');
@@ -78,7 +111,13 @@ const ContasPage: React.FC = () => {
   const loadContasByClient = async (clienteId: string) => {
     try {
       const response = await bankAccountService.getAccountsByClient(clienteId);
-      setContas(response.data);
+      if (response.data && typeof response.data === 'object') {
+        if ('contas' in response.data) {
+          setContas(response.data.contas);
+        } else if (Array.isArray(response.data)) {
+          setContas(response.data);
+        }
+      }
     } catch (error) {
       console.error('Erro ao carregar contas do cliente:', error);
       toast.error('Erro ao carregar contas do cliente');
@@ -97,11 +136,16 @@ const ContasPage: React.FC = () => {
         agencia: '',
         conta: '',
         tipoConta: 'corrente',
+        bankCode: '',
+        accountNumber: '',
+        description: '',
         credentials: {
           clientId: '',
           clientSecret: '',
           apiKey: '',
-          environment: 'sandbox'
+          environment: 'sandbox',
+          mtlsCert: '',
+          additionalData: {}
         }
       });
       if (selectedClient) {
@@ -133,9 +177,9 @@ const ContasPage: React.FC = () => {
   };
 
   const filteredContas = contas.filter(conta =>
-    conta.banco.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conta.agencia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conta.conta.toLowerCase().includes(searchTerm.toLowerCase())
+    (conta.banco || conta.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (conta.agencia || conta.accountNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (conta.conta || conta.bankCode || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getClienteName = (clienteId: string) => {
@@ -143,9 +187,9 @@ const ContasPage: React.FC = () => {
     return cliente?.name || cliente?.email || 'N/A';
   };
 
-  const getBancoLabel = (banco: string) => {
-    const bancoInfo = bancos.find(b => b.value === banco);
-    return bancoInfo?.label || banco;
+  const getBancoLabel = (bankCode: string) => {
+    const bancoInfo = bancos.find(b => b.code === bankCode);
+    return bancoInfo ? `${bancoInfo.code} - ${bancoInfo.name}` : bankCode;
   };
 
   if (isLoading) {
@@ -249,7 +293,7 @@ const ContasPage: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredContas.map((conta) => (
-                <tr key={conta.id} className="hover:bg-gray-50">
+                <tr key={conta.contaId || conta.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {getClienteName(conta.clienteId)}
@@ -257,22 +301,29 @@ const ContasPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {getBancoLabel(conta.banco)}
+                      {getBancoLabel(conta.bankCode)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {conta.description}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {conta.agencia} / {conta.conta}
+                      {conta.agencia || conta.accountNumber} / {conta.conta || conta.accountNumber}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {conta.tipoConta}
+                      {conta.tipoConta || 'N/A'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Ativa
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      conta.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {conta.isActive ? 'Ativa' : 'Inativa'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -282,8 +333,8 @@ const ContasPage: React.FC = () => {
                     <button className="text-green-600 hover:text-green-900">
                       Testar
                     </button>
-                    <button 
-                      onClick={() => handleDeleteAccount(conta.id)}
+                    <button
+                      onClick={() => handleDeleteAccount(conta.contaId || conta.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       Excluir
@@ -297,11 +348,14 @@ const ContasPage: React.FC = () => {
       </div>
 
       {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Nova Conta Bancária</h3>
-            <form onSubmit={handleCreateAccount} className="space-y-4">
+      <CustomModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Nova Conta Bancária"
+        subtitle="Configure uma nova conta bancária para integração"
+        size="xl"
+      >
+        <form onSubmit={handleCreateAccount} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -327,14 +381,22 @@ const ContasPage: React.FC = () => {
                   </label>
                   <select
                     required
-                    value={newAccount.banco}
-                    onChange={(e) => setNewAccount({...newAccount, banco: e.target.value})}
+                    value={newAccount.bankCode}
+                    onChange={(e) => {
+                      const selectedBank = bancos.find(b => b.code === e.target.value);
+                      setNewAccount({
+                        ...newAccount,
+                        bankCode: e.target.value,
+                        banco: selectedBank?.name || '',
+                        description: selectedBank ? `Conta ${selectedBank.name}` : ''
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Selecione um banco</option>
                     {bancos.map((banco) => (
-                      <option key={banco.value} value={banco.value}>
-                        {banco.label}
+                      <option key={banco.code} value={banco.code}>
+                        {banco.code} - {banco.name}
                       </option>
                     ))}
                   </select>
@@ -342,30 +404,24 @@ const ContasPage: React.FC = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Agência
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newAccount.agencia}
-                    onChange={(e) => setNewAccount({...newAccount, agencia: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Conta
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newAccount.conta}
-                    onChange={(e) => setNewAccount({...newAccount, conta: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <MaskedInputField
+                  label="Agência"
+                  field="agencia"
+                  value={newAccount.agencia}
+                  onChange={(field, value) => setNewAccount({...newAccount, [field]: value})}
+                  mask="bankAgency"
+                  required
+                  placeholder="0000-0"
+                />
+                <MaskedInputField
+                  label="Conta"
+                  field="conta"
+                  value={newAccount.conta}
+                  onChange={(field, value) => setNewAccount({...newAccount, [field]: value})}
+                  mask="bankAccount"
+                  required
+                  placeholder="00000000-0"
+                />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tipo
@@ -378,6 +434,35 @@ const ContasPage: React.FC = () => {
                     <option value="corrente">Corrente</option>
                     <option value="poupanca">Poupança</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Número da Conta (API)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newAccount.accountNumber}
+                    onChange={(e) => setNewAccount({...newAccount, accountNumber: e.target.value})}
+                    placeholder="Número da conta para integração"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrição
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newAccount.description}
+                    onChange={(e) => setNewAccount({...newAccount, description: e.target.value})}
+                    placeholder="Descrição da conta bancária"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               </div>
 
@@ -447,25 +532,23 @@ const ContasPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Criar Conta
-                </button>
-              </div>
-            </form>
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Criar Conta
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </CustomModal>
     </div>
   );
 };

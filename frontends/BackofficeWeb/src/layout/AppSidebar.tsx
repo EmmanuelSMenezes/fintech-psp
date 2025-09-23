@@ -34,18 +34,18 @@ const navItems: NavItem[] = [
   },
   {
     icon: <UserCircleIcon />,
-    name: "Clientes",
-    path: "/clientes",
+    name: "Empresas",
+    path: "/empresas",
   },
   {
-    name: "Contas Bancárias",
+    icon: <UserCircleIcon />,
+    name: "Usuários",
+    path: "/usuarios",
+  },
+  {
+    name: "Contas",
     icon: <ListIcon />,
     path: "/contas",
-  },
-  {
-    name: "Transações",
-    icon: <TableIcon />,
-    path: "/transacoes",
   },
   {
     name: "Priorização",
@@ -53,38 +53,33 @@ const navItems: NavItem[] = [
     path: "/priorizacao",
   },
   {
-    name: "Controle de Acesso",
+    name: "Transações",
+    icon: <TableIcon />,
+    path: "/transacoes",
+  },
+  {
+    name: "Histórico",
+    icon: <CalenderIcon />,
+    path: "/historico",
+  },
+  {
+    name: "Status",
+    icon: <PlugInIcon />,
+    path: "/status",
+  },
+  {
+    name: "Acessos",
     icon: <BoxCubeIcon />,
     path: "/acessos",
   },
+  {
+    name: "Configuração",
+    icon: <CalenderIcon />,
+    path: "/configuracao",
+  },
 ];
 
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Relatórios",
-    subItems: [
-      { name: "Dashboard Financeiro", path: "/relatorios/financeiro", pro: false },
-      { name: "Extrato de Transações", path: "/relatorios/extrato", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Integrações",
-    subItems: [
-      { name: "Status dos Bancos", path: "/integracoes/status", pro: false },
-      { name: "Webhooks", path: "/integracoes/webhooks", pro: false },
-    ],
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Configurações",
-    subItems: [
-      { name: "Sistema", path: "/configuracoes/sistema", pro: false },
-      { name: "Usuários", path: "/configuracoes/usuarios", pro: false },
-    ],
-  },
-];
+
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -231,8 +226,8 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+    ["main"].forEach((menuType) => {
+      const items = navItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -362,7 +357,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {renderMenuItems(othersItems, "others")}
+
             </div>
           </div>
         </nav>

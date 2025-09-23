@@ -96,6 +96,56 @@ export const formatDateTime = (date: string | Date): string => {
 };
 
 /**
+ * Formata CEP brasileiro
+ */
+export const formatCEP = (cep: string): string => {
+  if (!cep) return '';
+
+  // Remove caracteres não numéricos
+  const cleanCEP = cep.replace(/\D/g, '');
+
+  if (cleanCEP.length === 8) {
+    // CEP: 00000-000
+    return cleanCEP.replace(/(\d{5})(\d{3})/, '$1-$2');
+  }
+
+  return cleanCEP;
+};
+
+/**
+ * Remove formatação de CEP
+ */
+export const unformatCEP = (cep: string): string => {
+  return cep.replace(/\D/g, '');
+};
+
+// Formatação de conta bancária
+export const formatBankAccount = (account: string): string => {
+  const cleaned = account.replace(/\D/g, '');
+  if (cleaned.length <= 8) {
+    return cleaned;
+  }
+  return cleaned.replace(/(\d{8})(\d)/, '$1-$2');
+};
+
+export const unformatBankAccount = (account: string): string => {
+  return account.replace(/\D/g, '');
+};
+
+// Formatação de agência bancária
+export const formatBankAgency = (agency: string): string => {
+  const cleaned = agency.replace(/\D/g, '');
+  if (cleaned.length <= 4) {
+    return cleaned;
+  }
+  return cleaned.replace(/(\d{4})(\d)/, '$1-$2');
+};
+
+export const unformatBankAgency = (agency: string): string => {
+  return agency.replace(/\D/g, '');
+};
+
+/**
  * Formata valor monetário
  */
 export const formatCurrency = (value: number): string => {

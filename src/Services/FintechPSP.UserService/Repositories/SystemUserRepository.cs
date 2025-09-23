@@ -53,11 +53,11 @@ public class SystemUserRepository : ISystemUserRepository
     public async Task<IEnumerable<SystemUser>> GetAllAsync()
     {
         const string sql = @"
-            SELECT id, email, password_hash as PasswordHash, name, role, 
-                   is_active as IsActive, is_master as IsMaster, 
-                   last_login_at as LastLoginAt, created_at as CreatedAt, 
-                   updated_at as UpdatedAt, document, phone, address
-            FROM system_users 
+            SELECT id, email, password_hash as PasswordHash, name, role,
+                   is_active as IsActive, is_master as IsMaster,
+                   last_login_at as LastLoginAt, created_at as CreatedAt,
+                   updated_at as UpdatedAt
+            FROM system_users
             ORDER BY created_at DESC";
 
         using var connection = new NpgsqlConnection(_connectionString);
@@ -71,11 +71,11 @@ public class SystemUserRepository : ISystemUserRepository
 
         const string countSql = "SELECT COUNT(*) FROM system_users";
         const string dataSql = @"
-            SELECT id, email, password_hash as PasswordHash, name, role, 
-                   is_active as IsActive, is_master as IsMaster, 
-                   last_login_at as LastLoginAt, created_at as CreatedAt, 
-                   updated_at as UpdatedAt, document, phone, address
-            FROM system_users 
+            SELECT id, email, password_hash as PasswordHash, name, role,
+                   is_active as IsActive, is_master as IsMaster,
+                   last_login_at as LastLoginAt, created_at as CreatedAt,
+                   updated_at as UpdatedAt
+            FROM system_users
             ORDER BY created_at DESC
             LIMIT @PageSize OFFSET @Offset";
 
@@ -91,15 +91,16 @@ public class SystemUserRepository : ISystemUserRepository
     public async Task<SystemUser> CreateAsync(SystemUser user)
     {
         const string sql = @"
-            INSERT INTO system_users (id, email, password_hash, name, role, is_active, is_master, created_at, document, phone, address)
-            VALUES (@Id, @Email, @PasswordHash, @Name, @Role, @IsActive, @IsMaster, @CreatedAt, @Document, @Phone, @Address)
-            RETURNING id, email, password_hash as PasswordHash, name, role, 
-                      is_active as IsActive, is_master as IsMaster, 
-                      last_login_at as LastLoginAt, created_at as CreatedAt, 
-                      updated_at as UpdatedAt, document, phone, address";
+            INSERT INTO system_users (id, email, password_hash, name, role, is_active, is_master, created_at, updated_at)
+            VALUES (@Id, @Email, @PasswordHash, @Name, @Role, @IsActive, @IsMaster, @CreatedAt, @UpdatedAt)
+            RETURNING id, email, password_hash as PasswordHash, name, role,
+                      is_active as IsActive, is_master as IsMaster,
+                      last_login_at as LastLoginAt, created_at as CreatedAt,
+                      updated_at as UpdatedAt";
 
         user.Id = Guid.NewGuid();
         user.CreatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
 
         using var connection = new NpgsqlConnection(_connectionString);
         return await connection.QueryFirstAsync<SystemUser>(sql, user);
@@ -109,15 +110,14 @@ public class SystemUserRepository : ISystemUserRepository
     public async Task<SystemUser> UpdateAsync(SystemUser user)
     {
         const string sql = @"
-            UPDATE system_users 
-            SET email = @Email, password_hash = @PasswordHash, name = @Name, 
-                role = @Role, is_active = @IsActive, updated_at = @UpdatedAt,
-                document = @Document, phone = @Phone, address = @Address
+            UPDATE system_users
+            SET email = @Email, password_hash = @PasswordHash, name = @Name,
+                role = @Role, is_active = @IsActive, updated_at = @UpdatedAt
             WHERE id = @Id
-            RETURNING id, email, password_hash as PasswordHash, name, role, 
-                      is_active as IsActive, is_master as IsMaster, 
-                      last_login_at as LastLoginAt, created_at as CreatedAt, 
-                      updated_at as UpdatedAt, document, phone, address";
+            RETURNING id, email, password_hash as PasswordHash, name, role,
+                      is_active as IsActive, is_master as IsMaster,
+                      last_login_at as LastLoginAt, created_at as CreatedAt,
+                      updated_at as UpdatedAt";
 
         user.UpdatedAt = DateTime.UtcNow;
 

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Configuração base da API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5006';
 
 // Instância do axios
 const api: AxiosInstance = axios.create({
@@ -121,62 +121,64 @@ export interface LoginResponse {
 // Tipos para usuários
 export interface User {
   id: string;
-  userId?: string;
+  name: string;
   email: string;
-  name?: string;
-  role: string;
-  permissions?: string[];
-  lastLogin?: string;
-  isActive?: boolean;
+  document: string;
+  phone: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt?: string;
-  document?: string;
-  phone?: string;
-  address?: string;
 }
 
 export interface CreateUserRequest {
+  name: string;
   email: string;
-  role: string;
-  name?: string;
-  password?: string;
-  permissions?: string[];
-  document?: string;
-  phone?: string;
-  address?: string;
+  document: string;
+  phone: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserRequest {
-  email?: string;
-  role?: string;
   name?: string;
-  permissions?: string[];
-  isActive?: boolean;
+  email?: string;
   document?: string;
   phone?: string;
-  address?: string;
+  isActive?: boolean;
 }
 
 // Tipos para contas bancárias
 export interface BankAccount {
+  id: string;
   contaId: string;
   clienteId: string;
+  banco: string;
+  agencia: string;
+  conta: string;
+  tipoConta: 'corrente' | 'poupanca';
   bankCode: string;
   accountNumber: string;
   description: string;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
+  lastUpdated?: string;
+  credentialsTokenId?: string;
 }
 
 export interface CreateBankAccountRequest {
   clienteId: string;
+  banco: string;
+  agencia: string;
+  conta: string;
+  tipoConta: 'corrente' | 'poupanca';
   bankCode: string;
   accountNumber: string;
   description: string;
   credentials: {
     clientId: string;
     clientSecret: string;
+    apiKey?: string;
+    environment: 'sandbox' | 'production';
     mtlsCert?: string;
     additionalData?: Record<string, string>;
   };
@@ -289,7 +291,7 @@ export interface CreateSubUserRequest {
 export const authService = {
   // Login de usuário com email/senha
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    api.post('/auth/login', data),
+    axios.post('http://localhost:5001/auth/login', data),
 
   // Obter token OAuth2 (para aplicações)
   getToken: (data: TokenRequest): Promise<AxiosResponse<TokenResponse>> =>
@@ -308,31 +310,31 @@ export const userService = {
     page?: number;
     limit?: number;
     search?: string;
-    role?: string;
+    isActive?: boolean;
   }): Promise<AxiosResponse<{
     users: User[];
     total: number;
     page: number;
     limit: number;
   }>> =>
-    api.get('/admin/users', { params }),
+    api.get('/client-users', { params }),
 
   getUserById: (id: string): Promise<AxiosResponse<User>> =>
-    api.get(`/admin/users/${id}`),
+    api.get(`/client-users/${id}`),
 
   createUser: (data: CreateUserRequest): Promise<AxiosResponse<User>> => {
     console.log('🚀 Criando usuário:', data);
-    return api.post('/admin/users', data);
+    return api.post('/client-users', data);
   },
 
   updateUser: (id: string, data: UpdateUserRequest): Promise<AxiosResponse<User>> => {
     console.log('✏️ Atualizando usuário:', id, data);
-    return api.put(`/admin/users/${id}`, data);
+    return api.put(`/client-users/${id}`, data);
   },
 
   deleteUser: (id: string): Promise<AxiosResponse<void>> => {
     console.log('🗑️ Deletando usuário:', id);
-    return api.delete(`/admin/users/${id}`);
+    return api.delete(`/client-users/${id}`);
   },
 };
 
@@ -356,6 +358,12 @@ export interface Company {
   approvedAt?: string;
   approvedBy?: string;
   observacoes?: string;
+  applicant?: {
+    cpf: string;
+    nomeCompleto: string;
+    email?: string;
+    telefone?: string;
+  };
 }
 
 export interface CompanyAddress {
@@ -565,18 +573,18 @@ export const companyService = {
 };
 
 export const bankAccountService = {
-  getAccounts: (clienteId?: string): Promise<AxiosResponse<BankAccount[]>> =>
+  getAccounts: (clienteId?: string): Promise<AxiosResponse<{ contas: BankAccount[], total: number }>> =>
     api.get(`/admin/contas${clienteId ? `?clienteId=${clienteId}` : ''}`),
-  
-  getAccountsByClient: (clienteId: string): Promise<AxiosResponse<BankAccount[]>> =>
+
+  getAccountsByClient: (clienteId: string): Promise<AxiosResponse<{ clienteId: string, contas: BankAccount[] }>> =>
     api.get(`/admin/contas/${clienteId}`),
-  
+
   createAccount: (data: CreateBankAccountRequest): Promise<AxiosResponse<BankAccount>> =>
     api.post('/admin/contas', data),
-  
+
   updateAccount: (id: string, data: Partial<CreateBankAccountRequest>): Promise<AxiosResponse<BankAccount>> =>
     api.put(`/admin/contas/${id}`, data),
-  
+
   deleteAccount: (id: string): Promise<AxiosResponse<void>> =>
     api.delete(`/admin/contas/${id}`),
 };

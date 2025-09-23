@@ -1,7 +1,6 @@
 using System.Text;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.UserService.Repositories;
-using FintechPSP.UserService.Services;
 using Marten;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,14 +21,9 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
         ?? "Host=localhost;Database=fintech_psp_users;Username=postgres;Password=postgres"));
 
 // Repositories
-builder.Services.AddScoped<IContaBancariaRepository, ContaBancariaRepository>();
-builder.Services.AddScoped<ICredentialsTokenRepository, CredentialsTokenRepository>();
 builder.Services.AddScoped<IAcessoRepository, AcessoRepository>();
 builder.Services.AddScoped<ISystemUserRepository>(provider =>
     new SystemUserRepository(builder.Configuration.GetConnectionString("DefaultConnection")!));
-
-// Services
-builder.Services.AddScoped<ICredentialsTokenService, CredentialsTokenService>();
 
 // Marten para Event Store
 builder.Services.AddMarten(options =>
@@ -70,10 +64,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("BankingScope", policy =>
-        policy.RequireAuthenticatedUser()
-              .RequireClaim("scope", "banking"));
-
     options.AddPolicy("AdminScope", policy =>
         policy.RequireAuthenticatedUser()
               .RequireClaim("scope", "admin"));
