@@ -68,9 +68,9 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres:5432;Database=fintech_psp;Username=postgres;Password=postgres
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - Redis__ConnectionString=redis:6379
-      - Jwt__Key=your-super-secret-key-that-should-be-at-least-256-bits-long-for-production
-      - Jwt__Issuer=FintechPSP
-      - Jwt__Audience=FintechPSP
+      - Jwt__Key=mortadela-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=Mortadela
+      - Jwt__Audience=Mortadela
     depends_on:
       postgres:
         condition: service_healthy
@@ -191,9 +191,9 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres:5432;Database=fintech_psp;Username=postgres;Password=postgres
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - Redis__ConnectionString=redis:6379
-      - Jwt__Key=your-super-secret-key-that-should-be-at-least-256-bits-long-for-production
-      - Jwt__Issuer=FintechPSP
-      - Jwt__Audience=FintechPSP
+      - Jwt__Key=mortadela-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=Mortadela
+      - Jwt__Audience=Mortadela
     depends_on:
       postgres:
         condition: service_healthy
@@ -229,6 +229,31 @@ services:
       - fintech-network
     restart: unless-stopped
 
+
+  company-service:
+    build:
+      context: .
+      dockerfile: src/Services/FintechPSP.CompanyService/Dockerfile
+    container_name: fintech-company-service
+    ports:
+      - "5009:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Jwt__Key=mortadela-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=Mortadela
+      - Jwt__Audience=Mortadela
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
   api-gateway:
     build:
       context: .
@@ -239,9 +264,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:8080
-      - Jwt__Key=your-super-secret-key-that-should-be-at-least-256-bits-long-for-production
-      - Jwt__Issuer=FintechPSP
-      - Jwt__Audience=FintechPSP
+      - Jwt__Key=mortadela-super-secret-key-that-should-be-at-least-256-bits-long-for-production
+      - Jwt__Issuer=Mortadela
+      - Jwt__Audience=Mortadela
     depends_on:
       - auth-service
       - transaction-service

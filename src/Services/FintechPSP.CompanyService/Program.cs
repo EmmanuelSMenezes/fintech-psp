@@ -71,9 +71,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-should-be-at-least-256-bits";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP";
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "mortadela-super-secret-key-that-should-be-at-least-256-bits";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "Mortadela";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "Mortadela";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -105,15 +105,9 @@ builder.Services.AddAuthorization(options =>
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontends", policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",  // BackofficeWeb
-                "http://localhost:3001"   // InternetBankingWeb
-            )
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+        policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
     });
 });
 
@@ -135,7 +129,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontends");
+// Use CORS (deve vir antes de Authentication/Authorization)
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

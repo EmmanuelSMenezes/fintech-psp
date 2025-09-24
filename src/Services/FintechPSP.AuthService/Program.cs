@@ -15,12 +15,9 @@ builder.Services.AddEndpointsApiExplorer();
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:3002")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
     });
 });
 builder.Services.AddSwaggerGen(c =>
@@ -86,11 +83,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "Mortadela",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "Mortadela",
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
-                "your-super-secret-key-that-should-be-at-least-256-bits"))
+                "mortadela-super-secret-key-that-should-be-at-least-256-bits"))
         };
     });
 
@@ -107,7 +104,7 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();
 
 // Use CORS
-app.UseCors("AllowFrontend");
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

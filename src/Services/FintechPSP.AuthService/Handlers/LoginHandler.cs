@@ -88,8 +88,8 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginResponse>
     private string GenerateJwtToken(Models.SystemUser user)
     {
         var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key não configurada");
-        var jwtIssuer = _configuration["Jwt:Issuer"] ?? "FintechPSP";
-        var jwtAudience = _configuration["Jwt:Audience"] ?? "FintechPSP";
+        var jwtIssuer = _configuration["Jwt:Issuer"] ?? "Mortadela";
+        var jwtAudience = _configuration["Jwt:Audience"] ?? "Mortadela";
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

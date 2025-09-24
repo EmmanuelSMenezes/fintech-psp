@@ -23,11 +23,11 @@ public class SystemUserRepository : ISystemUserRepository
     public async Task<SystemUser?> GetByEmailAsync(string email)
     {
         const string sql = @"
-            SELECT id, email, password_hash as PasswordHash, name, role, 
-                   is_active as IsActive, is_master as IsMaster, 
-                   last_login_at as LastLoginAt, created_at as CreatedAt, 
-                   updated_at as UpdatedAt, document, phone, address
-            FROM system_users 
+            SELECT id, email, password_hash as PasswordHash, name, role,
+                   is_active as IsActive, is_master as IsMaster,
+                   last_login_at as LastLoginAt, created_at as CreatedAt,
+                   updated_at as UpdatedAt
+            FROM system_users
             WHERE email = @Email AND is_active = true";
 
         using var connection = new NpgsqlConnection(_connectionString);
@@ -38,11 +38,11 @@ public class SystemUserRepository : ISystemUserRepository
     public async Task<SystemUser?> GetByIdAsync(Guid id)
     {
         const string sql = @"
-            SELECT id, email, password_hash as PasswordHash, name, role, 
-                   is_active as IsActive, is_master as IsMaster, 
-                   last_login_at as LastLoginAt, created_at as CreatedAt, 
-                   updated_at as UpdatedAt, document, phone, address
-            FROM system_users 
+            SELECT id, email, password_hash as PasswordHash, name, role,
+                   is_active as IsActive, is_master as IsMaster,
+                   last_login_at as LastLoginAt, created_at as CreatedAt,
+                   updated_at as UpdatedAt
+            FROM system_users
             WHERE id = @Id";
 
         using var connection = new NpgsqlConnection(_connectionString);

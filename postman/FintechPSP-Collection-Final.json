@@ -1,0 +1,692 @@
+{
+  "info": {
+    "name": "🚀 FintechPSP - Trilha Completa",
+    "description": "Collection completa para testar todo o sistema FintechPSP com JWT Mortadela.\n\n📋 **TRILHA DE TESTES - SIGA ESTA ORDEM:**\n\n**FASE 1 - AUTENTICAÇÃO**\n1️⃣ Login Admin (obter token)\n2️⃣ Validar Token JWT\n\n**FASE 2 - GESTÃO DE USUÁRIOS**\n3️⃣ Criar Cliente\n4️⃣ Listar Clientes\n5️⃣ Buscar Cliente por ID\n6️⃣ Atualizar Cliente\n\n**FASE 3 - GESTÃO DE CONTAS**\n7️⃣ Criar Conta Bancária\n8️⃣ Listar Contas\n9️⃣ Consultar Saldo\n\n**FASE 4 - TRANSAÇÕES**\n🔟 Criar Transação PIX\n1️⃣1️⃣ Consultar Transação\n1️⃣2️⃣ Listar Transações\n\n**FASE 5 - WEBHOOKS & INTEGRAÇÕES**\n1️⃣3️⃣ Configurar Webhook\n1️⃣4️⃣ Testar Integração\n\n**CONFIGURAÇÃO:**\n- Base URL: http://localhost:5000\n- JWT: Mortadela (Issuer/Audience)\n- Credenciais Admin: admin@fintechpsp.com / admin123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 2,
+      "minor": 1,
+      "patch": 0
+    }
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string",
+      "description": "URL base do API Gateway"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string",
+      "description": "Token JWT obtido no login"
+    },
+    {
+      "key": "client_id",
+      "value": "",
+      "type": "string",
+      "description": "ID do cliente criado"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string",
+      "description": "ID da conta bancária criada"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string",
+      "description": "ID da transação criada"
+    }
+  ],
+  "item": [
+    {
+      "name": "📋 FASE 1 - AUTENTICAÇÃO",
+      "description": "Endpoints para autenticação e validação de tokens JWT",
+      "item": [
+        {
+          "name": "1️⃣ Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Salvar token automaticamente",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.accessToken);",
+                  "    console.log('✅ Token salvo automaticamente');",
+                  "    ",
+                  "    // Decodificar JWT para verificar",
+                  "    const token = response.accessToken;",
+                  "    const payload = JSON.parse(atob(token.split('.')[1]));",
+                  "    console.log('🔍 Token JWT:', payload);",
+                  "    console.log('📝 Issuer:', payload.iss);",
+                  "    console.log('📝 Audience:', payload.aud);",
+                  "    ",
+                  "    pm.test('Token contém Issuer Mortadela', () => {",
+                  "        pm.expect(payload.iss).to.equal('Mortadela');",
+                  "    });",
+                  "    ",
+                  "    pm.test('Token contém Audience Mortadela', () => {",
+                  "        pm.expect(payload.aud).to.equal('Mortadela');",
+                  "    });",
+                  "} else {",
+                  "    console.log('❌ Erro no login');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@fintechpsp.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Fazer login como administrador e obter token JWT com Mortadela"
+          }
+        },
+        {
+          "name": "2️⃣ Validar Token JWT (REMOVIDO - rota não existe)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Token válido', () => {",
+                  "    pm.expect(pm.response.text()).to.include('valid');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/validate",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "validate"]
+            },
+            "description": "Validar se o token JWT está funcionando corretamente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 FASE 2 - GESTÃO DE USUÁRIOS",
+      "description": "Endpoints para gerenciar clientes do sistema",
+      "item": [
+        {
+          "name": "3️⃣ Criar Cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('client_id', response.id);",
+                  "    console.log('✅ Cliente criado com ID:', response.id);",
+                  "    ",
+                  "    pm.test('Cliente criado com sucesso', () => {",
+                  "        pm.expect(response.id).to.not.be.empty;",
+                  "        pm.expect(response.name).to.equal('Joao Silva Teste');",
+                  "        pm.expect(response.email).to.equal('joao.teste@email.com');",
+                  "        pm.expect(response.active).to.be.true;",
+                  "    });",
+                  "} else {",
+                  "    console.log('❌ Erro ao criar cliente');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Joao Silva Teste\",\n  \"email\": \"joao.teste@email.com\",\n  \"document\": \"12345678901\",\n  \"phone\": \"11999887766\",\n  \"address\": \"Rua das Flores, 123 - São Paulo/SP\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/client-users",
+              "host": ["{{base_url}}"],
+              "path": ["client-users"]
+            },
+            "description": "Criar um novo cliente no sistema"
+          }
+        },
+        {
+          "name": "4️⃣ Listar Clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Lista de clientes retornada', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    console.log('📋 Total de clientes:', response.length);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/client-users",
+              "host": ["{{base_url}}"],
+              "path": ["client-users"]
+            },
+            "description": "Listar todos os clientes cadastrados"
+          }
+        },
+        {
+          "name": "5️⃣ Buscar Cliente por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cliente encontrado', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.id).to.equal(pm.collectionVariables.get('client_id'));",
+                  "    console.log('✅ Cliente encontrado:', response.name);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/client-users/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["client-users", "{{client_id}}"]
+            },
+            "description": "Buscar cliente específico por ID"
+          }
+        },
+        {
+          "name": "6️⃣ Atualizar Cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cliente atualizado', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.name).to.equal('João Silva Atualizado');",
+                  "    console.log('✅ Cliente atualizado com sucesso');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Joao Silva Atualizado\",\n  \"phone\": \"11888777666\",\n  \"address\": \"Rua Nova, 456 - São Paulo/SP\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/client-users/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["client-users", "{{client_id}}"]
+            },
+            "description": "Atualizar dados do cliente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏦 FASE 3 - GESTÃO DE CONTAS",
+      "description": "Endpoints para gerenciar contas bancárias e saldos",
+      "item": [
+        {
+          "name": "7️⃣ Criar Conta Bancária",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('account_id', response.contaId || response.id);",
+                  "    console.log('✅ Conta criada com ID:', response.contaId || response.id);",
+                  "    ",
+                  "    pm.test('Conta criada com sucesso', () => {",
+                  "        pm.expect(response.contaId || response.id).to.not.be.empty;",
+                  "        pm.expect(response.conta || response.accountNumber).to.not.be.empty;",
+                  "        pm.expect(response.banco || response.bankCode).to.not.be.empty;",
+                  "    });",
+                  "} else {",
+                  "    console.log('❌ Erro ao criar conta:', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ClienteId\": \"{{client_id}}\",\n  \"BankCode\": \"001\",\n  \"AccountNumber\": \"12345-6\",\n  \"Description\": \"Conta Corrente Principal\",\n  \"Credentials\": {\n    \"ClientId\": \"test_client_id\",\n    \"ClientSecret\": \"test_client_secret\",\n    \"ApiKey\": \"test_api_key\",\n    \"Environment\": \"sandbox\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["accounts"]
+            },
+            "description": "Criar nova conta bancária para o cliente"
+          }
+        },
+        {
+          "name": "8️⃣ Listar Contas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Lista de contas retornada', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    console.log('🏦 Total de contas:', response.length);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["accounts"]
+            },
+            "description": "Listar todas as contas bancárias"
+          }
+        },
+        {
+          "name": "9️⃣ Consultar Saldo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Saldo retornado', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.balance).to.be.a('number');",
+                  "    console.log('💰 Saldo atual: R$', response.balance);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/saldo/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["saldo", "{{client_id}}"]
+            },
+            "description": "Consultar saldo da conta bancária"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💸 FASE 4 - TRANSAÇÕES",
+      "description": "Endpoints para processar transações PIX, TED e outras",
+      "item": [
+        {
+          "name": "🔟 Criar Transação PIX",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('transaction_id', response.id);",
+                  "    console.log('✅ Transação PIX criada com ID:', response.id);",
+                  "    ",
+                  "    pm.test('Transação PIX criada', () => {",
+                  "        pm.expect(response.id).to.not.be.empty;",
+                  "        pm.expect(response.type).to.equal('PIX');",
+                  "        pm.expect(response.amount).to.equal(100.50);",
+                  "        pm.expect(response.status).to.equal('PENDING');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{account_id}}\",\n  \"toPixKey\": \"11999887766\",\n  \"amount\": 100.50,\n  \"description\": \"Pagamento teste PIX\",\n  \"type\": \"PIX\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "Criar uma nova transação PIX"
+          }
+        },
+        {
+          "name": "1️⃣1️⃣ Consultar Transação",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transação encontrada', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.id).to.equal(pm.collectionVariables.get('transaction_id'));",
+                  "    console.log('✅ Transação encontrada:', response.type, 'R$', response.amount);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "{{transaction_id}}"]
+            },
+            "description": "Consultar status de uma transação específica"
+          }
+        },
+        {
+          "name": "1️⃣2️⃣ Listar Transações",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Lista de transações retornada', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    console.log('💸 Total de transações:', response.length);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions?contaId={{account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"],
+              "query": [
+                {
+                  "key": "contaId",
+                  "value": "{{account_id}}"
+                }
+              ]
+            },
+            "description": "Listar todas as transações de uma conta"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔗 FASE 5 - WEBHOOKS & INTEGRAÇÕES",
+      "description": "Endpoints para configurar webhooks e testar integrações",
+      "item": [
+        {
+          "name": "1️⃣3️⃣ Configurar Webhook",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 Created', () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Webhook configurado', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.url).to.include('webhook.site');",
+                  "    pm.expect(response.events).to.include('transaction.completed');",
+                  "    console.log('✅ Webhook configurado para:', response.url);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://webhook.site/unique-id\",\n  \"events\": [\n    \"transaction.completed\",\n    \"transaction.failed\",\n    \"account.balance.updated\"\n  ],\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/webhooks",
+              "host": ["{{base_url}}"],
+              "path": ["webhooks"]
+            },
+            "description": "Configurar webhook para receber notificações de eventos"
+          }
+        },
+        {
+          "name": "1️⃣4️⃣ Testar Integração",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Integração funcionando', () => {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal('healthy');",
+                  "    console.log('✅ Integração funcionando:', response.message);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/integrations/health",
+              "host": ["{{base_url}}"],
+              "path": ["integrations", "health"]
+            },
+            "description": "Testar se as integrações estão funcionando corretamente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ UTILITÁRIOS",
+      "description": "Endpoints auxiliares para testes e debugging",
+      "item": [
+        {
+          "name": "🔍 Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Verificar se o API Gateway está funcionando"
+          }
+        },
+        {
+          "name": "📊 Status dos Serviços",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["status"]
+            },
+            "description": "Verificar status de todos os microserviços"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -41,12 +41,14 @@ public class WebhookController : ControllerBase
         try
         {
             var clientId = GetCurrentClientId();
-            if (clientId == Guid.Empty)
+            var isAdmin = IsAdmin();
+
+            if (clientId == Guid.Empty && !isAdmin)
             {
                 return Unauthorized("Cliente não identificado");
             }
 
-            _logger.LogInformation("Listando webhooks para cliente {ClientId}", clientId);
+            _logger.LogInformation("Listando webhooks para cliente {ClientId} (Admin: {IsAdmin})", clientId, isAdmin);
 
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 50;
@@ -74,12 +76,14 @@ public class WebhookController : ControllerBase
         try
         {
             var clientId = GetCurrentClientId();
-            if (clientId == Guid.Empty)
+            var isAdmin = IsAdmin();
+
+            if (clientId == Guid.Empty && !isAdmin)
             {
                 return Unauthorized("Cliente não identificado");
             }
 
-            _logger.LogInformation("Obtendo webhook {WebhookId} para cliente {ClientId}", id, clientId);
+            _logger.LogInformation("Obtendo webhook {WebhookId} para cliente {ClientId} (Admin: {IsAdmin})", id, clientId, isAdmin);
 
             var query = new ObterWebhookQuery(id, clientId);
             var result = await _mediator.Send(query);
@@ -109,12 +113,25 @@ public class WebhookController : ControllerBase
         try
         {
             var clientId = GetCurrentClientId();
-            if (clientId == Guid.Empty)
+            var isAdmin = IsAdmin();
+
+            if (clientId == Guid.Empty && !isAdmin)
             {
                 return Unauthorized("Cliente não identificado");
             }
 
-            _logger.LogInformation("Criando webhook para cliente {ClientId}", clientId);
+            // Se for admin e não tiver clientId, usar um clientId padrão ou do primeiro cliente
+            if (isAdmin && clientId == Guid.Empty)
+            {
+                // Para admin, usar o sub (ID do usuário admin) como clientId temporário
+                var subClaim = User.FindFirst("sub")?.Value;
+                if (Guid.TryParse(subClaim, out var adminId))
+                {
+                    clientId = adminId;
+                }
+            }
+
+            _logger.LogInformation("Criando webhook para cliente {ClientId} (Admin: {IsAdmin})", clientId, isAdmin);
 
             // Validar request
             if (string.IsNullOrWhiteSpace(request.Url))
@@ -290,5 +307,10 @@ public class WebhookController : ControllerBase
     {
         var clientIdClaim = User.FindFirst("client_id")?.Value;
         return Guid.TryParse(clientIdClaim, out var clientId) ? clientId : Guid.Empty;
+    }
+
+    private bool IsAdmin()
+    {
+        return User.HasClaim("scope", "admin");
     }
 }

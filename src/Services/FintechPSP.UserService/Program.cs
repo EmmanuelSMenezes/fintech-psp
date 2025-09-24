@@ -1,6 +1,8 @@
 using System.Text;
 using FintechPSP.Shared.Infrastructure.Database;
+using FintechPSP.Shared.Infrastructure.Messaging;
 using FintechPSP.UserService.Repositories;
+using FintechPSP.UserService.Services;
 using Marten;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+    });
+});
 
 // MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -24,6 +35,10 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
 builder.Services.AddScoped<IAcessoRepository, AcessoRepository>();
 builder.Services.AddScoped<ISystemUserRepository>(provider =>
     new SystemUserRepository(builder.Configuration.GetConnectionString("DefaultConnection")!));
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+
+// Services
+builder.Services.AddSingleton<ICredentialsProtector, AesCredentialsProtector>();
 
 // Marten para Event Store
 builder.Services.AddMarten(options =>
@@ -43,6 +58,9 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+// Event Publisher (RabbitMQ/MassTransit)
+builder.Services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
+
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -53,11 +71,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "Mortadela",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "Mortadela",
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
-                "your-super-secret-key-that-should-be-at-least-256-bits"))
+                "mortadela-super-secret-key-that-should-be-at-least-256-bits"))
         };
     });
 
@@ -119,6 +137,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Use CORS (deve vir antes de Authentication/Authorization)
+app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

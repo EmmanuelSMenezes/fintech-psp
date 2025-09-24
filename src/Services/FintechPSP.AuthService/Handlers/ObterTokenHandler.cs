@@ -117,7 +117,7 @@ public class ObterTokenHandler : IRequestHandler<ObterTokenCommand, TokenRespons
     private string GenerateJwtToken(string clientId, string[] scopes)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _configuration["Jwt:Key"] ?? "your-super-secret-key-that-should-be-at-least-256-bits"));
+            _configuration["Jwt:Key"] ?? "mortadela-super-secret-key-that-should-be-at-least-256-bits"));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
@@ -133,8 +133,8 @@ public class ObterTokenHandler : IRequestHandler<ObterTokenCommand, TokenRespons
         }
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "FintechPSP",
-            audience: _configuration["Jwt:Audience"] ?? "FintechPSP",
+            issuer: _configuration["Jwt:Issuer"] ?? "Mortadela",
+            audience: _configuration["Jwt:Audience"] ?? "Mortadela",
             claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials);

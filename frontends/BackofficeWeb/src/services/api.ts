@@ -1,88 +1,111 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-// Configuração base da API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5006';
+// Configuração das URLs dos serviços
+const SERVICE_URLS = {
+  USER_SERVICE: process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:5006',
+  AUTH_SERVICE: process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:5001',
+  TRANSACTION_SERVICE: process.env.NEXT_PUBLIC_TRANSACTION_SERVICE_URL || 'http://localhost:5005',
+  BALANCE_SERVICE: process.env.NEXT_PUBLIC_BALANCE_SERVICE_URL || 'http://localhost:5003',
+  CONFIG_SERVICE: process.env.NEXT_PUBLIC_CONFIG_SERVICE_URL || 'http://localhost:5007',
+  WEBHOOK_SERVICE: process.env.NEXT_PUBLIC_WEBHOOK_SERVICE_URL || 'http://localhost:5004',
+  COMPANY_SERVICE: process.env.NEXT_PUBLIC_COMPANY_SERVICE_URL || 'http://localhost:5009',
+  API_GATEWAY: process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:5000'
+};
 
-// Instância do axios
-const api: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// Função para criar instância do axios com interceptors
+const createApiInstance = (baseURL: string): AxiosInstance => {
+  const instance = axios.create({
+    baseURL,
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-console.log('🔧 API Service inicializado com baseURL:', API_BASE_URL);
+  // Interceptor para adicionar token JWT automaticamente
+  instance.interceptors.request.use(
+    (config) => {
+      console.log('🚀 Interceptor executado para:', config.method?.toUpperCase(), config.url);
 
-// Interceptor para adicionar token JWT automaticamente
-api.interceptors.request.use(
-  (config) => {
-    console.log('🚀 Interceptor executado para:', config.method?.toUpperCase(), config.url);
+      // Só acessar localStorage no lado do cliente
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token');
+        console.log('🔑 Interceptor - Token encontrado:', token ? 'SIM' : 'NÃO');
 
-    // Só acessar localStorage no lado do cliente
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      console.log('🔑 Interceptor - Token encontrado:', token ? 'SIM' : 'NÃO');
+        if (token) {
+          // Garantir que headers existe
+          config.headers = {
+            ...(config.headers || {}),
+            Authorization: `Bearer ${token}`,
+          } as any;
+          console.log('✅ Interceptor - Authorization header adicionado');
+          console.log('🎫 Token (primeiros 20 chars):', token.substring(0, 20) + '...');
 
-      if (token) {
-        // Garantir que headers existe
-        if (!config.headers) {
-          config.headers = {};
+          // Log detalhado dos headers finais
+          console.log('📋 Headers finais:', {
+            'Content-Type': config.headers['Content-Type'],
+            'Authorization': config.headers.Authorization ? 'Bearer [TOKEN]' : 'AUSENTE'
+          });
+        } else {
+          console.log('❌ Interceptor - Nenhum token para adicionar');
+          // Verificar se há dados no localStorage
+          const keys = Object.keys(localStorage);
+          console.log('🗂️ Chaves no localStorage:', keys);
         }
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log('✅ Interceptor - Authorization header adicionado');
-        console.log('🎫 Token (primeiros 20 chars):', token.substring(0, 20) + '...');
-
-        // Log detalhado dos headers finais
-        console.log('📋 Headers finais:', {
-          'Content-Type': config.headers['Content-Type'],
-          'Authorization': config.headers.Authorization ? 'Bearer [TOKEN]' : 'AUSENTE'
-        });
       } else {
-        console.log('❌ Interceptor - Nenhum token para adicionar');
-        // Verificar se há dados no localStorage
-        const keys = Object.keys(localStorage);
-        console.log('🗂️ Chaves no localStorage:', keys);
+        console.log('🖥️ Interceptor - Executando no servidor (sem localStorage)');
       }
-    } else {
-      console.log('🖥️ Interceptor - Executando no servidor (sem localStorage)');
+
+      // Log final da configuração
+      console.log('🔧 Config final - URL:', config.url);
+      console.log('🔧 Config final - Headers Authorization:', config.headers?.Authorization ? 'PRESENTE' : 'AUSENTE');
+
+      return config;
+    },
+    (error) => {
+      console.error('❌ Erro no interceptor de request:', error);
+      return Promise.reject(error);
     }
+  );
 
-    // Log final da configuração
-    console.log('🔧 Config final - URL:', config.url);
-    console.log('🔧 Config final - Headers Authorization:', config.headers?.Authorization ? 'PRESENTE' : 'AUSENTE');
+  // Interceptor para tratar respostas e erros
+  instance.interceptors.response.use(
+    (response: AxiosResponse) => {
+      console.log('✅ Resposta recebida:', response.status, response.config.method?.toUpperCase(), response.config.url);
+      return response;
+    },
+    (error) => {
+      console.log('❌ Erro na resposta:', error.response?.status, error.config?.method?.toUpperCase(), error.config?.url);
 
-    return config;
-  },
-  (error) => {
-    console.error('❌ Erro no interceptor de request:', error);
-    return Promise.reject(error);
-  }
-);
+      if (error.response?.status === 401) {
+        console.log('🚫 Erro 401 - Token inválido ou ausente');
+        console.log('🔍 Headers enviados na requisição:', error.config?.headers?.Authorization ? 'Authorization PRESENTE' : 'Authorization AUSENTE');
 
-// Interceptor para tratar respostas e erros
-api.interceptors.response.use(
-  (response: AxiosResponse) => {
-    console.log('✅ Resposta recebida:', response.status, response.config.method?.toUpperCase(), response.config.url);
-    return response;
-  },
-  (error) => {
-    console.log('❌ Erro na resposta:', error.response?.status, error.config?.method?.toUpperCase(), error.config?.url);
-
-    if (error.response?.status === 401) {
-      console.log('🚫 Erro 401 - Token inválido ou ausente');
-      console.log('🔍 Headers enviados na requisição:', error.config?.headers?.Authorization ? 'Authorization PRESENTE' : 'Authorization AUSENTE');
-
-      // Token expirado ou inválido - só executar no cliente
-      // if (typeof window !== 'undefined') {
-      //   localStorage.removeItem('access_token');
-      //   localStorage.removeItem('user_data');
-      //   window.location.href = '/auth/signin';
-      // }
+        // Token expirado ou inválido - só executar no cliente
+        // if (typeof window !== 'undefined') {
+        //   localStorage.removeItem('access_token');
+        //   localStorage.removeItem('user_data');
+        //   window.location.href = '/auth/signin';
+        // }
+      }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
+
+  return instance;
+};
+
+// Instância única via API Gateway para todos os serviços
+const gatewayApi = createApiInstance(SERVICE_URLS.API_GATEWAY);
+const userApi = gatewayApi;
+const transactionApi = gatewayApi;
+const configApi = gatewayApi;
+const companyApi = gatewayApi;
+
+// Instância principal (para compatibilidade)
+const api = userApi;
+
+console.log('🔧 API Service inicializado com URLs:', SERVICE_URLS);
 
 // Tipos para autenticação OAuth2 (client credentials)
 export interface TokenRequest {
@@ -291,11 +314,11 @@ export interface CreateSubUserRequest {
 export const authService = {
   // Login de usuário com email/senha
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    axios.post('http://localhost:5001/auth/login', data),
+    axios.post(`${SERVICE_URLS.API_GATEWAY}/auth/login`, data),
 
   // Obter token OAuth2 (para aplicações)
   getToken: (data: TokenRequest): Promise<AxiosResponse<TokenResponse>> =>
-    api.post('/auth/token', data),
+    axios.post(`${SERVICE_URLS.API_GATEWAY}/auth/token`, data),
 
   logout: () => {
     if (typeof window !== 'undefined') {
@@ -528,48 +551,48 @@ export const companyService = {
     limit: number;
     totalPages: number;
   }>> =>
-    api.get('/admin/companies', { params }),
+    companyApi.get('/admin/companies', { params }),
 
   getCompanyById: (id: string): Promise<AxiosResponse<Company>> =>
-    api.get(`/admin/companies/${id}`),
+    companyApi.get(`/admin/companies/${id}`),
 
   createCompany: (data: CreateCompanyRequest): Promise<AxiosResponse<Company>> => {
     console.log('🚀 Criando empresa:', data);
-    return api.post('/admin/companies', data);
+    return companyApi.post('/admin/companies', data);
   },
 
   updateCompany: (id: string, data: CompanyData): Promise<AxiosResponse<Company>> => {
     console.log('✏️ Atualizando empresa:', id, data);
-    return api.put(`/admin/companies/${id}`, data);
+    return companyApi.put(`/admin/companies/${id}`, data);
   },
 
   updateCompanyStatus: (id: string, status: CompanyStatus, observacoes?: string): Promise<AxiosResponse<Company>> => {
     console.log('📊 Atualizando status da empresa:', id, status);
-    return api.patch(`/admin/companies/${id}/status`, { status, observacoes });
+    return companyApi.patch(`/admin/companies/${id}/status`, { status, observacoes });
   },
 
   deleteCompany: (id: string): Promise<AxiosResponse<void>> =>
-    api.delete(`/admin/companies/${id}`),
+    companyApi.delete(`/admin/companies/${id}`),
 
   // Representantes Legais
   getRepresentatives: (companyId: string): Promise<AxiosResponse<LegalRepresentative[]>> =>
-    api.get(`/admin/companies/${companyId}/representatives`),
+    companyApi.get(`/admin/companies/${companyId}/representatives`),
 
   getRepresentativeById: (companyId: string, representativeId: string): Promise<AxiosResponse<LegalRepresentative>> =>
-    api.get(`/admin/companies/${companyId}/representatives/${representativeId}`),
+    companyApi.get(`/admin/companies/${companyId}/representatives/${representativeId}`),
 
   createRepresentative: (companyId: string, data: LegalRepresentativeData): Promise<AxiosResponse<LegalRepresentative>> => {
     console.log('🚀 Criando representante legal:', companyId, data);
-    return api.post(`/admin/companies/${companyId}/representatives`, data);
+    return companyApi.post(`/admin/companies/${companyId}/representatives`, data);
   },
 
   updateRepresentative: (companyId: string, representativeId: string, data: LegalRepresentativeData): Promise<AxiosResponse<LegalRepresentative>> => {
     console.log('✏️ Atualizando representante legal:', companyId, representativeId, data);
-    return api.put(`/admin/companies/${companyId}/representatives/${representativeId}`, data);
+    return companyApi.put(`/admin/companies/${companyId}/representatives/${representativeId}`, data);
   },
 
   deleteRepresentative: (companyId: string, representativeId: string): Promise<AxiosResponse<void>> =>
-    api.delete(`/admin/companies/${companyId}/representatives/${representativeId}`),
+    companyApi.delete(`/admin/companies/${companyId}/representatives/${representativeId}`),
 };
 
 export const bankAccountService = {
@@ -591,10 +614,10 @@ export const bankAccountService = {
 
 export const configService = {
   getPriorityConfig: (clienteId: string): Promise<AxiosResponse<PriorityConfig>> =>
-    api.get(`/admin/configs/roteamento/${clienteId}`),
-  
+    configApi.get(`/admin/configs/roteamento/${clienteId}`),
+
   updatePriorityConfig: (clienteId: string, data: Omit<PriorityConfig, 'clienteId' | 'totalPercentual' | 'isValid' | 'updatedAt'>): Promise<AxiosResponse<PriorityConfig>> =>
-    api.put(`/admin/configs/roteamento/${clienteId}`, data),
+    configApi.put(`/admin/configs/roteamento/${clienteId}`, data),
 };
 
 export const transactionService = {
@@ -608,22 +631,22 @@ export const transactionService = {
     page?: number;
     limit?: number;
   }): Promise<AxiosResponse<{ transactions: Transaction[]; total: number; page: number; limit: number }>> =>
-    api.get('/admin/transacoes/historico', { params }),
-  
+    transactionApi.get('/admin/transacoes/historico', { params }),
+
   getTransactionStatus: (id: string): Promise<AxiosResponse<{ status: string; details: any }>> =>
-    api.get(`/transacoes/${id}/status`),
+    transactionApi.get(`/transacoes/${id}/status`),
 };
 
 export const reportService = {
   getDashboardReport: (): Promise<AxiosResponse<DashboardReport>> =>
-    api.get('/admin/transacoes/report'),
-  
+    transactionApi.get('/admin/transacoes/report'),
+
   getExtrato: (clienteId: string, params?: {
     contaId?: string;
     startDate?: string;
     endDate?: string;
   }): Promise<AxiosResponse<ExtratoResponse>> =>
-    api.get(`/admin/extrato/${clienteId}`, { params }),
+    transactionApi.get(`/admin/extrato/${clienteId}`, { params }),
 };
 
 export const accessService = {

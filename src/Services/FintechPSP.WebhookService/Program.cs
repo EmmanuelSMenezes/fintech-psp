@@ -13,6 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+    });
+});
+
 // MediatR para CQRS
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
@@ -44,11 +53,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "Mortadela",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "Mortadela",
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
-                "your-super-secret-key-that-should-be-at-least-256-bits"))
+                "mortadela-super-secret-key-that-should-be-at-least-256-bits"))
         };
     });
 
@@ -102,6 +111,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Use CORS (deve vir antes de Authentication/Authorization)
+app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

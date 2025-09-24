@@ -1,14 +1,14 @@
-using Ocelot.DependencyInjection;
-using Ocelot.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// JWT Authentication
+// ✅ Configuração JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer("Bearer", options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -16,45 +16,47 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "FintechPSP",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "FintechPSP",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "Mortadela",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "Mortadela",
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
-                "your-super-secret-key-that-should-be-at-least-256-bits"))
+                "mortadela-super-secret-key-that-should-be-at-least-256-bits"))
         };
     });
 
-// Add Ocelot
-builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
-builder.Services.AddOcelot();
-
-// Add CORS
+// ✅ CORS global
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .AllowAnyOrigin()      // 🔑 para React local
+            .AllowAnyHeader()
+            .AllowAnyMethod();     // Inclui OPTIONS, GET, POST etc.
     });
 });
 
-// Add Health Checks
+// ✅ Ocelot
+builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+builder.Services.AddOcelot();
+
+// Health check
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Configure pipeline
-app.UseCors();
+// ✅ ORDEM do pipeline é importante
+app.UseRouting();
 
-// Add Authentication and Authorization
+// CORS precisa vir ANTES de Auth/Ocelot
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Health check endpoint
 app.MapHealthChecks("/health");
 
-// Use Ocelot
+// ✅ Ocelot por último
 await app.UseOcelot();
 
 app.Run();

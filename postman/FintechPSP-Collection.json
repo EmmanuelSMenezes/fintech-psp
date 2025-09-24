@@ -1,8 +1,13 @@
 {
   "info": {
-    "name": "FintechPSP Microservices",
-    "description": "Collection para testar APIs do PSP event-driven",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "FintechPSP Microservices - Trilha Completa",
+    "description": "Collection completa para testar todo o sistema FintechPSP com JWT Mortadela. Siga a ordem numerada para uma experiência completa.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 2,
+      "minor": 0,
+      "patch": 0
+    }
   },
   "variable": [
     {

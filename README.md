@@ -160,9 +160,9 @@ ConnectionStrings__DefaultConnection="Host=localhost;Database=fintech_psp;Userna
 ConnectionStrings__RabbitMQ="amqp://guest:guest@localhost:5672/"
 
 # JWT
-Jwt__Key="your-super-secret-key-that-should-be-at-least-256-bits-long"
-Jwt__Issuer="FintechPSP"
-Jwt__Audience="FintechPSP"
+Jwt__Key="mortadela-super-secret-key-that-should-be-at-least-256-bits-long-for-production"
+Jwt__Issuer="Mortadela"
+Jwt__Audience="Mortadela"
 ```
 
 ### Clientes OAuth Pré-configurados

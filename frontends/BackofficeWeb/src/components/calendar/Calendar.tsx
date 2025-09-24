@@ -155,7 +155,6 @@ const Calendar: React.FC = () => {
         size="lg"
       >
         <div className="space-y-6">
-          </div>
           <div className="mt-8">
             <div>
               <div>

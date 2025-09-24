@@ -46,9 +46,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     console.log('🔧 useEffect: Iniciando restauração...');
 
-    const initAuth = () => {
+    const initAuth = async () => {
       try {
+        console.log('🌐 Verificando se estamos no cliente...');
         if (typeof window !== 'undefined') {
+          console.log('✅ Estamos no cliente, verificando localStorage...');
           const token = localStorage.getItem('access_token');
           const userData = localStorage.getItem('user_data');
 
@@ -56,12 +58,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('👤 UserData no localStorage:', userData ? 'SIM' : 'NÃO');
 
           if (token && userData) {
-            const parsedUser = JSON.parse(userData);
-            console.log('✅ RESTAURANDO USUÁRIO:', parsedUser);
-            setUser(parsedUser);
+            try {
+              const parsedUser = JSON.parse(userData);
+              console.log('✅ RESTAURANDO USUÁRIO:', parsedUser);
+              setUser(parsedUser);
+            } catch (parseError) {
+              console.error('❌ Erro ao fazer parse dos dados do usuário:', parseError);
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('user_data');
+            }
           } else {
             console.log('ℹ️ Nenhum usuário para restaurar');
           }
+        } else {
+          console.log('🖥️ Estamos no servidor, pulando localStorage');
         }
       } catch (error) {
         console.error('❌ Erro ao restaurar usuário:', error);
@@ -77,14 +87,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    // Executar imediatamente se já estamos no cliente
-    if (typeof window !== 'undefined') {
-      initAuth();
-    } else {
-      // Se estamos no servidor, apenas finalizar o loading
-      setIsLoading(false);
-      setMounted(true);
-    }
+    // Executar a inicialização
+    initAuth();
   }, []); // Array vazio - executar apenas uma vez
 
   const login = async (credentials: LoginRequest): Promise<boolean> => {
