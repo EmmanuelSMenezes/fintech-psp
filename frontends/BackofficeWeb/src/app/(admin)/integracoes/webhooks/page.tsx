@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth, useRequireAuth } from '@/context/AuthContext';
+import { integrationService } from '@/services/api';
 import toast from 'react-hot-toast';
 
 interface Webhook {
@@ -144,9 +145,8 @@ const WebhooksPage: React.FC = () => {
   const loadWebhooks = async () => {
     try {
       setIsLoading(true);
-      // Simular carregamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setWebhooks(mockWebhooks);
+      const response = await integrationService.getWebhooks();
+      setWebhooks(response.data || []);
     } catch (error) {
       console.error('Erro ao carregar webhooks:', error);
       toast.error('Erro ao carregar webhooks');
@@ -157,8 +157,8 @@ const WebhooksPage: React.FC = () => {
 
   const loadWebhookLogs = async (webhookId: string) => {
     try {
-      const logs = mockWebhookLogs.filter(log => log.webhookId === webhookId);
-      setWebhookLogs(logs);
+      const response = await integrationService.getWebhookLogs(webhookId);
+      setWebhookLogs(response.data || []);
       setSelectedWebhook(webhookId);
       setShowLogsModal(true);
     } catch (error) {
@@ -170,34 +170,33 @@ const WebhooksPage: React.FC = () => {
   const handleCreateWebhook = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const webhook: Webhook = {
-        id: `wh_${Date.now()}`,
+      const webhookData = {
         url: newWebhook.url,
         events: newWebhook.events,
-        status: 'active',
-        secret: newWebhook.secret || `wh_secret_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date().toISOString(),
-        successCount: 0,
-        failureCount: 0,
-        retryCount: 3
+        secret: newWebhook.secret || undefined,
+        active: true,
+        description: `Webhook para ${newWebhook.url}`
       };
-      
-      setWebhooks([...webhooks, webhook]);
+
+      await integrationService.createWebhook(webhookData);
       toast.success('Webhook criado com sucesso!');
       setShowCreateModal(false);
       setNewWebhook({ url: '', events: [], secret: '' });
-    } catch (error) {
+      loadWebhooks(); // Recarregar lista
+    } catch (error: any) {
       console.error('Erro ao criar webhook:', error);
-      toast.error('Erro ao criar webhook');
+      const errorMessage = error.response?.data?.message || 'Erro ao criar webhook';
+      toast.error(errorMessage);
     }
   };
 
   const handleDeleteWebhook = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este webhook?')) return;
-    
+
     try {
-      setWebhooks(webhooks.filter(w => w.id !== id));
+      await integrationService.deleteWebhook(id);
       toast.success('Webhook excluído com sucesso!');
+      loadWebhooks(); // Recarregar lista
     } catch (error) {
       console.error('Erro ao excluir webhook:', error);
       toast.error('Erro ao excluir webhook');
@@ -206,29 +205,36 @@ const WebhooksPage: React.FC = () => {
 
   const handleToggleWebhook = async (id: string) => {
     try {
-      setWebhooks(webhooks.map(w => 
-        w.id === id 
-          ? { ...w, status: w.status === 'active' ? 'inactive' : 'active' }
-          : w
-      ));
+      const webhook = webhooks.find(w => w.id === id);
+      if (!webhook) return;
+
+      const newStatus = webhook.status === 'active' ? 'inactive' : 'active';
+      const updateData = {
+        ...webhook,
+        active: newStatus === 'active'
+      };
+
+      await integrationService.updateWebhook(id, updateData);
       toast.success('Status do webhook atualizado!');
-    } catch (error) {
+      loadWebhooks(); // Recarregar lista
+    } catch (error: any) {
       console.error('Erro ao atualizar webhook:', error);
-      toast.error('Erro ao atualizar webhook');
+      const errorMessage = error.response?.data?.message || 'Erro ao atualizar webhook';
+      toast.error(errorMessage);
     }
   };
 
   const handleTestWebhook = async (webhook: Webhook) => {
     try {
       toast.loading('Testando webhook...', { id: 'test-webhook' });
-      
-      // Simular teste
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
+      await integrationService.testWebhook(webhook.id);
+
       toast.success('Webhook testado com sucesso!', { id: 'test-webhook' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao testar webhook:', error);
-      toast.error('Erro ao testar webhook', { id: 'test-webhook' });
+      const errorMessage = error.response?.data?.message || 'Erro ao testar webhook';
+      toast.error(errorMessage, { id: 'test-webhook' });
     }
   };
 

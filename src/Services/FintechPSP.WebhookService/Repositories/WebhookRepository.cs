@@ -78,7 +78,7 @@ public class WebhookRepository : IWebhookRepository
     {
         const string sql = @"
             INSERT INTO webhooks (id, client_id, url, events, secret, active, description, created_at, success_count, failure_count)
-            VALUES (@Id, @ClientId, @Url, @Events, @Secret, @Active, @Description, @CreatedAt, @SuccessCount, @FailureCount)";
+            VALUES (@Id, @ClientId, @Url, @Events::jsonb, @Secret, @Active, @Description, @CreatedAt, @SuccessCount, @FailureCount)";
 
         var parameters = new
         {
@@ -103,8 +103,8 @@ public class WebhookRepository : IWebhookRepository
     public async Task<Webhook> UpdateAsync(Webhook webhook)
     {
         const string sql = @"
-            UPDATE webhooks 
-            SET url = @Url, events = @Events, secret = @Secret, active = @Active, 
+            UPDATE webhooks
+            SET url = @Url, events = @Events::jsonb, secret = @Secret, active = @Active,
                 description = @Description, last_triggered = @LastTriggered,
                 success_count = @SuccessCount, failure_count = @FailureCount
             WHERE id = @Id AND client_id = @ClientId";
