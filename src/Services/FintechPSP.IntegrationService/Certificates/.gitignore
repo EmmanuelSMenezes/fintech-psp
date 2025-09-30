@@ -1,0 +1,10 @@
+# Ignorar todos os certificados
+*.pfx
+*.p12
+*.crt
+*.key
+*.pem
+
+# Manter apenas o README
+!README.md
+!.gitignore

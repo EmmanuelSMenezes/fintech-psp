@@ -2,6 +2,11 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FintechPSP.IntegrationService.Services;
+using FintechPSP.IntegrationService.Services.Sicoob.Pix;
+using FintechPSP.IntegrationService.Services.Sicoob.ContaCorrente;
+using FintechPSP.IntegrationService.Services.Sicoob.SPB;
+using FintechPSP.IntegrationService.Models.Sicoob.Pix;
+using FintechPSP.IntegrationService.Models.Sicoob.SPB;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,13 +23,25 @@ public class IntegrationController : ControllerBase
 {
     private readonly ILogger<IntegrationController> _logger;
     private readonly IRoutingService _routingService;
+    private readonly IPixPagamentosService _pixPagamentosService;
+    private readonly IPixRecebimentosService _pixRecebimentosService;
+    private readonly IContaCorrenteService _contaCorrenteService;
+    private readonly ISPBService _spbService;
 
     public IntegrationController(
         ILogger<IntegrationController> logger,
-        IRoutingService routingService)
+        IRoutingService routingService,
+        IPixPagamentosService pixPagamentosService,
+        IPixRecebimentosService pixRecebimentosService,
+        IContaCorrenteService contaCorrenteService,
+        ISPBService spbService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _routingService = routingService ?? throw new ArgumentNullException(nameof(routingService));
+        _pixPagamentosService = pixPagamentosService ?? throw new ArgumentNullException(nameof(pixPagamentosService));
+        _pixRecebimentosService = pixRecebimentosService ?? throw new ArgumentNullException(nameof(pixRecebimentosService));
+        _contaCorrenteService = contaCorrenteService ?? throw new ArgumentNullException(nameof(contaCorrenteService));
+        _spbService = spbService ?? throw new ArgumentNullException(nameof(spbService));
     }
 
     /// <summary>
@@ -118,7 +135,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Processando transferência Stark Bank");
         
         // Integração Stark Bank
-        _logger.LogInformation("Processando transação PIX via Stark Bank para valor {Amount}", amount);
+        _logger.LogInformation("Processando transação PIX via Stark Bank");
         
         return Ok(new { 
             success = true, 
@@ -129,22 +146,139 @@ public class IntegrationController : ControllerBase
     }
 
     /// <summary>
-    /// Integração Sicoob - PSP
+    /// Integração Sicoob - PIX Pagamento
     /// </summary>
-    [HttpPost("sicoob/psp")]
-    public async Task<IActionResult> SicoobPsp([FromBody] object request)
+    [HttpPost("sicoob/pix/pagamento")]
+    public async Task<IActionResult> SicoobPixPagamento([FromBody] PixPagamentoRequest request)
     {
-        _logger.LogInformation("Processando PSP Sicoob");
-        
-        // Integração Sicoob
-        _logger.LogInformation("Processando transação PIX via Sicoob para valor {Amount}", amount);
-        
-        return Ok(new { 
-            success = true, 
-            transactionId = Guid.NewGuid(),
-            bankResponse = "PSP transaction completed",
-            provider = "sicoob"
-        });
+        try
+        {
+            _logger.LogInformation("Processando pagamento PIX Sicoob para chave: {Chave}", request.Favorecido.Chave);
+
+            var response = await _pixPagamentosService.RealizarPagamentoPixAsync(request);
+
+            if (response == null)
+            {
+                return BadRequest(new { error = "payment_failed", message = "Falha ao processar pagamento PIX" });
+            }
+
+            return Ok(new {
+                success = true,
+                transactionId = response.E2eId,
+                txId = response.TxId,
+                status = response.Status,
+                valor = response.Valor,
+                dataHoraSolicitacao = response.DataHoraSolicitacao,
+                provider = "sicoob"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao processar pagamento PIX Sicoob");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Integração Sicoob - PIX Cobrança
+    /// </summary>
+    [HttpPost("sicoob/pix/cobranca")]
+    public async Task<IActionResult> SicoobPixCobranca([FromBody] CobrancaRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Criando cobrança PIX Sicoob para chave: {Chave}", request.Chave);
+
+            var response = await _pixRecebimentosService.CriarCobrancaImediataAsync(request);
+
+            if (response == null)
+            {
+                return BadRequest(new { error = "cobranca_failed", message = "Falha ao criar cobrança PIX" });
+            }
+
+            return Ok(new {
+                success = true,
+                txId = response.TxId,
+                status = response.Status,
+                pixCopiaECola = response.PixCopiaECola,
+                qrcode = response.QrCode,
+                provider = "sicoob"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao criar cobrança PIX Sicoob");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Integração Sicoob - TED
+    /// </summary>
+    [HttpPost("sicoob/ted")]
+    public async Task<IActionResult> SicoobTED([FromBody] TEDRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Processando TED Sicoob para conta: {Banco}-{Agencia}-{Conta}",
+                request.ContaDestino.Banco, request.ContaDestino.Agencia, request.ContaDestino.Conta);
+
+            var response = await _spbService.RealizarTEDAsync(request);
+
+            if (response == null)
+            {
+                return BadRequest(new { error = "ted_failed", message = "Falha ao processar TED" });
+            }
+
+            return Ok(new {
+                success = true,
+                numeroDocumento = response.NumeroDocumento,
+                codigoTransacao = response.CodigoTransacao,
+                status = response.Status,
+                valor = response.Valor,
+                dataHoraSolicitacao = response.DataHoraSolicitacao,
+                provider = "sicoob"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao processar TED Sicoob");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Integração Sicoob - Consultar Saldo
+    /// </summary>
+    [HttpGet("sicoob/conta/{contaCorrente}/saldo")]
+    public async Task<IActionResult> SicoobConsultarSaldo(string contaCorrente)
+    {
+        try
+        {
+            _logger.LogInformation("Consultando saldo Sicoob da conta: {ContaCorrente}", contaCorrente);
+
+            var response = await _contaCorrenteService.ConsultarSaldoAsync(contaCorrente);
+
+            if (response == null)
+            {
+                return NotFound(new { error = "account_not_found", message = "Conta não encontrada" });
+            }
+
+            return Ok(new {
+                success = true,
+                contaCorrente = response.ContaCorrente,
+                saldoAtual = response.SaldoAtual,
+                saldoDisponivel = response.SaldoDisponivel,
+                saldoBloqueado = response.SaldoBloqueado,
+                dataHoraConsulta = response.DataHoraConsulta,
+                provider = "sicoob"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao consultar saldo Sicoob");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -156,7 +290,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Processando PIX Banco Genial");
         
         // Integração Banco Genial
-        _logger.LogInformation("Processando transação PIX via Banco Genial para valor {Amount}", amount);
+        _logger.LogInformation("Processando transação PIX via Banco Genial");
         
         return Ok(new { 
             success = true, 
@@ -176,7 +310,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Processando PIX Efí");
         
         // Integração Efí
-        _logger.LogInformation("Processando transação TED via Efí para valor {Amount}", amount);
+        _logger.LogInformation("Processando transação TED via Efí");
         
         return Ok(new { 
             success = true, 
@@ -196,7 +330,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Processando boleto Efí");
         
         // Integração Efí
-        _logger.LogInformation("Processando emissão de boleto via Efí para valor {Amount}", amount);
+        _logger.LogInformation("Processando emissão de boleto via Efí");
         
         return Ok(new { 
             success = true, 
@@ -216,7 +350,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Processando PIX Celcoin");
         
         // Integração Celcoin
-        _logger.LogInformation("Processando transação PIX via Celcoin para valor {Amount}", amount);
+        _logger.LogInformation("Processando transação PIX via Celcoin");
         
         return Ok(new { 
             success = true, 
@@ -236,7 +370,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Processando transação cripto {Currency}", currency);
         
         // Integração crypto
-        _logger.LogInformation("Processando transação crypto para moeda {Currency} e valor {Amount}", currency, amount);
+        _logger.LogInformation("Processando transação crypto para moeda {Currency}", currency);
         
         var supportedCurrencies = new[] { "USDT", "BTC", "ETH" };
         if (!supportedCurrencies.Contains(currency.ToUpper()))
@@ -263,7 +397,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Gerando QR Code PIX via Stark Bank");
 
         // Integração Stark Bank QR Code
-        _logger.LogInformation("Gerando QR Code PIX via Stark Bank para chave {PixKey}", pixKey);
+        _logger.LogInformation("Gerando QR Code PIX via Stark Bank");
 
         return Ok(new {
             success = true,
@@ -284,7 +418,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Gerando QR Code PIX via Sicoob Cobrança V3");
 
         // Integração Sicoob QR Code
-        _logger.LogInformation("Gerando QR Code PIX via Sicoob para chave {PixKey}", pixKey);
+        _logger.LogInformation("Gerando QR Code PIX via Sicoob");
 
         return Ok(new {
             success = true,
@@ -305,7 +439,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Gerando QR Code PIX via Banco Genial Open Finance");
 
         // Integração Banco Genial QR Code
-        _logger.LogInformation("Gerando QR Code PIX via Banco Genial para chave {PixKey}", pixKey);
+        _logger.LogInformation("Gerando QR Code PIX via Banco Genial");
 
         return Ok(new {
             success = true,
@@ -326,7 +460,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Gerando QR Code PIX via Efí");
 
         // Integração Efí QR Code
-        _logger.LogInformation("Gerando QR Code PIX via Efí para chave {PixKey}", pixKey);
+        _logger.LogInformation("Gerando QR Code PIX via Efí");
 
         return Ok(new {
             success = true,
@@ -347,7 +481,7 @@ public class IntegrationController : ControllerBase
         _logger.LogInformation("Gerando QR Code PIX via Celcoin");
 
         // Integração Celcoin QR Code
-        _logger.LogInformation("Gerando QR Code PIX via Celcoin para chave {PixKey}", pixKey);
+        _logger.LogInformation("Gerando QR Code PIX via Celcoin");
 
         return Ok(new {
             success = true,
@@ -387,6 +521,12 @@ public class IntegrationController : ControllerBase
                 "banco-genial/openfinance/pix/qrcode",
                 "efi/pix/qrcode",
                 "celcoin/pix/qrcode"
+            },
+            sicoobEndpoints = new[] {
+                "sicoob/pix/pagamento",
+                "sicoob/pix/cobranca",
+                "sicoob/ted",
+                "sicoob/conta/{contaCorrente}/saldo"
             }
         });
     }

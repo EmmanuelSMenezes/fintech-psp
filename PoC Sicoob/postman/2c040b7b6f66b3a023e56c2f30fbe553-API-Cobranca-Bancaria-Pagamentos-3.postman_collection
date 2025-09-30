@@ -1,0 +1,1165 @@
+{
+	"info": {
+		"_postman_id": "11b6e56f-4bd5-424e-8ebc-3872ca42d241",
+		"name": "API Cobrança Bancária Pagamentos",
+		"description": "**API Cobrança Bancária Pagamentos:** Disponibiliza funcionalidades para realização de pagamentos de boletos de Cobrança Bancária.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20565799",
+		"_collection_link": "https://sicoobapi.postman.co/workspace/API-Cobran%25C3%25A7a-Banc%25C3%25A1ria-Pagamento~bccdaaff-318b-4b21-bd4e-c406f1708f3e/collection/20565799-11b6e56f-4bd5-424e-8ebc-3872ca42d241?action=share&source=collection_link&creator=20565799"
+	},
+	"item": [
+		{
+			"name": "Certificado Digital",
+			"item": [],
+			"description": "Na criação de credenciais para as APIs Sicoob será solicitado o certificado do cooperado. O certificado deve atender alguns requisitos para que a criação das credenciais seja bem sucedida, serão aceitos **somente os certificados emitidos pela ICP Brasil** e que tenham sido **emitidos para o próprio cooperado**. Serão extraídas as seguintes informações do certificado: CN (common name/nome comum) e CA (autoridade certificadora).\n\n> É possível conferir as entidades certificadoras que tem como entidade raiz a **ICP Brasil** [aqui](https://estrutura.iti.gov.br/). \n  \n> Para conferir os detalhes do seu certificado com o OpenSSL você pode executar o comando a baixo usando a chave pública do seu certificado (geralmente no formato .pem). \n  \n> Para extrair os arquivos **.crt**, **.pem** e o arquivo **.key** você pode seguir os passos descritos [neste tutorial](https://www.ibm.com/docs/en/arl/9.7?topic=certification-extracting-certificate-keys-from-pfx-file). \n  \n\n#### Como configurar o certificado nas requisições do Postman\n\nÉ necessário abrir as **configurações** do Postman\n\n<img src=\"https://content.pstmn.io/eb63462f-8a8b-45f1-973f-9099482e81d4/MS5wbmc=\">\n\nSelecionar **settings**\n\n<img src=\"https://content.pstmn.io/d5075ed9-6f0e-4461-8607-8cfc770cdfbb/Mi5wbmc=\">\n\nSelecionar **Certificates e** **Add certificate**\n\n<img src=\"https://content.pstmn.io/104a18da-c1b3-4051-a309-3225a115f9a6/My5wbmc=\">\n\nFornecer os seguintes hosts:  \n[https://auth.sicoob.com.br](https://auth.sicoob.com.br/) e [https://api.sicoob.com.br](https://api.sicoob.com.br/)﻿\n\nInserir a chave pública do certificado (em formato .PEM ou .CER) e chave privada (formato .KEY) para o certificado (ou, alternativamente, você pode usar um PFX Arquivo e a senha correspondente).  \nLembre-se também de fornecer uma senha de sua chave privada, caso você use uma."
+		},
+		{
+			"name": "Requisição de token",
+			"item": [
+				{
+					"name": "Requisição de Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Retorno é Status 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Possui access_token\", function () {\r",
+									"     pm.expect(pm.response.text()).to.include(\"access_token\");  \r",
+									"     let jsonData = pm.response.json();  \r",
+									"     pm.environment.set(\"token\",jsonData.access_token);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							},
+							{
+								"key": "",
+								"value": "",
+								"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "pagamentos_consulta pagamentos_inclusao pagamentos_alteracao",
+									"description": "Escopos Cobrança Bancária Pagamento que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+							"protocol": "https",
+							"host": [
+								"auth",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"cooperado",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "Endpoint de geração de Token, o token gerado tem a duração de 300 segundos ou 5 minutos devendo ser solicitado novamente ao término do tempo de expiração."
+					},
+					"response": [
+						{
+							"name": "Requisição de Token",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "cobranca_boletos_consultar cobranca_boletos_incluir",
+											"description": "Escopos Cobrança Bancária que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"protocol": "https",
+									"host": [
+										"auth",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"cooperado",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Cache-Control",
+									"value": "no-store"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "1; mode=block"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "SAMEORIGIN"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "no-referrer"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 24 Feb 2023 20:10:06 GMT"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "75"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"access_token\": \"token\",\n  \"expires_in\": 300,\n  \"refresh_expires_in\": 0,\n  \"token_type\": \"Bearer\",\n  \"not-before-policy\": 0,\n  \"scope\": \"cobranca_boletos_consultar cobranca_boletos_incluir\"\n}"
+						}
+					]
+				}
+			],
+			"description": "O Token deve ser gerado para ser anexado as demais requisições da API, sem isso não é possível realizar os próximos passos\n\nPara gerar o Token da API será necessário o **client_id** gerado no momento da criação das suas credenciais pelo portal [<b>Developers Sicoob</b>](https://developers.sicoob.com.br/), você também precisará dos **escopos** de utilização da API e do **certificado** corretamente configurado na requisição SSL.\n\n## **Lista de escopos da API Cobrança Bancária Pagamentos**\n\n- **pagamentos_consulta:** Escopo de consulta para pagamentos de boletos\n- **pagamentos_inclusao** Escopo de inclusão para pagamentos de boletos\n- **pagamentos_alteracao:** Escopo de alteração para pagamentos de boletos"
+		},
+		{
+			"name": "EndPoints",
+			"item": [
+				{
+					"name": "Consultar Boleto",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clientid}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/:codigoBarras?numeroConta=Integer&dataPagamento=String",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pagamentos",
+								"v3",
+								"boletos",
+								":codigoBarras"
+							],
+							"query": [
+								{
+									"key": "numeroConta",
+									"value": "Integer",
+									"description": "Número da Conta Habilitada para Pagamentos via API."
+								},
+								{
+									"key": "dataPagamento",
+									"value": "String",
+									"description": "Data do pagamento do boleto. Se não for informada o pagamento será para data atual\n            Formato: yyyy-MM-dd\n            Exemplo: 2022-07-30"
+								},
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "codigoBarras",
+									"value": "",
+									"description": "Número de código de barras com 44 posições ou linha digitável com 47 posições do boleto"
+								}
+							]
+						},
+						"description": "Este endpoint permite consultar informações detalhadas sobre um boleto. Ao fornecer o número do boleto como parâmetro na URL, você receberá os dados relacionados a esse boleto, incluindo status de pagamento, valor, data de vencimento e informações do beneficiário."
+					},
+					"response": [
+						{
+							"name": "Consultar Boleto",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clientid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/:codigoBarras?numeroConta=Integer&dataPagamento=String",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pagamentos",
+										"v3",
+										"boletos",
+										":codigoBarras"
+									],
+									"query": [
+										{
+											"key": "numeroConta",
+											"value": "Integer",
+											"description": "Número da Conta Habilitada para Pagamentos via API."
+										},
+										{
+											"key": "dataPagamento",
+											"value": "String",
+											"description": "Data do pagamento do boleto. Se não for informada o pagamento será para data atual\n            Formato: yyyy-MM-dd\n            Exemplo: 2022-07-30"
+										},
+										{
+											"key": "",
+											"value": null,
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "codigoBarras",
+											"value": "String",
+											"description": "Número de código de barras com 44 posições ou linha digitável com 47 posições do boleto"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n  \"resultado\": {\r\n    \"numeroInstituicaoEmissora\": 756,\r\n    \"nomeInstituicaoEmissora\": \"Banco Cooperativo do Brasil\",\r\n    \"tipoPessoaBeneficiario\": \"F\",\r\n    \"numeroCpfCnpjBeneficiario\": \"12345678900\",\r\n    \"nomeRazaoSocialBeneficiario\": \"José da Silva\",\r\n    \"nomeFantasiaBeneficiario\": \"Estilo Tech\",\r\n    \"tipoPessoaBeneficiarioFinal\": \"2\",\r\n    \"numeroCpfCnpjBeneficiarioFinal\": \"12345678900\",\r\n    \"nomeRazaoSocialBeneficiarioFinal\": \"João das Flores\",\r\n    \"nomeFantasiaBeneficiarioFinal\": \"Quitanda do João\",\r\n    \"tipoPessoaPagador\": \"F\",\r\n    \"numeroCpfCnpjPagador\": \"12345678900\",\r\n    \"nomeRazaoSocialPagador\": \"Maria José\",\r\n    \"nomeFantasiaPagador\": \"Rosa Maria da Silva\",\r\n    \"codigoBarras\": \"string\",\r\n    \"numeroLinhaDigitavel\": \"string\",\r\n    \"dataVencimentoBoleto\": \"2021-04-20\",\r\n    \"dataLimitePagamentoBoleto\": \"2021-04-25\",\r\n    \"valorBoleto\": 152.3,\r\n    \"valorAbatimentoDesconto\": 0,\r\n    \"valorMultaMora\": 0,\r\n    \"valorPagamento\": 152.3,\r\n    \"dataPagamento\": \"2021-04-24\",\r\n    \"permiteAlterarValor\": true,\r\n    \"codigoEspecieDocumento\": 25,\r\n    \"codigoSituacaoBoletoPagamento\": \"12\",\r\n    \"nossoNumero\": \"123789\",\r\n    \"numeroDocumento\": \"123456\",\r\n    \"identificadorConsulta\": \"hash\",\r\n    \"descricaoInstrucaoDesconto1\": \"Conceder desconto de 10% até 05/04/2021\",\r\n    \"descricaoInstrucaoDesconto2\": \"Conceder desconto de 5% até 10/04/2021\",\r\n    \"descricaoInstrucaoDesconto3\": \"Conceder desconto de 2% até 05/04/2021\",\r\n    \"descricaoInstrucaoValorMinMax\": \"O Valor Mínimo é R$ 0,01. O Valor Máximo é R$ 99.999.999,99\",\r\n    \"bloquearPagamento\": true,\r\n    \"mensagemBloqueioPagamento\": \"Pagamento bloqueado\"\r\n  }\r\n}"
+						}
+					]
+				},
+				{
+					"name": "Pagar boleto",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-idempotency-key",
+								"value": "string",
+								"description": "Este parâmetro é usado para garantir a idempotência das requisições, ajudando a evitar operações duplicadas. \n            Para cada requisição que deseja ser tratada de forma idempotente, envie um valor exclusivo. \n\nEsse valor deve ser uma string única que segue um padrão específico: começa com um número de cooperativa (com até 4 dígitos), seguido do número da conta corrente (com até 14 dígitos), e termina com um UUID (Universally Unique Identifier).\n\nEx:4342-8901234-550e8400-e29b-41d4-a716-446655440000.\n            \n[Especificação do UUID](https://datatracker.ietf.org/doc/html/rfc4122)",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clientid}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"identificadorConsulta\": \"hash\",\r\n  \"valorBoleto\": 152.3,\r\n  \"valorDescontoAbatimento\": 0,\r\n  \"valorMultaMora\": 0,\r\n  \"descricaoObservacao\": \"Boleto da Escola\",\r\n  \"aceitaValorDivergente\": true,\r\n  \"numeroCpfCnpjPortador\": \"12345678900\",\r\n  \"nomePortador\": \"Rosa Maria da Silva\",\r\n  \"amount\": 152.3,\r\n  \"date\": \"2021-04-24\",\r\n  \"debtorAccount\": {\r\n    \"issuer\": 1234,\r\n    \"number\": 1234569,\r\n    \"accountType\": 0,\r\n    \"personType\": 0\r\n  }\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/:codigoBarras",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pagamentos",
+								"v3",
+								"boletos",
+								"pagamentos",
+								":codigoBarras"
+							],
+							"variable": [
+								{
+									"key": "codigoBarras",
+									"value": "String",
+									"description": "Número de código de barras com 44 posições"
+								}
+							]
+						},
+						"description": "Este endpoint permite efetuar o pagamento imediato ou agendar o pagamento de um boleto. Ao fornecer os detalhes do boleto e a opção de pagamento imediato ou agendado, a API processará o pagamento conforme especificado.\n\n_BoletoPagamento (Body)_\n\n| Propriedade | Obrigatório | **Tipo** | **Descrição** | **Exemplo** |\n| --- | --- | --- | --- | --- |\n| identificadorConsulta | Sim | String | Identificador da consulta do boleto. | hash |\n| valorBoleto | Sim | number | Valor nominal do Boleto. | 152.30 |\n| valorDescontoAbatimento | Sim | double | Valor de desconto/abatimento do pagamento do Boleto. | 0.00 |\n| valorMultaMora | Sim | double | Valor de mora/multa do pagamento do Boleto. | 0.00 |\n| descricaoObservacao | Não | string | Descrição da observação informada no pagamento. | Boleto da Escola |\n| aceitaValorDivergente | Sim | boolean | Entre o agendamento e o pagamento, o boleto poderá sofrer alterações pelo benificiário. Autoriza o pagamento com o valor divergente do agendado. | true |\n| numeroCpfCnpjPortador | Sim | string | Número do CPF/CNPJ do portador, responsável pelo pagamento. | 12345678900 |\n| nomePortador | Sim | string | Rosa Maria da Silva | Nome do portador, responsável pelo pagamento. |\n| amount | Sim | double | Valor de pagamento do Boleto. | 152.30 |\n| date | Sim | string | Data do pagamento do boleto. Se não for informada o pagamento será para data atual. | \"2021-04-24\" |\n\n_debtorAccount (Conta do associado)_\n\n| **Propriedade** | **Obrigatório** | **Tipo** | **Descrição** | **Exemplo** |\n| --- | --- | --- | --- | --- |\n| issuer | Sim | number | Número da cooperativa da conta | 1234 |\n| number | Sim | integer | Número da Conta onde será realizado o débito para o pagamento (Deve ser a mesma habilidata para pagamentos via API). | 1234569 |\n| accountType | Sim | integer | Tipo da conta. Opções: 0 - Conta Corrente | 0 |\n| personType | Sim | integer | Tipo pessoa. Opções: 0 - Pessoa Física, 1 - Pessoa Júridica | 0 |"
+					},
+					"response": [
+						{
+							"name": "Pagar boleto",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-idempotency-key",
+										"value": "string",
+										"description": "Este parâmetro é usado para garantir a idempotência das requisições, ajudando a evitar operações duplicadas. \n            Para cada requisição que deseja ser tratada de forma idempotente, envie um valor exclusivo. \n\nEsse valor deve ser uma string única que segue um padrão específico: começa com um número de cooperativa (com até 4 dígitos), seguido do número da conta corrente (com até 14 dígitos), e termina com um UUID (Universally Unique Identifier).\n\nEx:4342-8901234-550e8400-e29b-41d4-a716-446655440000.\n            \n[Especificação do UUID](https://datatracker.ietf.org/doc/html/rfc4122)",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clientid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "  {\r\n    \"identificadorConsulta\": \"hash\",\r\n    \"valorBoleto\": 152.30,\r\n    \"valorDescontoAbatimento\": 0.00,\r\n    \"valorMultaMora\": 0.00,\r\n    \"descricaoObservacao\": \"Boleto da Escola\",\r\n    \"aceitaValorDivergente\": true,\r\n    \"numeroCpfCnpjPortador\": \"12345678900\",\r\n    \"nomePortador\": \"Rosa Maria da Silva\",\r\n    \"amount\": 152.30,\r\n    \"date\": \"2021-04-24\",\r\n    \"debtorAccount\": {\r\n    \"issuer\": \"1234\",\r\n    \"number\": \"1234569\",\r\n    \"accountType\": 0,\r\n    \"personType\": 0\r\n    }\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/:codigoBarras",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pagamentos",
+										"v3",
+										"boletos",
+										"pagamentos",
+										":codigoBarras"
+									],
+									"variable": [
+										{
+											"key": "codigoBarras",
+											"value": "String",
+											"description": "Número de código de barras com 44 posições."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"resultado\": {\n    \"numeroAgencia\": \"0001-9\",\n    \"nomeAgencia\": \"Agência Sede\",\n    \"numeroConta\": 1234569,\n    \"nomeProprietarioContaCorrente\": \"José da Silva\",\n    \"numeroLinhaDigitavel\": \"string\",\n    \"numeroInstituicaoEmissora\": 756,\n    \"nomeInstituicaoEmissora\": \"Banco Cooperativo do Brasil\",\n    \"numeroCpfCnpjBeneficiario\": \"12345678900\",\n    \"nomeRazaoSocialBeneficiario\": \"José da Silva\",\n    \"nomeFantasiaBeneficiario\": \"Estilo Tech\",\n    \"numeroCpfCnpjBeneficiarioFinal\": \"12345678900\",\n    \"nomeRazaoSocialBeneficiarioFinal\": \"João das Flores\",\n    \"nomeFantasiaBeneficiarioFinal\": \"Quinatda dojão\",\n    \"numeroCpfCnpjPagador\": \"12345678900\",\n    \"nomeRazaoSocialPagador\": \"Maria José\",\n    \"nomeFantasiaPagador\": \"Rosa Maria da Silva\",\n    \"dataVencimento\": \"2018-09-20\",\n    \"valorBoleto\": 100.36,\n    \"valorAbatimentoDesconto\": 0,\n    \"valorMultaMora\": 60.36,\n    \"valorPagamento\": 255.63,\n    \"dataPagamento\": \"2019-10-20\",\n    \"situacaoPagamento\": \"REJEITADO\",\n    \"descricaoDetalheSituacao\": \"Saldo no momento da rejeição em 10/03/2021 às 22:01:10: R$ 343,05.\",\n    \"dataHoraCadastro\": \"2019-10-20T12:30:22.000Z\",\n    \"aceitaValorDivergente\": true,\n    \"nossoNumero\": \"756\",\n    \"numeroDocumento\": \"123456\",\n    \"descricaoObservacao\": \"Boleto da Escola\",\n    \"descricaoOuvidoria\": \"OUVIDORIA AGIBANK: 08007250996\",\n    \"descricaoTituloComprovante\": \"PAGAMENTO DE TÍTULO\",\n    \"idPagamento\": 1983450,\n    \"numeroAutenticacaoPagamento\": \"89C3E9FD-1A37-40BE-A85B-69AF118D336A\"\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Consultar comprovante de pagamento",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clientid}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/:idPagamento/comprovantes?numeroConta=Integer",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pagamentos",
+								"v3",
+								"boletos",
+								"pagamentos",
+								":idPagamento",
+								"comprovantes"
+							],
+							"query": [
+								{
+									"key": "numeroConta",
+									"value": "Integer",
+									"description": "Número da Conta Habilitada para Pagamentos via API."
+								},
+								{
+									"key": null,
+									"value": "",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "idPagamento",
+									"value": "",
+									"description": "Número de identificação do agendamento no SISBR.\n\n"
+								}
+							]
+						},
+						"description": "Serviço para consultar um comprovante de um pagamento efetuado."
+					},
+					"response": [
+						{
+							"name": "Consultar comprovante de pagamento",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clientid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": []
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/:idPagamento/comprovantes?numeroConta=Integer",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pagamentos",
+										"v3",
+										"boletos",
+										"pagamentos",
+										":idPagamento",
+										"comprovantes"
+									],
+									"query": [
+										{
+											"key": "numeroConta",
+											"value": "Integer",
+											"description": "Número da Conta Habilitada para Pagamentos via API."
+										},
+										{
+											"key": null,
+											"value": null,
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "idPagamento",
+											"value": ""
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "\t\nExample Value\nModel\n{\n  \"resultado\": {\n    \"numeroAgencia\": \"0001-9\",\n    \"nomeAgencia\": \"Agência Sede\",\n    \"numeroConta\": 1234569,\n    \"nomeProprietarioContaCorrente\": \"José da Silva\",\n    \"numeroLinhaDigitavel\": \"string\",\n    \"numeroInstituicaoEmissora\": 756,\n    \"nomeInstituicaoEmissora\": \"Banco Cooperativo do Brasil\",\n    \"numeroCpfCnpjBeneficiario\": \"12345678900\",\n    \"nomeRazaoSocialBeneficiario\": \"José da Silva\",\n    \"nomeFantasiaBeneficiario\": \"Estilo Tech\",\n    \"numeroCpfCnpjBeneficiarioFinal\": \"12345678900\",\n    \"nomeRazaoSocialBeneficiarioFinal\": \"João das Flores\",\n    \"nomeFantasiaBeneficiarioFinal\": \"Quinatda dojão\",\n    \"numeroCpfCnpjPagador\": \"12345678900\",\n    \"nomeRazaoSocialPagador\": \"Maria José\",\n    \"nomeFantasiaPagador\": \"Rosa Maria da Silva\",\n    \"dataVencimento\": \"2018-09-20\",\n    \"valorBoleto\": 100.36,\n    \"valorAbatimentoDesconto\": 0,\n    \"valorMultaMora\": 60.36,\n    \"valorPagamento\": 255.63,\n    \"dataPagamento\": \"2019-10-20\",\n    \"situacaoPagamento\": \"REJEITADO\",\n    \"descricaoDetalheSituacao\": \"Saldo no momento da rejeição em 10/03/2021 às 22:01:10: R$ 343,05.\",\n    \"dataHoraCadastro\": \"2019-10-20T12:30:22.000Z\",\n    \"aceitaValorDivergente\": true,\n    \"nossoNumero\": \"756\",\n    \"numeroDocumento\": \"123456\",\n    \"descricaoObservacao\": \"Boleto da Escola\",\n    \"descricaoOuvidoria\": \"OUVIDORIA AGIBANK: 08007250996\",\n    \"descricaoTituloComprovante\": \"PAGAMENTO DE TÍTULO\",\n    \"idPagamento\": 1983450,\n    \"numeroAutenticacaoPagamento\": \"89C3E9FD-1A37-40BE-A85B-69AF118D336A\"\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Cancelar um agendamento de pagamento",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clientid}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"numeroConta\": 1234569\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/agendamentos/:idPagamento",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pagamentos",
+								"v3",
+								"boletos",
+								"pagamentos",
+								"agendamentos",
+								":idPagamento"
+							],
+							"variable": [
+								{
+									"key": "idPagamento",
+									"value": "",
+									"description": "Número de identificação do agendamento no SISBR.\n\n"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Cancelar um agendamento de pagamento",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clientid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \r\n    \"numeroConta\": 1234569\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/agendamentos/:idPagamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pagamentos",
+										"v3",
+										"boletos",
+										"pagamentos",
+										"agendamentos",
+										":idPagamento"
+									],
+									"variable": [
+										{
+											"key": "idPagamento",
+											"value": ""
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Consultar comprovante de pagamento através do Idempotency",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clientid}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/:idPagamento/comprovantes?numeroConta=Integer",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pagamentos",
+								"v3",
+								"boletos",
+								"pagamentos",
+								":idPagamento",
+								"comprovantes"
+							],
+							"query": [
+								{
+									"key": "numeroConta",
+									"value": "Integer",
+									"description": "Número da Conta Habilitada para Pagamentos via API."
+								},
+								{
+									"key": null,
+									"value": "",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "idPagamento",
+									"value": "",
+									"description": "Número de identificação do agendamento no SISBR.\n\n"
+								}
+							]
+						},
+						"description": "Serviço para consultar um comprovante de um pagamento efetuado."
+					},
+					"response": [
+						{
+							"name": "Consultar comprovante de pagamento através do Idempotency",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clientid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": []
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos/pagamentos/:idempotency/idempotency/comprovantes",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pagamentos",
+										"v3",
+										"boletos",
+										"pagamentos",
+										":idempotency",
+										"idempotency",
+										"comprovantes"
+									],
+									"query": [
+										{
+											"key": null,
+											"value": null,
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "idempotency",
+											"value": "",
+											"description": "Este parâmetro é usado para garantir a idempotência das requisições, ajudando a evitar operações duplicadas."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"resultado\": {\n    \"numeroAgencia\": \"0001-9\",\n    \"nomeAgencia\": \"Agência Sede\",\n    \"numeroConta\": 1234569,\n    \"nomeProprietarioContaCorrente\": \"José da Silva\",\n    \"numeroLinhaDigitavel\": \"string\",\n    \"numeroInstituicaoEmissora\": 756,\n    \"nomeInstituicaoEmissora\": \"Banco Cooperativo do Brasil\",\n    \"numeroCpfCnpjBeneficiario\": \"12345678900\",\n    \"nomeRazaoSocialBeneficiario\": \"José da Silva\",\n    \"nomeFantasiaBeneficiario\": \"Estilo Tech\",\n    \"numeroCpfCnpjBeneficiarioFinal\": \"12345678900\",\n    \"nomeRazaoSocialBeneficiarioFinal\": \"João das Flores\",\n    \"nomeFantasiaBeneficiarioFinal\": \"Quinatda dojão\",\n    \"numeroCpfCnpjPagador\": \"12345678900\",\n    \"nomeRazaoSocialPagador\": \"Maria José\",\n    \"nomeFantasiaPagador\": \"Rosa Maria da Silva\",\n    \"dataVencimento\": \"2018-09-20\",\n    \"valorBoleto\": 100.36,\n    \"valorAbatimentoDesconto\": 0,\n    \"valorMultaMora\": 60.36,\n    \"valorPagamento\": 255.63,\n    \"dataPagamento\": \"2019-10-20\",\n    \"situacaoPagamento\": \"Efetivado\",\n    \"descricaoDetalheSituacao\": \"Saldo no momento da rejeição em 10/03/2021 às 22:01:10: R$ 343,05.\",\n    \"dataHoraCadastro\": \"2019-10-20T12:30:22.000Z\",\n    \"aceitaValorDivergente\": true,\n    \"nossoNumero\": \"756\",\n    \"numeroDocumento\": \"123456\",\n    \"descricaoObservacao\": \"Boleto da Escola\",\n    \"descricaoOuvidoria\": \"OUVIDORIA AGIBANK: 08007250996\",\n    \"descricaoTituloComprovante\": \"PAGAMENTO DE BOLETO\",\n    \"idPagamento\": 1983450,\n    \"numeroAutenticacaoPagamento\": \"89C3E9FD-1A37-40BE-A85B-69AF118D336A\"\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Consultar boletos DDA",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clientid}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos?numeroConta=integer&dataInicial=string&dataFinal=string&situacao=integer&tipoData=integer",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pagamentos",
+								"v3",
+								"boletos"
+							],
+							"query": [
+								{
+									"key": "numeroConta",
+									"value": "integer",
+									"description": "Número da Conta Habilitada para Pagamentos via API"
+								},
+								{
+									"key": "dataInicial",
+									"value": "string",
+									"description": "Data inicial do filtro por data.\nFormato: yyyy-MM-dd\nExemplo: 2022-07-30"
+								},
+								{
+									"key": "dataFinal",
+									"value": "string",
+									"description": "Data final do filtro por data.\nFormato: yyyy-MM-dd\nExemplo: 2022-07-30"
+								},
+								{
+									"key": "situacao",
+									"value": "integer",
+									"description": "Código da Situação do Boleto.\n\n1 - Em aberto\n2 - Agendado\n3 - Liquidado\n4 - Baixado"
+								},
+								{
+									"key": "tipoData",
+									"value": "integer",
+									"description": "Opções 1, 2 ou 3 para escolher a data que será filtrada.\n\n1 - Data de vencimento\n2 - Data de emissão\n3 - Data de inclusão"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Consultar boletos DDA",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clientid}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/pagamentos/v3/boletos?numeroConta=integer&dataInicial=string&dataFinal=string&situacao=integer&tipoData=integer",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pagamentos",
+										"v3",
+										"boletos"
+									],
+									"query": [
+										{
+											"key": "numeroConta",
+											"value": "integer",
+											"description": "Número da Conta Habilitada para Pagamentos via API"
+										},
+										{
+											"key": "dataInicial",
+											"value": "string",
+											"description": "Data inicial do filtro por data.\nFormato: yyyy-MM-dd\nExemplo: 2022-07-30"
+										},
+										{
+											"key": "dataFinal",
+											"value": "string",
+											"description": "Data final do filtro por data.\nFormato: yyyy-MM-dd\nExemplo: 2022-07-30"
+										},
+										{
+											"key": "situacao",
+											"value": "integer",
+											"description": "Código da Situação do Boleto.\n\n1 - Em aberto\n2 - Agendado\n3 - Liquidado\n4 - Baixado"
+										},
+										{
+											"key": "tipoData",
+											"value": "integer",
+											"description": "Opções 1, 2 ou 3 para escolher a data que será filtrada.\n\n1 - Data de vencimento\n2 - Data de emissão\n3 - Data de inclusão"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "91715c946706c56d1b28a452"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								},
+								{
+									"key": "WWW-Authenticate",
+									"value": "Bearer error='invalid_token'"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 09 Oct 2024 18:03:25 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183be6310c40daf937e8ed5b7cacab2cdf37b5503226bdc3959674ad15d507272c38ccb8d2b0ab14a6ecc1f2c4c1a6955b1b; Path=/; Domain=.api.sicoob.com.br; Secure; HTTPOnly"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "[\n  {\n    \"descricaoTipoPagador\": \"string\",\n    \"tipoPessoaBeneficiario\": \"string\",\n    \"numeroCpfCnpjBeneficiario\": \"string\",\n    \"nomeRazaoSocialBeneficiario\": \"string\",\n    \"tipoPessoaPagador\": \"string\",\n    \"numeroCpfCnpjPagador\": \"string\",\n    \"nomeRazaoSocialPagador\": \"string\",\n    \"nomeFantasiaPagador\": \"string\",\n    \"descricaoLogradouroPagador\": \"string\",\n    \"descricaoCidadePagador\": \"string\",\n    \"siglaUfPagador\": \"string\",\n    \"numeroCepPagador\": \"string\",\n    \"tipoPessoaAvalista\": \"string\",\n    \"numeroCpfCnpjAvalista\": \"string\",\n    \"nomeAvalista\": \"string\",\n    \"valorBoleto\": 0,\n    \"dataVencimentoBoleto\": \"2024-10-09\",\n    \"codigoTipoSituacaoBoleto\": 0,\n    \"descricaoSituacaoBoleto\": \"string\",\n    \"numeroIdentificadorBoletoCip\": 0,\n    \"numeroCodigoBarras\": \"string\",\n    \"numeroCpfCnpjPagadorEletronico\": \"string\",\n    \"aceite\": true,\n    \"numeroNossoNumero\": \"string\",\n    \"numeroDocumento\": \"string\",\n    \"dataPagamento\": \"2024-10-09\",\n    \"valorPagamento\": 0,\n    \"codigoEspecieDocumento\": 0,\n    \"dataEmissao\": \"2024-10-09\",\n    \"dataLimitePagamento\": \"string\",\n    \"codigoTipoJuros\": 0,\n    \"dataJuros\": \"2024-10-09\",\n    \"valorPercentualJuros\": 0,\n    \"codigoTipoMulta\": 0,\n    \"dataMulta\": \"2024-10-09\",\n    \"valorPercentualMulta\": 0,\n    \"valorAbatimento\": 0,\n    \"codigoTipoDesconto1\": \"string\",\n    \"dataDesconto1\": \"2024-10-09\",\n    \"valorPercentualDesconto1\": 0,\n    \"codigoTipoDesconto2\": \"string\",\n    \"dataDesconto2\": \"string\",\n    \"valorPercentualDesconto2\": 0,\n    \"codigoTipoDesconto3\": \"string\",\n    \"dataDesconto3\": \"string\",\n    \"valorPercentualDesconto3\": 0,\n    \"numeroDiasProtesto\": 0,\n    \"quantidadePagamentoParcial\": 0,\n    \"codigoAutorizacaoValorDivergente\": 0,\n    \"codigoIndicadorValorMaximo\": \"string\",\n    \"valorPercentualMaximo\": 0,\n    \"codigoIndicadorValorMinimo\": \"string\",\n    \"valorPercentualMinimo\": 0\n  }\n]"
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "Base path",
+			"value": "https://api.sicoob.com.br/cobranca-bancaria-pagamento/v3"
+		}
+	]
+}

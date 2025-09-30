@@ -1,0 +1,1369 @@
+{
+	"info": {
+		"_postman_id": "2aa112c9-bd75-41e2-badb-32f54be777d5",
+		"name": "API de envio de TEDs",
+		"description": "A API tem como propósito fornecer serviços para envio de TEDs.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20565799",
+		"_collection_link": "https://sicoobapi.postman.co/workspace/API-Envio-de-TED~613f964f-bfdc-4dd1-92d6-0ee3f9e23408/collection/20565799-2aa112c9-bd75-41e2-badb-32f54be777d5?action=share&source=collection_link&creator=20565799"
+	},
+	"item": [
+		{
+			"name": "Certificado Digital",
+			"item": [],
+			"description": "Na criação de credenciais para as APIs Sicoob será solicitado o certificado do cooperado. O certificado deve atender alguns requisitos para que a criação das credenciais seja bem sucedida, serão aceitos **somente os certificados emitidos pela ICP Brasil** e que tenham sido **emitidos para o próprio cooperado**. Serão extraídas as seguintes informações do certificado: CN (common name/nome comum) e CA (autoridade certificadora).\n\n> É possível conferir as entidades certificadoras que tem como entidade raiz a **ICP Brasil** [**aqui**](https://estrutura.iti.gov.br/).\n\n> Para conferir os detalhes do seu certificado com o OpenSSL você pode executar o comando a baixo usando a chave pública do seu certificado (geralmente no formato .pem).\n> \n> **`openssl x509 -in sua-chave-publica.pem -noout -text`**\n\n> Para extrair os arquivos **.crt**, **.pem** e o arquivo **.key** você pode seguir os passos descritos [**neste tutorial**](https://www.ibm.com/docs/en/arl/9.7?topic=certification-extracting-certificate-keys-from-pfx-file).\n\n#### Como configurar o certificado nas requisições do Postman\n\nÉ necessário abrir as **configurações** do Postman\n\n<img src=\"https://content.pstmn.io/eb63462f-8a8b-45f1-973f-9099482e81d4/MS5wbmc=\" alt=\"\">\n\nSelecionar **settings**\n\n<img src=\"https://content.pstmn.io/d5075ed9-6f0e-4461-8607-8cfc770cdfbb/Mi5wbmc=\" alt=\"\">\n\nSelecionar **Certificates e** **Add certificate**\n\n<img src=\"https://content.pstmn.io/104a18da-c1b3-4051-a309-3225a115f9a6/My5wbmc=\" alt=\"\">\n\nFornecer os seguintes hosts:  \n[https://auth.sicoob.com.br](https://auth.sicoob.com.br) e [https://api.sicoob.com.br](https://api.sicoob.com.br)\n\nInserir a chave pública do certificado (em formato .PEM ou .CER) e chave privada (formato .KEY) para o certificado (ou, alternativamente, você pode usar um PFX Arquivo e a senha correspondente).  \nLembre-se também de fornecer uma senha de sua chave privada, caso você use uma."
+		},
+		{
+			"name": "Requisição de Token",
+			"item": [
+				{
+					"name": "Requisição de Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "Grant_type",
+									"value": "client_credentials",
+									"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "spb_escrita spb_consulta",
+									"description": "Escopos que serão utilizados na requisição, os escopos devem ser separados apenas por espaço, sem escape",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+							"protocol": "https",
+							"host": [
+								"auth",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"cooperado",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "tEndpoint de geração de Token, o token gerado tem a duração de 300 segundos ou 5 minutos devendo ser solicitado novamente ao termino do tempo de expiração."
+					},
+					"response": [
+						{
+							"name": "Requisição de Token - Sucesso",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "Grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "spb_escrita spb_consulta",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"protocol": "https",
+									"host": [
+										"auth",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"cooperado",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"access_token\": \"token\",\r\n    \"expires_in\": 1200,\r\n    \"refresh_expires_in\": 0,\r\n    \"token_type\": \"Bearer\",\r\n    \"id_token\": \"idtoken\",\r\n    \"not-before-policy\": 0,\r\n    \"scope\": \"spb_escrita spb_consulta\"\r\n}"
+						},
+						{
+							"name": "Requisição de Token - Erro",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "Grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "spb_escrita spb_consulta",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"protocol": "https",
+									"host": [
+										"auth",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"cooperado",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"error_description\": \"Possíveis erros de negócio. Verificar validações negociais.\",\r\n    \"error\": \"erro\"\r\n}"
+						}
+					]
+				}
+			],
+			"description": "O Token deve ser gerado para ser anexado as demais requisições da API, sem isso não é possível realizar os próximos passos\n\nPara gerar o Token da API será necessário o **client_id** gerado no momento da criação das suas credenciais pelo portal [<b>Developers Sicoob</b>](https://developers.sicoob.com.br/), você também precisará dos **escopos** de utilização da API e do **certificado** corretamente configurado na requisição SSL.\n\n## **Lista de escopos da API Envio de TED**\n\n> spb_escrita  \n> spb_consulta"
+		},
+		{
+			"name": "Envio da TED",
+			"item": [
+				{
+					"name": "Envio de TED entre clientes.",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "scope",
+									"value": "spb_escrita spb_consulta",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://auth-hom.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) Credêncial de identificação do cliente",
+								"key": "client_id",
+								"value": "{{clientid}}"
+							},
+							{
+								"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+								"key": "x-idempotency-key",
+								"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0"
+							},
+							{
+								"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+								"key": "id_token",
+								"value": "{{idtoken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"description": "(Required) Access_token gerado na autenticação",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"debtorAccount\": {\n    \"ispb\": \"xxxxxxxxxxxxxx\",\n    \"issuer\": \"xxxx\",\n    \"number\": \"xxxxx\",\n    \"accountType\": \"CACC\",\n    \"personType\": \"NATURAL_PERSON\"\n  },\n  \"creditorAccount\": {\n    \"ispb\": \"xxxxxxxxxxxxxx\",\n    \"issuer\": \"xxxx\",\n    \"number\": \"xxxxx\",\n    \"accountType\": \"CACC\",\n    \"personType\": \"NATURAL_PERSON\"\n  },\n  \"creditor\": {\n    \"personType\": \"NATURAL_PERSON\",\n    \"cpfCnpj\": \"XXXXXXXXXXX\",\n    \"name\": \"xxxxxxxxxxxxx\"\n  },\n  \"date\": \"0000-00-00\",\n  \"amount\": \"0.00\",\n  \"finalidade\": \"00000\",\n  \"numeroPa\": 0,\n  \"historico\": \"xxxxxxxxxx\"\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/spb/v2/transferencias",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"spb",
+								"v2",
+								"transferencias"
+							]
+						},
+						"description": "Envio de TED entre clientes."
+					},
+					"response": [
+						{
+							"name": "TED enviada.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+										"key": "x-idempotency-key",
+										"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"debtorAccount\": {\n    \"ispb\": \"<string>\",\n    \"issuer\": \"<string>\",\n    \"number\": \"<string>\",\n    \"accountType\": \"SLRY\",\n    \"personType\": \"NATURAL_PERSON\"\n  },\n  \"creditorAccount\": {\n    \"ispb\": \"<string>\",\n    \"issuer\": \"<number>\",\n    \"number\": \"<string>\",\n    \"accountType\": \"CACC\",\n    \"personType\": \"LEGAL_PERSON\"\n  },\n  \"creditor\": {\n    \"personType\": \"NATURAL_PERSON\",\n    \"cpfCnpj\": \"<string>\",\n    \"name\": \"<string>\"\n  },\n  \"date\": \"<string>\",\n  \"amount\": \"<string>\",\n  \"finalidade\": \"<string>\",\n  \"numeroPa\": \"<number>\",\n  \"historico\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"finalidade\": \"10\",\n    \"numeroPa\": \"0\",\n    \"numeroControleIF\": null,\n    \"mensagemErro\": null,\n    \"idAgendamento\": 4900493,\n    \"numControleIdEmPotencia\": null,\n    \"situacao\": null,\n    \"agendamento\": true,\n    \"historico\": \"TED AGENDADA HISTORICO\",\n    \"tipoPessoaDebito\": \"F\",\n    \"nomePessoaDebito\": \"Maria da Silva de Souza Sauro\",\n    \"numeroCPFCNPJDebito\": \"22253311898\",\n    \"numeroBancoFavorecido\": 1,\n    \"codigoSituacaoAgendamento\": null,\n    \"dataLancamento\": null,\n    \"debtorAccount\": {\n        \"ispb\": \"05856736\",\n        \"issuer\": \"4364\",\n        \"number\": \"1234552\",\n        \"accountType\": \"CACC\",\n        \"personType\": \"NATURAL_PERSON\"\n    },\n    \"creditorAccount\": {\n        \"ispb\": \"00000000\",\n        \"issuer\": \"4002\",\n        \"number\": \"9865306\",\n        \"accountType\": \"CACC\",\n        \"personType\": \"NATURAL_PERSON\"\n    },\n    \"creditor\": {\n        \"personType\": \"NATURAL_PERSON\",\n        \"cpfCnpj\": \"01189657198\",\n        \"name\": \"TEST WANDERSON 31-08\"\n    },\n    \"date\": \"2023-09-01\",\n    \"amount\": \"2.21\"\n}"
+						},
+						{
+							"name": "Não foi possivel o envio da TED.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+										"key": "x-idempotency-key",
+										"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"debtorAccount\": {\n    \"ispb\": \"<string>\",\n    \"issuer\": \"<string>\",\n    \"number\": \"<string>\",\n    \"accountType\": \"SLRY\",\n    \"personType\": \"NATURAL_PERSON\"\n  },\n  \"creditorAccount\": {\n    \"ispb\": \"<string>\",\n    \"issuer\": \"<number>\",\n    \"number\": \"<string>\",\n    \"accountType\": \"CACC\",\n    \"personType\": \"LEGAL_PERSON\"\n  },\n  \"creditor\": {\n    \"personType\": \"NATURAL_PERSON\",\n    \"cpfCnpj\": \"<string>\",\n    \"name\": \"<string>\"\n  },\n  \"date\": \"<string>\",\n  \"amount\": \"<string>\",\n  \"finalidade\": \"<string>\",\n  \"numeroPa\": \"<number>\",\n  \"historico\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"31\",\n        \"title\": \"ERRO_ISPB_ENTRADA\",\n        \"detail\": \"ISPBIF divergente do usuário logado\"\n    }\n]"
+						},
+						{
+							"name": "Ocorreu um erro no servidor.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+										"key": "x-idempotency-key",
+										"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"debtorAccount\": {\n    \"ispb\": \"<string>\",\n    \"issuer\": \"<string>\",\n    \"number\": \"<string>\",\n    \"accountType\": \"SLRY\",\n    \"personType\": \"NATURAL_PERSON\"\n  },\n  \"creditorAccount\": {\n    \"ispb\": \"<string>\",\n    \"issuer\": \"<number>\",\n    \"number\": \"<string>\",\n    \"accountType\": \"CACC\",\n    \"personType\": \"LEGAL_PERSON\"\n  },\n  \"creditor\": {\n    \"personType\": \"NATURAL_PERSON\",\n    \"cpfCnpj\": \"<string>\",\n    \"name\": \"<string>\"\n  },\n  \"date\": \"<string>\",\n  \"amount\": \"<string>\",\n  \"finalidade\": \"<string>\",\n  \"numeroPa\": \"<number>\",\n  \"historico\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias"
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"<string>\",\n        \"title\": \"<string>\",\n        \"detail\": \"<string>\"\n    }\n]"
+						}
+					]
+				}
+			],
+			"description": "Este serviço permite ao parceiro enviar uma TED, sendo ela para o mesmo dia ou para uma data futura.\n\n## Lista de Parâmetros:\n\n- ispb: Número da instituição financeira\n    \n- issuer: Número da agência\n    \n- number: Número da conta\n    \n- accountType: Tipo de conta Ex: CACC (2-Abreviações e Acrônimos)\n    \n- personType: Tipo de pessoa. Ex: NATURAL_PERSON (2-Abreviações e Acrônimos)\n    \n- cpfCpnj: Número do CPF ou CPNJ\n    \n- name: Nome da pessoa\n    \n- date: Data corrente que será emitida a TED\n    \n- amount: Valor em reais da TED\n    \n- finalidade: Define a finalidade da TED. Ex: crédito em conta\n    \n- numeroPA: Número referente ao Ponto de Atendimento da TED\n    \n- historico: Campo livre para informar histórico da TED\n    \n- numeroControleIF: Número de controle da TED enviada\n    \n- mensagemErro: Código referente a um possível erro\n    \n- idAgendamento: Identificador gerado para a TED independente se foi realizada no dia corrente ou posterior\n    \n- agendamento: Identificador gerado para a TED caso esteja com data posterior ao dia corrente\n    \n- numControleIdEmPotencia: Número de controle id potência\n    \n- tipoPessoaDebito: Tipo pessoa debitada\n    \n- nomePessoaDebito: Nome pessoa debitada\n    \n- numeroCPFCPNJDebito: Numero do CPF ou CNPJ do debitado\n    \n- numeroBancoFavorecido: Número do banco favorecido\n    \n- codSituacaoAgendamento: Código da situação do agendamento\n    \n- dataLancamento: Data em que a TED será efetivada, preenchendo quando a TED está agendada para data posterior ao dia corrente."
+		},
+		{
+			"name": "Agendamentos TED",
+			"item": [
+				{
+					"name": "Consulta TED por NumeroControleIF",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "scope",
+									"value": "spb_escrita spb_consulta",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://auth-hom.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"description": "(Required) Credêncial de identificação do cliente",
+								"key": "client_id",
+								"value": "{{client_id}}"
+							},
+							{
+								"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+								"key": "id_token",
+								"value": "{{idToken}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/spb/v2/transferencias/:numeroControleIF",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"spb",
+								"v2",
+								"transferencias",
+								":numeroControleIF"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "numeroControleIF",
+									"value": "number",
+									"description": "(Required) Numéro de Controle IF"
+								}
+							]
+						},
+						"description": "Retorna as informações de uma TED."
+					},
+					"response": [
+						{
+							"name": "TED encontrada.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/:numeroControleIF",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										":numeroControleIF"
+									],
+									"variable": [
+										{
+											"key": "numeroControleIF",
+											"value": "number",
+											"description": "(Required) Numéro de Controle IF"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"resultado\": [\n        {\n            \"finalidade\": \"10\",\n            \"numeroPa\": 10,\n            \"numeroControleIF\": null,\n            \"mensagemErro\": null,\n            \"idAgendamento\": 4900493,\n            \"numControleIdEmPessoa\": null,\n            \"situação\": null,\n            \"agendamento\": true,\n            \"historico\": \"TED AGENDADA HISTORICO\",\n            \"tipoPessoaDebito\": \"F\",\n            \"nomePessoaDebito\": \"MARIA CLIENTE NOME DA SILVA\",\n            \"numeroCPFCNPJDebito\": \"22253311898\",\n            \"numeroBancoFavorecido\": \"1\",\n            \"codigoSituacaoAgendamento\": null,\n            \"debtorAccount\": {\n                \"ispb\": \"05856736\",\n                \"issuer\": \"4364\",\n                \"number\": \"1234552\",\n                \"accountType\": \"CACC\",\n                \"personType\": \"NATURAL_PERSON\"\n            },\n            \"creditorAccount\": {\n                \"ispb\": \"00000000\",\n                \"issuer\": \"4002\",\n                \"number\": \"9865306\",\n                \"accountType\": \"CACC\",\n                \"personType\": \"NATURAL_PERSON\"\n            },\n            \"creditor\": {\n                \"personType\": \"NATURAL_PERSON\",\n                \"cpfCnpj\": \"01189657198\",\n                \"name\": \"NOME CLIENTE\"\n            },\n            \"date\": \"2023-09-01\",\n            \"amount\": \"2.21\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "TED não encontrada.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/:numeroControleIF",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										":numeroControleIF"
+									],
+									"variable": [
+										{
+											"key": "numeroControleIF",
+											"value": "number",
+											"description": "(Required) Numéro de Controle IF"
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"400\",\n        \"title\": \"Erro negocial\",\n        \"detail\": \"Ted não encontrada com o NumeroControleIF: 4364230322101842774\"\n    }\n]"
+						},
+						{
+							"name": "Ocorreu um erro no servidor.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/:numeroControleIF",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										":numeroControleIF"
+									],
+									"variable": [
+										{
+											"key": "numeroControleIF",
+											"value": "number",
+											"description": "(Required) Numéro de Controle IF"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"500\",\n        \"title\": \"Internal Server Error\",\n        \"detail\": \"Possíveis erros de ambiente\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Consulta TED pelo atributo idAgendamento.",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "scope",
+									"value": "spb_escrita spb_consulta",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://auth-hom.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"description": "(Required) Credêncial de identificação do cliente",
+								"key": "client_id",
+								"value": "{{client_id}}"
+							},
+							{
+								"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+								"key": "id_token",
+								"value": "{{id_token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"spb",
+								"v2",
+								"transferencias",
+								"agendamentos",
+								":idAgendamento"
+							],
+							"variable": [
+								{
+									"key": "idAgendamento",
+									"value": "integer",
+									"description": "(Required) O codigo corresponde ao idAgendamento."
+								}
+							]
+						},
+						"description": "Retorna as informações de uma TED agendada."
+					},
+					"response": [
+						{
+							"name": "TED encontrada.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{id_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										"agendamentos",
+										":idAgendamento"
+									],
+									"variable": [
+										{
+											"key": "idAgendamento",
+											"value": "integer",
+											"description": "(Required) O codigo corresponde ao idAgendamento."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"resultado\": [\n        {\n            \"finalidade\": \"10\",\n            \"numeroPa\": \"0\",\n            \"numeroControleIF\": null,\n            \"mensagemErro\": null,\n            \"idAgendamento\": 4900493,\n            \"numControleIdEmPotencia\": null,\n            \"situação\": \"AGENDADO\",\n            \"agendamento\": true,\n            \"historico\": \"TED AGENDADA HISTORICO\",\n            \"tipoPessoaDebito\": \"F\",\n            \"nomePessoaDebito\": \"MARIA CLIENTE NOME DA SILVA\",\n            \"numeroCPFCNPJDebito\": \"22253311898\",\n            \"numeroBancoFavorecido\": \"1\",\n            \"codigoSituacaoAgendamento\": null,\n            \"debtorAccount\": {\n                \"ispb\": \"05856736\",\n                \"issuer\": \"4364\",\n                \"number\": \"1234552\",\n                \"accountType\": \"CACC\",\n                \"personType\": \"NATURAL_PERSON\"\n            },\n            \"creditorAccount\": {\n                \"ispb\": \"00000000\",\n                \"issuer\": \"4002\",\n                \"number\": \"9865306\",\n                \"accountType\": \"CACC\",\n                \"personType\": \"NATURAL_PERSON\"\n            },\n            \"creditor\": {\n                \"personType\": \"NATURAL_PERSON\",\n                \"cpfCnpj\": \"01189657198\",\n                \"name\": \"NOME CLIENTE\"\n            },\n            \"date\": \"2023-09-01\",\n            \"amount\": \"2.21\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "Não foi possivel consultar da Ted.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										"agendamentos",
+										":idAgendamento"
+									],
+									"variable": [
+										{
+											"key": "idAgendamento",
+											"value": "integer",
+											"description": "(Required) O codigo corresponde ao idAgendamento."
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"400\",\n        \"title\": \"Erro negocial\",\n        \"detail\": \"Ted não encontrada com o idAgendamento:4444\"\n    }\n]"
+						},
+						{
+							"name": "Ocorreu um erro no servidor.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										"agendamentos",
+										":idAgendamento"
+									],
+									"variable": [
+										{
+											"key": "idAgendamento",
+											"value": "integer",
+											"description": "(Required) O codigo corresponde ao idAgendamento."
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"500\",\n        \"title\": \"Internal Server Error\",\n        \"detail\": \"Possíveis erros de ambiente.\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Cancela uma TED com o status de agendada.",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "scope",
+									"value": "spb_escrita spb_consulta",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "https://auth-hom.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "(Required) Credêncial de identificação do cliente",
+								"key": "client_id",
+								"value": "{{client_id}}"
+							},
+							{
+								"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+								"key": "x-idempotency-key",
+								"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0"
+							},
+							{
+								"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+								"key": "id_token",
+								"value": "{{idtoken}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"spb",
+								"v2",
+								"transferencias",
+								"agendamentos",
+								":idAgendamento"
+							],
+							"variable": [
+								{
+									"key": "idAgendamento",
+									"value": "integer",
+									"description": "(Required) O codigo corresponde ao idAgendamento."
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "TED encontrada.",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+										"key": "x-idempotency-key",
+										"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0",
+										"disabled": true
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										"agendamentos",
+										":idAgendamento"
+									],
+									"variable": [
+										{
+											"key": "idAgendamento",
+											"value": "integer",
+											"description": "(Required) O codigo corresponde ao idAgendamento."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"resultado\": [\n        {\n            \"mensagem\": \"string\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "TED não encontrada.",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "{{clientid}}"
+									},
+									{
+										"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+										"key": "x-idempotency-key",
+										"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0",
+										"disabled": true
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "{{idtoken}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										"agendamentos",
+										":idAgendamento"
+									],
+									"variable": [
+										{
+											"key": "idAgendamento",
+											"value": "integer",
+											"description": "(Required) O codigo corresponde ao idAgendamento."
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"string\",\n        \"title\": \"string\",\n        \"detail\": \"string\"\n    }\n]"
+						},
+						{
+							"name": "Ocorreu um erro no servidor.",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"description": "(Required) Credêncial de identificação do cliente",
+										"key": "client_id",
+										"value": "xxxx-xxxx-xxxx-xxxx"
+									},
+									{
+										"description": "(Required) Codigo de controle idpotencia UUIDV4, deve ser unico para cada requisição.",
+										"key": "x-idempotency-key",
+										"value": "657e23a0-d14c-481e-a11c-3c718ff5b3c0"
+									},
+									{
+										"description": "(Required) Token JWT(id_token) gerado na autenticação.",
+										"key": "id_token",
+										"value": "xxxx-xxxx-xxxx"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									},
+									{
+										"description": "Added as a part of security scheme: oauth2",
+										"key": "Authorization",
+										"value": "<token>"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/spb/v2/transferencias/agendamentos/:idAgendamento",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"spb",
+										"v2",
+										"transferencias",
+										"agendamentos",
+										":idAgendamento"
+									],
+									"variable": [
+										{
+											"key": "idAgendamento",
+											"value": "integer",
+											"description": "(Required) O codigo corresponde ao idAgendamento."
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"code\": \"<string>\",\n        \"title\": \"<string>\",\n        \"detail\": \"<string>\"\n    }\n]"
+						}
+					]
+				}
+			],
+			"description": "Este serviço permite ao parceiro realizar a consulta de uma TED através do **numeroControleIF**.\n\n> numeroControleIF: Número de controle IF"
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://apic-homol.sicoob.com.br/sicoob/cooperado/spb/v2"
+		}
+	]
+}

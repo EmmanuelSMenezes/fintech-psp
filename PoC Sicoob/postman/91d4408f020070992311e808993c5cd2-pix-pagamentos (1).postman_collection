@@ -1,0 +1,1328 @@
+{
+	"info": {
+		"_postman_id": "8f30da1d-c4e8-446b-b2fc-d04baba8df8d",
+		"name": "API de Transferência PIX",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20565799",
+		"_collection_link": "https://sicoobapi.postman.co/workspace/API-Transfer%25C3%25AAncia-PIX~d7827bcb-38a5-41d4-9446-91a972454527/collection/20565799-8f30da1d-c4e8-446b-b2fc-d04baba8df8d?action=share&source=collection_link&creator=20565799"
+	},
+	"item": [
+		{
+			"name": "Certificado Digital",
+			"item": [],
+			"description": "Na criação de credenciais para as APIs Sicoob será solicitado o certificado do cooperado. O certificado deve atender alguns requisitos para que a criação das credenciais seja bem sucedida, serão aceitos **somente os certificados emitidos pela ICP Brasil** e que tenham sido **emitidos para o próprio cooperado**. Serão extraídas as seguintes informações do certificado: CN (common name/nome comum) e CA (autoridade certificadora).\n\n> É possível conferir as entidades certificadoras que tem como entidade raiz a **ICP Brasil** [**aqui**](https://estrutura.iti.gov.br/).\n\n> Para conferir os detalhes do seu certificado com o OpenSSL você pode executar o comando a baixo usando a chave pública do seu certificado (geralmente no formato .pem).\n> \n> **`openssl x509 -in sua-chave-publica.pem -noout -text`**\n\n> Para extrair os arquivos **.crt**, **.pem** e o arquivo **.key** você pode seguir os passos descritos [**neste tutorial**](https://www.ibm.com/docs/en/arl/9.7?topic=certification-extracting-certificate-keys-from-pfx-file).\n\n#### Como configurar o certificado nas requisições do Postman\n\nÉ necessário abrir as **configurações** do Postman\n\n<img src=\"https://content.pstmn.io/eb63462f-8a8b-45f1-973f-9099482e81d4/MS5wbmc=\" alt=\"\">\n\nSelecionar **settings**\n\n<img src=\"https://content.pstmn.io/d5075ed9-6f0e-4461-8607-8cfc770cdfbb/Mi5wbmc=\" alt=\"\">\n\nSelecionar **Certificates e** **Add certificate**\n\n<img src=\"https://content.pstmn.io/104a18da-c1b3-4051-a309-3225a115f9a6/My5wbmc=\" alt=\"\">\n\nFornecer os seguintes hosts:  \n[https://auth.sicoob.com.br](https://auth.sicoob.com.br) e [https://api.sicoob.com.br](https://api.sicoob.com.br)\n\nInserir a chave pública do certificado (em formato .PEM ou .CER) e chave privada (formato .KEY) para o certificado (ou, alternativamente, você pode usar um PFX Arquivo e a senha correspondente).  \nLembre-se também de fornecer uma senha de sua chave privada, caso você use uma."
+		},
+		{
+			"name": "Requisição de Token",
+			"item": [
+				{
+					"name": "Requisição de Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Retorno é Status 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Possui access_token\", function () {\r",
+									"     pm.expect(pm.response.text()).to.include(\"access_token\");  \r",
+									"     let jsonData = pm.response.json();  \r",
+									"     pm.environment.set(\"token\",jsonData.access_token);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "pixpagamentos_escrita pixpagamentos_webhook pixpagamentos_consulta",
+									"description": "Escopos Transferência PIX que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+							"protocol": "https",
+							"host": [
+								"auth",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"cooperado",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "Endpoint de geração de Token, o token gerado tem a duração de 300 segundos ou 5 minutos devendo ser solicitado novamente ao término do tempo de expiração."
+					},
+					"response": [
+						{
+							"name": "Requisição de Token",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "pixpagamentos_escrita pixpagamentos_webhook pixpagamentos_consulta",
+											"description": "Escopos Transferência PIX que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"protocol": "https",
+									"host": [
+										"auth",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"cooperado",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Cache-Control",
+									"value": "no-store"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "1; mode=block"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "SAMEORIGIN"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "no-referrer"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 24 Feb 2023 20:10:06 GMT"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "75"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"access_token\": \"token\",\n  \"expires_in\": 300,\n  \"refresh_expires_in\": 0,\n  \"token_type\": \"Bearer\",\n  \"not-before-policy\": 0,\n  \"scope\": \"pixpagamentos_escrita pixpagamentos_webhook pixpagamentos_consulta\"\n}"
+						}
+					]
+				}
+			],
+			"description": "O Token deve ser gerado para ser anexado as demais requisições da API, sem isso não é possível realizar os próximos passos\n\nPara gerar o Token da API será necessário o **client_id** gerado no momento da criação das suas credenciais pelo portal [<b>Developers Sicoob</b>](https://), você também precisará dos **escopos** de utilização da API e do **certificado** corretamente configurado na requisição SSL.\n\n## **Lista de escopos da API de Transferência PIX**\n\n> pixpagamentos_escrita\n> pixpagamentos_webhook\n> pixpagamentos_consulta"
+		},
+		{
+			"name": "Pagamentos",
+			"item": [
+				{
+					"name": "Consultar pagamento pix através do endToEndId.",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text",
+								"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+							},
+							{
+								"key": "client_id",
+								"value": "{{client_ID}}",
+								"type": "text",
+								"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/:id",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pix-pagamentos",
+								"v2",
+								"pagamentos",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "string",
+									"description": "Id fim a fim da transação"
+								}
+							]
+						},
+						"description": "Endpoint para consultar um pagamento Pix através de um e2eid."
+					},
+					"response": [
+						{
+							"name": "Dados do Pix efetuado.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/:id",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": null,
+											"description": "Id fim a fim da transação"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"string\",\n  \"estado\": \"NÃO_REALIZADO\",\n  \"valor\": \"1,99\",\n  \"detalheRejeicao\": \"string\",\n  \"descricao\": \"string\",\n  \"horario\": \"2023-11-22T19:41:03.704Z\",\n  \"origem\": {\n    \"ispb\": \"11111111\",\n    \"cpfCnpj\": \"31114574120\",\n    \"nome\": \"string\",\n    \"conta\": \"5\",\n    \"agencia\": \"6\",\n    \"tipo\": \"CORRENTE\",\n    \"chaveDict\": \"string\"\n  },\n  \"destino\": {\n    \"ispb\": \"00000000\",\n    \"cpfCnpj\": \"27326830176\",\n    \"nome\": \"string\",\n    \"conta\": \"6\",\n    \"agencia\": \"0\",\n    \"tipo\": \"CORRENTE\",\n    \"chaveDict\": \"string\",\n    \"boolFavorecido\": false\n  },\n  \"dataAgendamento\": \"2021-06-30\"\n}"
+						},
+						{
+							"name": "Requisição de participante autenticado que viola alguma regra de autorização.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/:id",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": null,
+											"description": "Id fim a fim da transação"
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://pix.bcb.gov.br/api/v2/error/AcessoNegado\",\n  \"title\": \"Acesso Negado\",\n  \"status\": 403,\n  \"detail\": \"Requisição de participante autenticado que viola alguma regra de autorização.\"\n}"
+						},
+						{
+							"name": "Recurso solicitado não foi encontrado.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/:id",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": null,
+											"description": "Id fim a fim da transação"
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://pix.bcb.gov.br/api/v2/error/NaoEncontrado\",\n  \"title\": \"Não Encontrado\",\n  \"status\": 404,\n  \"detail\": \"Entidade não encontrada.\"\n}"
+						},
+						{
+							"name": "Serviço não está disponível no momento. Serviço solicitado pode estar em manutenção ou fora da janela de funcionamento.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/:id",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "string",
+											"description": "Id fim a fim da transação"
+										}
+									]
+								}
+							},
+							"status": "Service Unavailable",
+							"code": 503,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://pix.bcb.gov.br/api/v2/error/ServicoIndisponivel\",\n  \"title\": \"Serviço Indisponível\",\n  \"status\": 503,\n  \"detail\": \"Serviço não está disponível no momento. Serviço solicitado pode estar em manutenção ou fora da janela de funcionamento.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Iniciar pagamento por meio de chave DICT",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text",
+								"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+							},
+							{
+								"key": "client_id",
+								"value": "{{client_ID}}",
+								"type": "text",
+								"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"chave\": \"string\",\r\n  \"dataAgendamento\": \"2021-06-30\"\r\n}"
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pix-pagamentos",
+								"v2",
+								"pagamentos"
+							]
+						},
+						"description": "Iniciar pagamento por meio de chave DICT"
+					},
+					"response": [
+						{
+							"name": "Pagamento iniciciado com sucesso.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"chave\": \"string\",\r\n  \"dataAgendamento\": \"2021-06-30\"\r\n}"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"endToEndId\": \"PRKSZKGMMo4PXrQAkAOmte8wTsErfjoX\",\n  \"chave\": \"28133847044\",\n  \"tipo\": \"CPF\",\n  \"proprietario\": {\n    \"identificador\": \"43063218522581\",\n    \"nome\": \"kKJ BA2Cfswz91Dhd*\\\\bartmL%8p:ifN%:CA5+f,07z)jg5ghjbqv'i(Ib3sI-3zHZzw'_lH!R\",\n    \"tipo\": \"FISICO\"\n  }\n}"
+						},
+						{
+							"name": "Serviço não está disponível no momento. Serviço solicitado pode estar em manutenção ou fora da janela de funcionamento.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"chave\": \"string\",\r\n  \"dataAgendamento\": \"2021-06-30\"\r\n}"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos"
+									]
+								}
+							},
+							"status": "Service Unavailable",
+							"code": 503,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://pix.bcb.gov.br/api/v2/error/ServicoIndisponivel\",\n  \"title\": \"Serviço Indisponível\",\n  \"status\": 503,\n  \"detail\": \"Serviço não está disponível no momento. Serviço solicitado pode estar em manutenção ou fora da janela de funcionamento.\"\n}"
+						},
+						{
+							"name": "Iniciar pagamento por meio de chave DICT",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados.",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"chave\": \"string\",\r\n  \"dataAgendamento\": \"2021-06-30\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "45cac06b655e5a1802a28af7"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Nov 2023 19:44:24 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183b2b8a2b7207c6b0bc1353cd0c8e924f178ba89fbd8629e23b10bf68213729eec230b789f778f477752d68ab01042ac4a7; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://pix.bcb.gov.br/api/v2/error/ServicoIndisponivel\",\n  \"title\": \"Serviço Indisponível\",\n  \"status\": 503,\n  \"detail\": \"Serviço não está disponível no momento. Serviço solicitado pode estar em manutenção ou fora da janela de funcionamento.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Efetivar um pagamento iniciado pela API de transferência",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text",
+								"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+							},
+							{
+								"key": "client_id",
+								"value": "{{client_ID}}",
+								"type": "text",
+								"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"endToEndId\": \"7oR4CqZBLS2RwLeR91XsTmzfbWYnvnZ9\",\r\n  \"valor\": \"1,99\",\r\n  \"descricao\": \"string\",\r\n  \"repeticao\": true,\r\n  \"meioIniciacao\": \"MANUAL\",\r\n  \"dataAgendamento\": \"2021-06-30\",\r\n  \"origem\": {\r\n    \"ispb\": \"22222222\",\r\n    \"cpfCnpj\": \"78780818047162\",\r\n    \"nome\": \"string\",\r\n    \"conta\": \"3\",\r\n    \"agencia\": \"1\",\r\n    \"tipo\": \"CORRENTE\",\r\n    \"chaveDict\": \"string\"\r\n  },\r\n  \"destino\": {\r\n    \"ispb\": \"33333333\",\r\n    \"cpfCnpj\": \"94401750091863\",\r\n    \"nome\": \"string\",\r\n    \"conta\": \"2\",\r\n    \"agencia\": \"3\",\r\n    \"tipo\": \"CORRENTE\",\r\n    \"chaveDict\": \"string\",\r\n    \"boolFavorecido\": false\r\n  }\r\n}"
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/confirmacao",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pix-pagamentos",
+								"v2",
+								"pagamentos",
+								"confirmacao"
+							]
+						},
+						"description": "Iniciar pagamento por meio de chave DICT"
+					},
+					"response": [
+						{
+							"name": "Iniciar pagamento por meio de chave DICT Copy",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Especifica o tipo de mídia do conteúdo da requisição ou resposta. Ele informa ao servidor qual formato os dados estão sendo enviados ou solicitados."
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text",
+										"description": "Indica os tipos de mídia que o cliente (você) está disposto a aceitar na resposta da API. Ele permite que você solicite uma resposta em um formato específico."
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text",
+										"description": "Você envia informações de autenticação para a API, permitindo que você acesse recursos protegidos ou execute ações específicas."
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_ID}}",
+										"type": "text",
+										"description": "Este é um identificador único fornecido pelo Portal Developers Sicoob ao servidor como parte do processo de autenticação. "
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"endToEndId\": \"7oR4CqZBLS2RwLeR91XsTmzfbWYnvnZ9\",\r\n  \"valor\": \"1,99\",\r\n  \"descricao\": \"string\",\r\n  \"repeticao\": true,\r\n  \"meioIniciacao\": \"MANUAL\",\r\n  \"dataAgendamento\": \"2021-06-30\",\r\n  \"origem\": {\r\n    \"ispb\": \"22222222\",\r\n    \"cpfCnpj\": \"78780818047162\",\r\n    \"nome\": \"string\",\r\n    \"conta\": \"3\",\r\n    \"agencia\": \"1\",\r\n    \"tipo\": \"CORRENTE\",\r\n    \"chaveDict\": \"string\"\r\n  },\r\n  \"destino\": {\r\n    \"ispb\": \"33333333\",\r\n    \"cpfCnpj\": \"94401750091863\",\r\n    \"nome\": \"string\",\r\n    \"conta\": \"2\",\r\n    \"agencia\": \"3\",\r\n    \"tipo\": \"CORRENTE\",\r\n    \"chaveDict\": \"string\",\r\n    \"boolFavorecido\": false\r\n  }\r\n}"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/confirmacao",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										"confirmacao"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "45cac06b655e5a9a057b2541"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Nov 2023 19:46:34 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183b2b8a2b7207c6b0bc1353cd0c8e924f178ba89fbd8629e23b10bf68213729eec230b789f778f477752d68ab01042ac4a7; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"string\",\n  \"estado\": \"NÃO_REALIZADO\",\n  \"valor\": \"1,99\",\n  \"detalheRejeicao\": \"string\",\n  \"descricao\": \"string\",\n  \"horario\": \"2023-11-22T19:46:05.370Z\",\n  \"origem\": {\n    \"ispb\": \"11111111\",\n    \"cpfCnpj\": \"84870133238025\",\n    \"nome\": \"string\",\n    \"conta\": \"0\",\n    \"agencia\": \"5\",\n    \"tipo\": \"CORRENTE\",\n    \"chaveDict\": \"string\"\n  },\n  \"destino\": {\n    \"ispb\": \"77777777\",\n    \"cpfCnpj\": \"97321496787986\",\n    \"nome\": \"string\",\n    \"conta\": \"1\",\n    \"agencia\": \"0\",\n    \"tipo\": \"CORRENTE\",\n    \"chaveDict\": \"string\",\n    \"boolFavorecido\": false\n  },\n  \"dataAgendamento\": \"2021-06-30\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Configurar o Webhook PIX",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "client_id",
+								"value": "{{client_id}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\"\r\n}"
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/webhook",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pix-pagamentos",
+								"v2",
+								"pagamentos",
+								"webhook"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Configurar o Webhook PIX",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "client_id",
+										"value": "{{client_id}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\"\r\n}"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/webhook",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"webhook"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "65946074655e5ae806002303"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Nov 2023 19:47:52 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183b2b8a2b7207c6b0bc1353cd0c8e924f178ba89fbd8629e23b10bf68213729eec230b789f778f477752d68ab01042ac4a7; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Exibir informações acerca do Webhook PIX",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "client_id",
+								"value": "{{client_id}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\"\r\n}"
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/webhook",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pix-pagamentos",
+								"v2",
+								"pagamentos",
+								"webhook"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Exibir informações acerca do Webhook PIX",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "client_id",
+										"value": "{{client_id}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\"\r\n}"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/webhook",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										"webhook"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "xml",
+							"header": [
+								{
+									"key": "X-Backside-Transport",
+									"value": "FAIL FAIL"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/xml"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183b2b8a2b7207c6b0bc1353cd0c8e924f178ba89fbd8629e23b10bf68213729eec230b789f778f477752d68ab01042ac4a7; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\",\r\n  \"criacao\": \"2020-11-11T10:15:00.358Z\"\r\n}"
+						}
+					]
+				},
+				{
+					"name": "Cancelar o webhook PIX",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "client_id",
+								"value": "{{client_id}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\"\r\n}"
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/webhook",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"pix-pagamentos",
+								"v2",
+								"pagamentos",
+								"webhook"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Configurar o Webhook PIX Copy 2",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "client_id",
+										"value": "{{client_id}}",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"webhookUrl\": \"https://pix.example.com/api/webhook/\"\r\n}"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/pix-pagamentos/v2/pagamentos/webhook",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"pix-pagamentos",
+										"v2",
+										"pagamentos",
+										"webhook"
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "45cac06b655e5b170dd12bd0"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Nov 2023 19:48:39 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183b2b8a2b7207c6b0bc1353cd0c8e924f178ba89fbd8629e23b10bf68213729eec230b789f778f477752d68ab01042ac4a7; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://api.sicoob.com.br/pix/pagamentos-pix/v2"
+		}
+	]
+}

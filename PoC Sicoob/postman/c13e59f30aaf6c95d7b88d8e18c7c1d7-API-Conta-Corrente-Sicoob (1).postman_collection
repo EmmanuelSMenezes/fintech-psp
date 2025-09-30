@@ -1,0 +1,577 @@
+{
+	"info": {
+		"_postman_id": "9a589e29-fe5a-45a4-8816-a1ce157b90dd",
+		"name": "API Conta Corrente Sicoob",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20565799",
+		"_collection_link": "https://sicoobapi.postman.co/workspace/API-Conta-Corrente~4c139511-ac89-4dc0-951c-4515731c37dc/collection/20565799-9a589e29-fe5a-45a4-8816-a1ce157b90dd?action=share&source=collection_link&creator=20565799"
+	},
+	"item": [
+		{
+			"name": "Certificado Digital",
+			"item": [],
+			"description": "Na criação de credenciais para as APIs Sicoob será solicitado o certificado do cooperado. O certificado deve atender alguns requisitos para que a criação das credenciais seja bem sucedida, serão aceitos **somente os certificados emitidos pela ICP Brasil** e que tenham sido **emitidos para o próprio cooperado**. Serão extraídas as seguintes informações do certificado: CN (common name/nome comum) e CA (autoridade certificadora).\n\nPara que a criação das credenciais seja bem sucedida, deve-se inserir somente a chave pública do certificado no formato .PEM ou .CER, caso seja selecionado arquivo de formato divergente não será possível prosseguir.\n\n> É possível conferir as entidades certificadoras que tem como entidade raiz a **ICP Brasil** [&lt;strong&gt;aqui&lt;/strong&gt;](https://estrutura.iti.gov.br/). \n  \n> Para conferir os detalhes do seu certificado com o OpenSSL você pode executar o comando a baixo usando a chave pública do seu certificado (geralmente no formato .pem). \n  \n> Para extrair os arquivos **.crt**, **.pem** e o arquivo **.key** você pode seguir os passos descritos [&lt;strong&gt;neste tutorial&lt;/strong&gt;](https://www.ibm.com/docs/en/arl/9.7?topic=certification-extracting-certificate-keys-from-pfx-file). \n  \n\n#### Como configurar o certificado nas requisições do Postman\n\nÉ necessário abrir as **configurações** do Postman\n\n<img src=\"https://content.pstmn.io/eb63462f-8a8b-45f1-973f-9099482e81d4/MS5wbmc=\">\n\nSelecionar **settings**\n\n<img src=\"https://content.pstmn.io/d5075ed9-6f0e-4461-8607-8cfc770cdfbb/Mi5wbmc=\">\n\nSelecionar **Certificates e** **Add certificate**\n\n<img src=\"https://content.pstmn.io/104a18da-c1b3-4051-a309-3225a115f9a6/My5wbmc=\">\n\nFornecer os seguintes hosts:  \n[https://auth.sicoob.com.br](https://auth.sicoob.com.br) e [https://api.sicoob.com.br](https://api.sicoob.com.br)\n\nInserir a chave pública do certificado (em formato .PEM ou .CER) e chave privada (formato .KEY) para o certificado (ou, alternativamente, você pode usar um PFX Arquivo e a senha correspondente).  \nLembre-se também de fornecer uma senha de sua chave privada, caso você use uma."
+		},
+		{
+			"name": "Requisição de Token",
+			"item": [
+				{
+					"name": "Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{client_ID}}",
+									"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "cco_transferencias cco_consulta openid",
+									"description": "Escopos que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{auth.url.contacorrente}}/auth/realms/cooperado/protocol/openid-connect/token",
+							"host": [
+								"{{auth.url.contacorrente}}"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"cooperado",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "O token gerado tem a duração de 300 segundos ou 5 minutos devendo ser solicitado novamente ao término do tempo de expiração."
+					},
+					"response": [
+						{
+							"name": "Token",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_ID}}",
+											"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "cco_transferencias cco_consulta openid",
+											"description": "Escopos que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token",
+									"protocol": "https",
+									"host": [
+										"auth",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"cooperado",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Cache-Control",
+									"value": "no-store"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "1; mode=block"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "SAMEORIGIN"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "no-referrer"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 24 Feb 2023 20:11:06 GMT"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "75"
+								}
+							],
+							"cookie": [],
+							"body": "{\"access_token\":\"token\",\n\"expires_in\":300,\n\"refresh_expires_in\":0,\n\"token_type\":\"Bearer\",\n\"id_token\":\"id token\",\n\"not-before-policy\":0,\n\"scope\":\"cco_extrato cco_saldo\"}"
+						}
+					]
+				}
+			],
+			"description": "O access_token e o id_token deve ser gerado para ser anexado as demais requisições, sem isso não é possível realizar os próximos passos.\n\nPara gerar o Access Token da API será necessário o **client_id** gerado no momento da criação das suas credenciais pelo portal [<b>Developers Sicoob</b>](https://developers.sicoob.com.br/), você também precisará dos **escopos** de utilização da API e do **certificado** corretamente configurado na requisição SSL.\n\n## **Lista de escopos da API Conta Corrente**\n\n> cco_transferencias  \n> cco_consulta\n> openid"
+		},
+		{
+			"name": "Extrato",
+			"item": [
+				{
+					"name": "Consulta de extrato de acordo com o mes, ano e dia agrupado de acordo com o tipo",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clienteID}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/conta-corrente/v4/extrato/{mes}/{ano}?diaInicial=01&diaFinal=05&agruparCNAB=true&numeroContaCorrente=string",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"conta-corrente",
+								"v4",
+								"extrato",
+								"{mes}",
+								"{ano}"
+							],
+							"query": [
+								{
+									"key": "diaInicial",
+									"value": "01",
+									"description": "integer"
+								},
+								{
+									"key": "diaFinal",
+									"value": "05",
+									"description": "integer"
+								},
+								{
+									"key": "agruparCNAB",
+									"value": "true",
+									"description": "boolean"
+								},
+								{
+									"key": "numeroContaCorrente",
+									"value": "string",
+									"description": "Número da conta corrente (obrigatório)"
+								}
+							]
+						},
+						"description": "O recurso de Extrato retorna todas as transações ocorridas em uma conta corrente no devido mês e ano.\n\nA consulta está limitada a três meses anteriores."
+					},
+					"response": [
+						{
+							"name": "200",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clienteID}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/conta-corrente/v4/extrato/{mes}/{ano}?diaInicial=01&diaFinal=05&agruparCNAB=true&numeroContaCorrente=string",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"conta-corrente",
+										"v4",
+										"extrato",
+										"{mes}",
+										"{ano}"
+									],
+									"query": [
+										{
+											"key": "diaInicial",
+											"value": "01",
+											"description": "integer"
+										},
+										{
+											"key": "diaFinal",
+											"value": "05",
+											"description": "integer"
+										},
+										{
+											"key": "agruparCNAB",
+											"value": "true",
+											"description": "boolean"
+										},
+										{
+											"key": "numeroContaCorrente",
+											"value": "string",
+											"description": "Número da conta corrente"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "cf00c5216380cf4a00e9b5b5"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 25 Nov 2022 14:20:58 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183be9510182d21221406dc944dd4e687be1d7ae2ab17b5bf93181db574e8c21d04b67228ab2699ccacda03e566eee104676; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"saldoAtual\": \"string\",\n  \"saldoBloqueado\": \"string\",\n  \"saldoLimite\": \"string\",\n  \"saldoAnterior\": \"string\",\n  \"saldoBloqueioJudicial\": \"string\",\n  \"saldoBloqueioJudicialAnterior\": \"string\",\n  \"transacoes\": [\n    {\n      \"tipo\": \"string\",\n      \"valor\": \"string\",\n      \"data\": \"string\",\n      \"dataLote\": \"string\",\n      \"descricao\": \"string\",\n      \"numeroDocumento\": \"string\",\n      \"cpfCnpj\": \"string\",\n      \"descInfComplementar\": \"string\"\n    }\n  ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Saldo",
+			"item": [
+				{
+					"name": "Consulta de saldo PF ou PJ",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clienteID}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/conta-corrente/v4/saldo?numeroContaCorrente=string",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"conta-corrente",
+								"v4",
+								"saldo"
+							],
+							"query": [
+								{
+									"key": "numeroContaCorrente",
+									"value": "string",
+									"description": "Número da conta corrente"
+								}
+							]
+						},
+						"description": "O recurso de Saldo retorna o valor disponível atual e o limite de crédito (cheque especial) de uma conta corrente.\n\nA consulta está limitada a três meses anteriores."
+					},
+					"response": [
+						{
+							"name": "200",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{clienteID}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/conta-corrente/v4/saldo?numeroContaCorrente=string",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"conta-corrente",
+										"v4",
+										"saldo"
+									],
+									"query": [
+										{
+											"key": "numeroContaCorrente",
+											"value": "string",
+											"description": "Número da conta corrente"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Client-IP",
+									"value": "10.210.95.2"
+								},
+								{
+									"key": "X-Global-Transaction-ID",
+									"value": "197368ee6380d10e0081c5b5"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								},
+								{
+									"key": "WWW-Authenticate",
+									"value": "Bearer error='invalid_token'"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 25 Nov 2022 14:28:30 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "TS013eb68f=017a3a183b1e19f839c0962dad808a5701f2ba3c5451b192d431f1ec236cc17fca52c790b2e1321abdb47055b4feed8dd15af94a80; Path=/; Domain=.api.sicoob.com.br"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"resultado\": {\n    \"saldo\": 0,\n    \"saldoLimite\": 0\n  }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Transferência entre contas",
+			"item": [
+				{
+					"name": "Método que transfere os valores entre contas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{clienteID}}",
+								"type": "text"
+							},
+							{
+								"key": "id_token",
+								"value": "{{idToken}}",
+								"description": "Objeto destinado a autenticação do OpenBanking",
+								"type": "text"
+							},
+							{
+								"key": "x-idempotency-key",
+								"value": "{{x-idempotency-key}}",
+								"description": "Objeto destinado para a validação do LimitControl. Não pode ser duplicado.",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"amount\": 0,\r\n  \"date\": \"2024-04-01T18:03:33.060Z\",\r\n  \"debtorAccount\": {\r\n    \"issuer\": \"string\",\r\n    \"number\": \"string\",\r\n    \"accountType\": 0,\r\n    \"personType\": 0\r\n  },\r\n  \"creditorAccount\": {\r\n    \"issuer\": \"string\",\r\n    \"number\": \"string\",\r\n    \"accountType\": 0,\r\n    \"personType\": 0\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/conta-corrente/v4/transferencias",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"conta-corrente",
+								"v4",
+								"transferencias"
+							]
+						},
+						"description": "**Amount**\namount number (number): Quantidade a ser transferida\n\n**Date**\ndate (string$date-time): Data da Transferência\n\n**debtorAccount**\ndebtorAccount (string): Numero da Cooperativa de Debito\nnumber (string): Numero da Conta Corrente de Debito\naccountType (integer): Tipo de Conta de Debito\npersonType (integer): Tipo de Pessoa de Debito\n\n**creditorAccount**\ncreditorAccount: Numero da Cooperativa de Crédito\nnumber (string): Numero da Conta Corrente de Crédito\naccountType (integer):Tipo de Conta de Crédito\npersonType (integer):Tipo de Pessoa de Crédito"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "api.url.contacorrente",
+			"value": "https://api.sicoob.com.br/conta-corrente/v2"
+		}
+	]
+}

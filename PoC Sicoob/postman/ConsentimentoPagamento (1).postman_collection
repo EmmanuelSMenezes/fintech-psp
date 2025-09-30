@@ -1,0 +1,699 @@
+{
+	"info": {
+		"_postman_id": "41def53c-c8db-48a4-8f4b-d876dd90c830",
+		"name": "API Consentimento Pagamento",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20565799",
+		"_collection_link": "https://sicoobapi.postman.co/workspace/API-Consentimento-Pagamento~77518b99-c59f-4649-b12a-d8264b83ce8a/collection/20565799-41def53c-c8db-48a4-8f4b-d876dd90c830?action=share&source=collection_link&creator=20565799"
+	},
+	"item": [
+		{
+			"name": "Certificado Digital",
+			"item": [],
+			"description": "Na criação de credenciais para as APIs Sicoob será solicitado o certificado do cooperado. O certificado deve atender alguns requisitos para que a criação das credenciais seja bem sucedida, serão aceitos **somente os certificados emitidos pela ICP Brasil** e que tenham sido **emitidos para o próprio cooperado**. Serão extraídas as seguintes informações do certificado: CN (common name/nome comum) e CA (autoridade certificadora).\n\n> É possível conferir as entidades certificadoras que tem como entidade raiz a **ICP Brasil** [aqui](https://estrutura.iti.gov.br/). \n  \n> Para conferir os detalhes do seu certificado com o OpenSSL você pode executar o comando a baixo usando a chave pública do seu certificado (geralmente no formato .pem). \n  \n> Para extrair os arquivos **.crt**, **.pem** e o arquivo **.key** você pode seguir os passos descritos [neste tutorial](https://www.ibm.com/docs/en/arl/9.7?topic=certification-extracting-certificate-keys-from-pfx-file). \n  \n\n#### Como configurar o certificado nas requisições do Postman\n\nÉ necessário abrir as **configurações** do Postman\n\n<img src=\"https://content.pstmn.io/eb63462f-8a8b-45f1-973f-9099482e81d4/MS5wbmc=\">\n\nSelecionar **settings**\n\n<img src=\"https://content.pstmn.io/d5075ed9-6f0e-4461-8607-8cfc770cdfbb/Mi5wbmc=\">\n\nSelecionar **Certificates e** **Add certificate**\n\n<img src=\"https://content.pstmn.io/104a18da-c1b3-4051-a309-3225a115f9a6/My5wbmc=\">\n\nFornecer os seguintes hosts:  \n[https://auth.sicoob.com.br](https://auth.sicoob.com.br) e [https://api.sicoob.com.br](https://api.sicoob.com.br)\n\nInserir a chave pública do certificado (em formato .PEM ou .CER) e chave privada (formato .KEY) para o certificado (ou, alternativamente, você pode usar um PFX Arquivo e a senha correspondente).  \nLembre-se também de fornecer uma senha de sua chave privada, caso você use uma."
+		},
+		{
+			"name": "Requisição de token",
+			"item": [
+				{
+					"name": "Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "sicoob_consentimento_pagamento_itp_escrita sicoob_consentimento_pagamento_itp_leitura",
+									"description": "Escopos Cobrança Bancária que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token\n",
+							"protocol": "https",
+							"host": [
+								"auth",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"cooperado",
+								"protocol",
+								"openid-connect",
+								"token\n"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Token",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									},
+									{
+										"key": "",
+										"value": "",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"description": "Tipo de Autenticação (com Certificado Digital - SSL)",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"description": "Uma String, o client_id gerado na criação das credenciais pelo portal developers.sicoob.com.br",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "sicoob_consentimento_pagamento_itp_escrita sicoob_consentimento_pagamento_itp_leitura",
+											"description": "Escopos Cobrança Bancária que serão utilizados nas requisições, os escopos devem ser separados apenas por espaço, sem escape",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "https://auth.sicoob.com.br/auth/realms/cooperado/protocol/openid-connect/token\n",
+									"protocol": "https",
+									"host": [
+										"auth",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"cooperado",
+										"protocol",
+										"openid-connect",
+										"token\n"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\t\n    \"access_token\": \"<!token!>\", \n    \"expires_in\": 1200,\n    \"refresh_expires_in\": 0, \n    \"token_type\": \"Bearer\",\n    \"id_token\": \"<!token!>\", \n    \"not-before-policy\": 0, \n    \"scope\": \" sicoob_consentimento_pagamento_itp_escrita sicoob_consentimento_pagamento_itp_leitura \"\t\n}"
+						}
+					]
+				}
+			],
+			"description": "O Token deve ser gerado para ser anexado as demais requisições da API, sem isso não é possível realizar os próximos passos\n\nPara gerar o Token da API será necessário o **client_id** gerado no momento da criação das suas credenciais pelo portal [<b>Developers Sicoob</b>](https://developers.sicoob.com.br/), você também precisará dos **escopos** de utilização da API e do **certificado** corretamente configurado na requisição SSL.\n\n> \n\n## **Lista de escopos da API Consentimento Pagamento**\n\n \n  \n\nsicoob_consentimento_pagamento_itp_escrita\n\nsicoob_consentimento_pagamento_itp_leitura"
+		},
+		{
+			"name": "EndPoints",
+			"item": [
+				{
+					"name": "CRIAR CONSENTIMENTO",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "Application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{client_id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{       \r\n        \"brandId\": \"12e3be4b-ada8-467d-92cc-467de22c53ef\",\r\n        \"loggedUser\": {\r\n            \"document\": {\r\n                \"identification\": \"20939407019\",\r\n                \"rel\": \"CPF\"\r\n            }\r\n        },\r\n        \"businessEntity\": {\r\n            \"document\": {\r\n                \"identification\": \"27324279000115\",\r\n                \"rel\": \"CNPJ\"\r\n            }\r\n            },\r\n        \"creditor\": {\r\n            \"personType\": \"PESSOA_JURIDICA\",\r\n            \"cpfCnpj\": \"27324279000115\",\r\n            \"name\": \"OPEN FINANCE PJ GESTOR\"\r\n        },\r\n        \"debtorAccount\":{\r\n            \"accountType\" : \"CACC\",\r\n            \"ispb\":\"05856736\",\r\n            \"issuer\":\"4364\",\r\n            \"number\":\"741852969\"\r\n        },\r\n        \"payment\": {\r\n            \"type\": \"PIX\",\r\n            \"currency\": \"BRL\",\r\n            \"amount\": \"9.99\",\r\n            \"details\": {\r\n                \"localInstrument\": \"MANU\",\r\n                \"creditorAccount\": {\r\n                    \"ispb\": \"05856736\",\r\n                     \"issuer\": \"4364\",\r\n                    \"number\": \"741852969\",\r\n                    \"accountType\": \"CACC\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n    \r\n\r\n"
+						},
+						"url": {
+							"raw": "https://api.sicoob.com.br/sicoob/cooperado/payments/v2/itp/consents",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"sicoob",
+								"cooperado",
+								"payments",
+								"v2",
+								"itp",
+								"consents"
+							]
+						},
+						"description": "Este serviço permite ao parceiro criar consentimento para a iniciação de pagamento.\n\n**Parâmetros utilizados na requisição:**\n\n| Parâmetro | Descrição | Obrigatório | Tipo de parâmetro |\n| --- | --- | --- | --- |\n| brandId | Identificador da instituição financeira Debitora. | Sim | Texto |\n| loggedUser | loggedUser Usuário (pessoa natural) que encontra-se logado na instituição Iniciadora de Pagamento. | Sim | Objeto |\n| loggedUser.identification | Número do documento de identificação oficial do usuário. | Sim | Texto |\n| loggedUser.rel | Tipo do documento de identificação oficial do usuário. | Sim | Texto |\n| businessEntity | Número da instituição  <br>financeira do favorecido | Sim (Para pessoas jurídica) | Objeto |\n| businessEntity .identification | Número do documento de identificação oficial do usuário. | Sim | Texto |\n| businessEntity.rel | Tipo do documento de identificação oficial do usuário. | Sim | Texto |\n| creditor | Tipo de conta do favorecido  <br>Ex: CC (conta corrente) | Sim | Texto |\n| creditor.cpfCnpj | Identificação da pessoa envolvida na transação.  <br>Preencher com o CPF ou CNPJ, de acordo com o valor escolhido no campo type.  <br>O CPF será utilizado com 11 números e deverá ser informado sem pontos ou traços.  <br>O CNPJ será utilizado com 14 números e deverá ser informado sem pontos ou traços. | Sim | Texto |\n| creditor.name | Em caso de pessoa natural deve ser informado o nome completo do titular da conta do recebedor.  <br>Em caso de pessoa jurídica deve ser informada a razão social ou o nome fantasia da conta do recebedor. | Sim | Texto |\n| creditor.personType | Titular, pessoa natural ou juridica a quem se referem os dados de recebedor (creditor).  <br>Enum: PESSOA_NATURAL, PESSOA_JURIDICA | Sim | Texto |\n| debtorAccount | Objeto que contém a identificação da conta de origem do pagador.  <br>As informações quanto à conta de origem do pagador poderão ser trazidas no consentimento para a detentora, caso a iniciadora tenha coletado essas informações do cliente. Do contrário, será coletada na detentora e trazida para a iniciadora como resposta à criação do pagamento. | Não | Objeto |\n| debtorAccount .accountType | Tipos de contas usadas para pagamento via Pix.  <br>Modalidades tradicionais previstas pela Resolução 4.753, não contemplando contas vinculadas,  <br>conta de domiciliados no exterior, contas em moedas estrangeiras e conta correspondente moeda eletrônica.  <br>Segue descrição de cada valor do ENUM para o escopo do Pix.  <br>CACC - Current - Conta Corrente.  <br>SLRY - Salary - Conta-Salário.  <br>SVGS - Savings - Conta de Poupança.  <br>TRAN - TransactingAccount - Conta de Pagamento pré-paga. | Sim | Texto |\n| debtorAccount.ispb | Deve ser preenchido com o ISPB (Identificador do Sistema de Pagamentos Brasileiros) do participante do SPI (Sistema de pagamentos instantâneos) somente com números. Sim Texto  <br>Deve ser preenchido com o ISPB (Identificador do Sistema de Pagamentos Brasileiros) do participante do SPI (Sistema de pagamentos instantâneos) somente com números. | Sim | Texto |\n| debtorAccount.issuer | Código da Agência emissora da conta sem dígito.  <br>(Agência é a dependência destinada ao atendimento aos clientes, ao público em geral e aos associados de cooperativas de crédito, no exercício de atividades da instituição, não podendo ser móvel ou transitória).  <br>\\[Restrição\\] Preenchimento obrigatório para os seguintes tipos de conta: CACC (CONTA_DEPOSITO_A_VISTA), SVGS (CONTA_POUPANCA) e SLRY (CONTA_SALARIO). | Não | Texto |\n| debtorAccount.number | Deve ser preenchido com o número da conta transacional do usuário pagador, com dígito verificador (se este existir), se houver valor alfanumérico, este deve ser convertido para 0. | Sim | Texto |\n| payment | Objeto contendo dados de pagamento para consentimento. | Sim | Texto |\n| payment.type | Este campo define o tipo de pagamento que será iniciado após a autorização do consentimento.  <br>Enum: PIX | Sim | Texto |\n| payment.amount | Valor da transação com 2 casas decimais. O valor deve ser o mesmo enviado no consentimento.  <br>Para QR Code estático com valor pré-determinado no QR Code ou para QR Code dinâmico com indicação de que o valor não pode ser alterado: O campo amount deve ser preenchido com o valor estabelecido no QR Code | Sim | Texto |\n| payment.currency | Código da moeda nacional segundo modelo ISO-4217, ou seja, 'BRL'. Todos os valores monetários informados estão representados com a moeda vigente do Brasil. | Sim | Texto |\n| payment.date | \\[Restrição\\] Mutuamente excludente com o objeto schedule.  <br>Este campo é obrigatório no caso de pagamento único.  <br>Neste caso, o objeto schedule não deve ser informado. | Não | Texto |\n| payment.ibgeTownCode | O campo ibgetowncode no arranjo PIX, tem o mesmo comportamento que o campo codMun descrito no item 1.6.6 do manual do PIX, conforme segue:  <br>Caso a informação referente ao município não seja enviada; o PSP do recebedor assumirá que não existem feriados estaduais e municipais no período em questão; | Não | Texto |\n| payment. paymentDescription | Descrição de pagamento. | Não | Texto |\n| payment.details | Objeto contendo os detalhes do pagamento. | Sim | Objeto |\n| payment.details. localInstrument | Especifica a forma de iniciação do pagamento:  <br>MANU - Inserção manual de dados da conta transacional  <br>DICT - Inserção manual de chave Pix  <br>QRDN - QR code dinâmico  <br>QRES - QR code estático  <br>INIC - Indica que o recebedor (creditor) contratou o Iniciador de Pagamentos especificamente para realizar iniciações de pagamento em que o beneficiário é previamente conhecido. | Sim | Texto |\n| payment.details.qrCode | Sequência de caracteres que corresponde ao QR Code disponibilizado para o pagador. É a sequência de caracteres que seria lida pelo leitor de QR Code, e deve propiciar o retorno dos dados do pagador após consulta na DICT. Essa funcionalidade é possível tanto para QR Code estático quanto para QR Code dinâmico. No arranjo do Pix esta é a mesma sequência gerada e/ou lida pela funcionalidade Pix Copia e Cola. Este campo deverá ser no formato UTF-8. \\[Restrição\\] Preenchimento obrigatório para pagamentos por QR Code, observado o tamanho máximo de 512 bytes | Não | Texto |\n| payment.details.proxy | Chave cadastrada no DICT pertencente ao recebedor. Os tipos de chaves podem ser: telefone, e-mail, cpf/cnpj ou chave aleatória. No caso de telefone celular deve ser informado no padrão E.1641. Para e-mail deve ter o formato [xxxxxxxx@xxxxxxx.xxx](https://mailto:xxxxxxxx@xxxxxxx.xxx)(.xx) e no máximo 77 caracteres. No caso de CPF deverá ser informado com 11 números, sem pontos ou traços. Para o caso de CNPJ deverá ser informado com 14 números, sem pontos ou traços. No caso de chave aleatória deve ser informado o UUID gerado pelo DICT, conforme formato especificado na RFC41223. Se informado, a detentora da conta deve validar o proxy no DICT quando localInstrument for igual a DICT, QRDN ou QRES e validar o campo creditorAccount. Esta validação é opcional caso o localInstrument for igual a INIC.  <br>\\[Restrição\\] Se localInstrument for igual a MANU, o campo proxy não deve ser preenchido. Se localInstrument for igual INIC, DICT, QRDN ou QRES, o campo proxy deve ser sempre preenchido com a chave Pix. | Não | Texto |\n| payment.details .creditorAccount | Objeto que contém a identificação da conta de destino do beneficiário/recebedor. | Sim | Objeto |\n| payment.details .creditorAccount .ccountType | Tipos de contas usadas para pagamento via Pix.  <br>Modalidades tradicionais previstas pela Resolução 4.753, não contemplando contas vinculadas,  <br>conta de domiciliados no exterior, contas em moedas estrangeiras e conta correspondente moeda eletrônica.  <br>Segue descrição de cada valor do ENUM para o escopo do Pix.  <br>CACC - Current - Conta Corrente.  <br>SLRY - Salary - Conta-Salário.  <br>SVGS - Savings - Conta de Poupança.  <br>TRAN - TransactingAccount - Conta de Pagamento pré-paga | Sim | Texto |\n| payment.details .creditorAccount.ispb | Deve ser preenchido com o ISPB (Identificador do Sistema de Pagamentos Brasileiros) do participante do SPI (Sistema de pagamentos instantâneos) somente com números. | Sim | Texto |\n| payment.details .creditorAccount.issuer | Código da Agência emissora da conta sem dígito.  <br>(Agência é a dependência destinada ao atendimento aos clientes, ao público em geral e aos associados de cooperativas de crédito,  <br>no exercício de atividades da instituição, não podendo ser móvel ou transitória).  <br>\\[Restrição\\] Preenchimento obrigatório para os seguintes tipos de conta: CACC (CONTA_DEPOSITO_A_VISTA), SVGS (CONTA_POUPANCA) e SLRY (CONTA_SALARIO). | Não | Texto |\n| payment.details .creditorAccount.number | Deve ser preenchido com o número da conta do usuário recebedor, com dígito verificador (se este existir),  <br>se houver valor alfanumérico, este deve ser convertido para 0. | Sim | Texto |\n| payment.schedule | Restrição\\] Mutuamente excludente com o campo date.  <br>Este campo é obrigatório no caso de agendamento.  <br>Neste caso, o campo date não deve ser informado. | Não | Objeto |\n| payment.schedule.single. date | Define a data alvo da liquidação do pagamento.  <br>O fuso horário de Brasília deve ser utilizado para criação e racionalização sobre os dados deste campo.  <br>Observação: Esse campo deverá sempre ser no mínimo D+1 corrido, ou seja, a data imediatamente posterior em relação a data do consentimento considerando o fuso horário de Brasília e deverá ser no máximo D+365 corridos a partir da data do consentimento considerando o fuso horário de Brasília | Sim | Texto |"
+					},
+					"response": [
+						{
+							"name": "Criar consentimento",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "Application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_id}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{       \r\n        \"brandId\": \"12e3be4b-ada8-467d-92cc-467de22c53ef\",\r\n        \"loggedUser\": {\r\n            \"document\": {\r\n                \"identification\": \"20939407019\",\r\n                \"rel\": \"CPF\"\r\n            }\r\n        },\r\n        \"businessEntity\": {\r\n            \"document\": {\r\n                \"identification\": \"27324279000115\",\r\n                \"rel\": \"CNPJ\"\r\n            }\r\n            },\r\n        \"creditor\": {\r\n            \"personType\": \"PESSOA_JURIDICA\",\r\n            \"cpfCnpj\": \"27324279000115\",\r\n            \"name\": \"OPEN FINANCE PJ GESTOR\"\r\n        },\r\n        \"debtorAccount\":{\r\n            \"accountType\" : \"CACC\",\r\n            \"ispb\":\"05856736\",\r\n            \"issuer\":\"4364\",\r\n            \"number\":\"741852969\"\r\n        },\r\n        \"payment\": {\r\n            \"type\": \"PIX\",\r\n            \"currency\": \"BRL\",\r\n            \"amount\": \"9.99\",\r\n            \"details\": {\r\n                \"localInstrument\": \"MANU\",\r\n                \"creditorAccount\": {\r\n                    \"ispb\": \"05856736\",\r\n                     \"issuer\": \"4364\",\r\n                    \"number\": \"741852969\",\r\n                    \"accountType\": \"CACC\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n    \r\n\r\n"
+								},
+								"url": {
+									"raw": "https://api.sicoob.com.br/sicoob/cooperado/payments/v2/itp/consents",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"sicoob",
+										"cooperado",
+										"payments",
+										"v2",
+										"itp",
+										"consents"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n  \"resultado\": [\r\n    {\r\n      \"status\": {\r\n        \"codigo\": 201,\r\n        \"mensagem\": \"Consentimento solicitado com sucesso\"\r\n      },\r\n      \"loggedUser\": {\r\n        \"document\": {\r\n          \"identification\": \"20939407019\",\r\n          \"rel\": \"CPF\"\r\n        }\r\n      },\r\n      \"businessEntity\": {\r\n        \"document\": {\r\n          \"identification\": \"27324279000115\",\r\n          \"rel\": \"CNPJ\"\r\n        }\r\n      },\r\n      \"creditor\": {\r\n        \"personType\": \"PESSOA_JURIDICA\",\r\n        \"cpfCnpj\": \"27324279000115\",\r\n        \"name\": \"OPEN FINANCE PJ GESTOR\"\r\n      },\r\n      \"payment\": {\r\n        \"type\": \"PIX\",\r\n        \"currency\": \"BRL\",\r\n        \"amount\": \"9.99\",\r\n        \"details\": {\r\n          \"localInstrument\": \"MANU\",\r\n          \"creditorAccount\": {\r\n            \"ispb\": \"05856736\",\r\n            \"issuer\": \"4364\",\r\n            \"number\": \"741852969\",\r\n            \"accountType\": \"CACC\"\r\n          }\r\n        }\r\n      },\r\n      \"brandId\": \"12e3be4b-ada8-467d-92cc-467de22c53ef\"\r\n    }\r\n    \r\n  ]\r\n}\r\n"
+						}
+					]
+				},
+				{
+					"name": "LISTAR CONSENTIMENTO PAGAMENTO",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{client_id}}",
+								"type": "text"
+							},
+							{
+								"key": "Id_token",
+								"value": "{{id_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/sicoob/cooperado/payments/v2/itp/consents?status={{string}}&cpf={{string}}&cnpj={{string}}&account-number={{string}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								"sicoob",
+								"cooperado",
+								"payments",
+								"v2",
+								"itp",
+								"consents"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "{{string}}",
+									"description": "Situação do consentimento de pagamento.\n\nObrigatório: Sim"
+								},
+								{
+									"key": "cpf",
+									"value": "{{string}}",
+									"description": "Documento pessoa física de identificação do cooperado que solicitou o consentimento.\n\nObrigatório: Sim"
+								},
+								{
+									"key": "cnpj",
+									"value": "{{string}}",
+									"description": "Documento pessoa jurídica do cooperado que solicitou o consentimento.\n\nObrigatório: Sim (Se o consentimento for pessoa jurídica)"
+								},
+								{
+									"key": "account-number",
+									"value": "{{string}}",
+									"description": "Número da conta de crédito\n\nObrigatório: Não"
+								}
+							]
+						},
+						"description": "Este serviço permite realizar a consulta para listar os consentimentos de pagamento por situação e documento do requerente."
+					},
+					"response": [
+						{
+							"name": "LISTAR CONSENTIMENTO PAGAMENTO",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{client_id}}",
+										"type": "text"
+									},
+									{
+										"key": "Id_token",
+										"value": "{{id_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/sicoob/cooperado/payments/v2/itp/consents?status={{string}}&cpf={{string}}&cnpj={{string}}&account-number={{string}}",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										"sicoob",
+										"cooperado",
+										"payments",
+										"v2",
+										"itp",
+										"consents"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "{{string}}",
+											"description": "Situação do consentimento de pagamento teste.\n\nObrigatório: Sim"
+										},
+										{
+											"key": "cpf",
+											"value": "{{string}}",
+											"description": "Documento pessoa física de identificação do cooperado que solicitou o consentimento.\n\nObrigatório: Sim"
+										},
+										{
+											"key": "cnpj",
+											"value": "{{string}}",
+											"description": "Documento pessoa jurídica do cooperado que solicitou o consentimento.\n\nObrigatório: Sim (Se o consentimento for pessoa jurídica)"
+										},
+										{
+											"key": "account-number",
+											"value": "{{string}}",
+											"description": "Número da conta de crédito\n\nObrigatório: Não"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n\t\"consentId\": \"urn:sicoob:e0966b07-38db-4155-b46a-bbc42ae30d2b\",\r\n\t\"creationDateTime\": \"2023-11-14T20:35:50Z\",\r\n\t\"expirationDateTime\": \"2023-11-14T21:35:50Z\",\r\n\t\"statusUpdateDateTime\": \"2023-11-14T20:37:39Z\",\r\n\t\"status\": \"CONSUMED\",\r\n\t\"statusPayment\": \"RJCT\",\r\n\t\"loggedUser\": {\r\n\t\t\"document\": {\r\n\t\t\t\"identification\": \"41875873490\",\r\n\t\t\t\"rel\": \"CPF\"\r\n\t\t}\r\n\t},\r\n\t\"creditor\": {\r\n\t\t\"personType\": \"PESSOA_JURIDICA\",\r\n\t\t\"cpfCnpj\": \"13955214000163\",\r\n\t\t\"name\": \"Sicoob Pagamentos SA1\"\r\n\t},\r\n\t\"payment\": {\r\n\t\t\"type\": \"PIX\",\r\n\t\t\"currency\": \"BRL\",\r\n\t\t\"amount\": \"1.50\",\r\n\t\t\"date\": \"2023-11-14T00:00:00.000Z\",\r\n\t\t\"details\": {\r\n\t\t\t\"localInstrument\": \"DICT\",\r\n\t\t\t\"proxy\": \"13955214000163\",\r\n\t\t\t\"creditorAccount\": {\r\n\t\t\t\t\"ispb\": \"05856736\",\r\n\t\t\t\t\"issuer\": \"4364\",\r\n\t\t\t\t\"number\": \"32589115\",\r\n\t\t\t\t\"accountType\": \"CACC\"\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n"
+						}
+					]
+				},
+				{
+					"name": "BUSCAR CONSENTIMENTO PAGAMENTO",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "client_id",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/ sicoob/cooperado/payments/v2/itp/consents/{consent-id}?consent-id={{consent-id}}&cpf={{String}}&cnpj={{String}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								" sicoob",
+								"cooperado",
+								"payments",
+								"v2",
+								"itp",
+								"consents",
+								"{consent-id}"
+							],
+							"query": [
+								{
+									"key": "consent-id",
+									"value": "{{consent-id}}",
+									"description": "Identificador único do consentimento criado para a iniciação de pagamento.\n\nObrigatório: Sim"
+								},
+								{
+									"key": "cpf",
+									"value": "{{String}}",
+									"description": "Documento da pessoa física vinculado ao consentimento de pagamento.\n\nObrigatório: Sim"
+								},
+								{
+									"key": "cnpj",
+									"value": "{{String}}",
+									"description": "Documento pessoa jurídica vinculado ao consentimento de pagamento\tSomente para consulta de pessoa jurídica.\n\nObrigatório: Sim (Somente para consulta de pessoa jurídica)"
+								}
+							]
+						},
+						"description": "Este serviço permite ao parceiro realizar buscar o consentimento pagamento pelo consentId."
+					},
+					"response": [
+						{
+							"name": "BUSCAR CONSENTIMENTO PAGAMENTO",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "client_id",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/ sicoob/cooperado/payments/v2/itp/consents/{consent-id}?consent-id={{consent-id}}&cpf={{String}}&cnpj={{String}}",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										" sicoob",
+										"cooperado",
+										"payments",
+										"v2",
+										"itp",
+										"consents",
+										"{consent-id}"
+									],
+									"query": [
+										{
+											"key": "consent-id",
+											"value": "{{consent-id}}",
+											"description": "Identificador único do consentimento criado para a iniciação de pagamento.\n\nObrigatório: Sim"
+										},
+										{
+											"key": "cpf",
+											"value": "{{String}}",
+											"description": "Documento da pessoa física vinculado ao consentimento de pagamento.\n\nObrigatório: Sim"
+										},
+										{
+											"key": "cnpj",
+											"value": "{{String}}",
+											"description": "Documento pessoa jurídica vinculado ao consentimento de pagamento\tSomente para consulta de pessoa jurídica.\n\nObrigatório: Sim (Somente para consulta de pessoa jurídica)"
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n\t\"consentId\": \"urn:sicoob:2045b276-d06d-4b68-b6e7-50ae02ad9bdd\",\r\n\t\"creationDateTime\": \"2023-11-13T22:45:26Z\",\r\n\t\"expirationDateTime\": \"2023-11-13T23:45:26Z\",\r\n\t\"statusUpdateDateTime\": \"2023-11-13T22:46:04Z\",\r\n\t\"status\": \"CONSUMED\",\r\n\t\"statusPayment\": \"ACSC\",\r\n\t\"loggedUser\": {\r\n\t\t\"document\": {\r\n\t\t\t\"identification\": \"20939407019\",\r\n\t\t\t\"rel\": \"CPF\"\r\n\t\t}\r\n\t},\r\n\t\"businessEntity\": {\r\n\t\t\"document\": {\r\n\t\t\t\"identification\": \"27324279000115\",\r\n\t\t\t\"rel\": \"CNPJ\"\r\n\t\t}\r\n\t},\r\n\t\"creditor\": {\r\n\t\t\"personType\": \"PESSOA_JURIDICA\",\r\n\t\t\"cpfCnpj\": \"27324279000115\",\r\n\t\t\"name\": \"OPEN FINANCE PJ GESTOR\"\r\n\t},\r\n\t\"payment\": {\r\n\t\t\"type\": \"PIX\",\r\n\t\t\"currency\": \"BRL\",\r\n\t\t\"amount\": \"9.99\",\r\n\t\t\"date\": \"2023-11-13T00:00:00.000Z\",\r\n\t\t\"details\": {\r\n\t\t\t\"localInstrument\": \"MANU\",\r\n\t\t\t\"creditorAccount\": {\r\n\t\t\t\t\"ispb\": \"05856736\",\r\n\t\t\t\t\"issuer\": \"4364\",\r\n\t\t\t\t\"number\": \"741852969\",\r\n\t\t\t\t\"accountType\": \"CACC\"\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n"
+						}
+					]
+				},
+				{
+					"name": "ATUALIZAR CONSENTIMENTO PAGAMENTO CALLBACK",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "client_id",
+								"value": "{{Client_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://api.sicoob.com.br/ sicoob/cooperado/payments/v2/itp/consents/callback?code={{String}}&error={{String}}&state={{String}}&idToken={{String}}",
+							"protocol": "https",
+							"host": [
+								"api",
+								"sicoob",
+								"com",
+								"br"
+							],
+							"path": [
+								" sicoob",
+								"cooperado",
+								"payments",
+								"v2",
+								"itp",
+								"consents",
+								"callback"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{String}}",
+									"description": "Exemplo: \"5Ng0CtWXbIMxD3fZn_0RfKaq4mF4yXE8ajHlolKswEO\"\n\nObrigatório: Sim"
+								},
+								{
+									"key": "error",
+									"value": "{{String}}"
+								},
+								{
+									"key": "state",
+									"value": "{{String}}",
+									"description": "Exemplo: \"state\": \"i_5ltk_2a11niQ1Rd-3uAl1veYw2MJZaIkfkgdFsLLI\"\n\nObrigatório: Sim"
+								},
+								{
+									"key": "idToken",
+									"value": "{{String}}",
+									"description": "Exemplo: \"idToken\": \"${jwt}\n\nObrigatório: Sim"
+								}
+							]
+						},
+						"description": "Realiza Callback da iniciação de pagamento."
+					},
+					"response": [
+						{
+							"name": "ATUALIZAR CONSENTIMENTO PAGAMENTO CALLBACK",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "client_id",
+										"value": "{{Client_id}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "https://api.sicoob.com.br/ sicoob/cooperado/payments/v2/itp/consents/callback?code={{String}}&error={{String}}&state={{String}}&idToken={{String}}",
+									"protocol": "https",
+									"host": [
+										"api",
+										"sicoob",
+										"com",
+										"br"
+									],
+									"path": [
+										" sicoob",
+										"cooperado",
+										"payments",
+										"v2",
+										"itp",
+										"consents",
+										"callback"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{String}}",
+											"description": "Exemplo: \"5Ng0CtWXbIMxD3fZn_0RfKaq4mF4yXE8ajHlolKswEO\"\n\nObrigatório: Sim"
+										},
+										{
+											"key": "error",
+											"value": "{{String}}"
+										},
+										{
+											"key": "state",
+											"value": "{{String}}",
+											"description": "Exemplo: \"state\": \"i_5ltk_2a11niQ1Rd-3uAl1veYw2MJZaIkfkgdFsLLI\"\n\nObrigatório: Sim"
+										},
+										{
+											"key": "idToken",
+											"value": "{{String}}",
+											"description": "Exemplo: \"idToken\": \"${jwt}\n\nObrigatório: Sim"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"cnpjIniciador\": \"02038232000164\",\r\n    \"consentId\": \"urn:sicoob:64e1ba61-71a0-4f9a-9fd3-75d19c03fe92\",\r\n    \"creationDateTime\": \"2023-11-15T02:50:30Z\",\r\n    \"expirationDateTime\": \"2023-11-15T03:50:30Z\",\r\n    \"statusUpdateDateTime\": \"2023-11-15T02:50:49Z\",\r\n    \"status\": \"AUTHORISED\",\r\n    \"statusPayment\": \"NA\",\r\n    \"loggedUser\": {\r\n        \"document\": {\r\n            \"identification\": \"20939407019\",\r\n            \"rel\": \"CPF\"\r\n        }\r\n    },\r\n    \"businessEntity\": {\r\n        \"document\": {\r\n            \"identification\": \"27324279000115\",\r\n            \"rel\": \"CNPJ\"\r\n        }\r\n    },\r\n    \"creditor\": {\r\n        \"personType\": \"PESSOA_JURIDICA\",\r\n        \"cpfCnpj\": \"27324279000115\",\r\n        \"name\": \"OPEN FINANCE PJ GESTOR\"\r\n    },\r\n    \"payment\": {\r\n        \"type\": \"PIX\",\r\n        \"currency\": \"BRL\",\r\n        \"amount\": \"9.99\",\r\n        \"date\": \"2023-11-14T00:00:00.000Z\",\r\n        \"details\": {\r\n            \"localInstrument\": \"MANU\",\r\n            \"creditorAccount\": {\r\n                \"ispb\": \"05856736\",\r\n                \"issuer\": \"4364\",\r\n                \"number\": \"741852969\",\r\n                \"accountType\": \"CACC\"\r\n            }\r\n        }\r\n    },\r\n    \"accessToken\": \"FW3honwcbt8mwbc4_plFGT7BKEr-ZG3JomMzWgiX13X\",\r\n    \"cnpjInitiator\": \"02038232000164\"\r\n}\r\n"
+						}
+					]
+				}
+			]
+		}
+	]
+}
