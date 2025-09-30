@@ -22,10 +22,10 @@ public class AccountRepository : IAccountRepository
     public async Task<Account?> GetByClientIdAsync(Guid clientId, string? accountId = null)
     {
         var sql = @"
-            SELECT client_id as ClientId, account_id as AccountId, 
-                   available_balance as AvailableBalance, blocked_balance as BlockedBalance,
-                   currency, created_at as CreatedAt, last_updated as LastUpdated
-            FROM accounts 
+            SELECT client_id as ClientId, account_id as AccountId,
+                   balance as AvailableBalance, 0.00 as BlockedBalance,
+                   currency, created_at as CreatedAt, updated_at as LastUpdated
+            FROM accounts
             WHERE client_id = @ClientId";
 
         object parameters = new { ClientId = clientId };
@@ -47,18 +47,17 @@ public class AccountRepository : IAccountRepository
     public async Task<Account> CreateAsync(Account account)
     {
         const string sql = @"
-            INSERT INTO accounts (client_id, account_id, available_balance, blocked_balance, currency, created_at, last_updated)
-            VALUES (@ClientId, @AccountId, @AvailableBalance, @BlockedBalance, @Currency, @CreatedAt, @LastUpdated)";
+            INSERT INTO accounts (client_id, account_id, balance, currency, created_at, updated_at)
+            VALUES (@ClientId, @AccountId, @Balance, @Currency, @CreatedAt, @UpdatedAt)";
 
         var parameters = new
         {
             account.ClientId,
             account.AccountId,
-            AvailableBalance = account.AvailableBalance.Amount,
-            BlockedBalance = account.BlockedBalance.Amount,
+            Balance = account.AvailableBalance.Amount,
             Currency = account.AvailableBalance.Currency,
             account.CreatedAt,
-            account.LastUpdated
+            UpdatedAt = account.LastUpdated
         };
 
         using var connection = _connectionFactory.CreateConnection();
@@ -70,16 +69,14 @@ public class AccountRepository : IAccountRepository
     public async Task<Account> UpdateAsync(Account account)
     {
         const string sql = @"
-            UPDATE accounts 
-            SET available_balance = @AvailableBalance, blocked_balance = @BlockedBalance, 
-                last_updated = @LastUpdated
+            UPDATE accounts
+            SET balance = @Balance, updated_at = @UpdatedAt
             WHERE client_id = @ClientId AND account_id = @AccountId";
 
         var parameters = new
         {
-            AvailableBalance = account.AvailableBalance.Amount,
-            BlockedBalance = account.BlockedBalance.Amount,
-            account.LastUpdated,
+            Balance = account.AvailableBalance.Amount,
+            UpdatedAt = account.LastUpdated,
             account.ClientId,
             account.AccountId
         };
@@ -93,10 +90,10 @@ public class AccountRepository : IAccountRepository
     public async Task<IEnumerable<Account>> GetAccountsByClientIdAsync(Guid clientId)
     {
         const string sql = @"
-            SELECT client_id as ClientId, account_id as AccountId, 
-                   available_balance as AvailableBalance, blocked_balance as BlockedBalance,
-                   currency, created_at as CreatedAt, last_updated as LastUpdated
-            FROM accounts 
+            SELECT client_id as ClientId, account_id as AccountId,
+                   balance as AvailableBalance, 0.00 as BlockedBalance,
+                   currency, created_at as CreatedAt, updated_at as LastUpdated
+            FROM accounts
             WHERE client_id = @ClientId
             ORDER BY created_at";
 
@@ -110,17 +107,29 @@ public class AccountRepository : IAccountRepository
     {
         // Usar reflection para criar instância privada
         var account = (Account)Activator.CreateInstance(typeof(Account), true)!;
-        
+
         // Mapear propriedades usando reflection
         var type = typeof(Account);
-        
-        type.GetProperty("ClientId")?.SetValue(account, (Guid)result.ClientId);
-        type.GetProperty("AccountId")?.SetValue(account, (string)result.AccountId);
-        type.GetProperty("AvailableBalance")?.SetValue(account, new Money((decimal)result.AvailableBalance, (string)result.currency));
-        type.GetProperty("BlockedBalance")?.SetValue(account, new Money((decimal)result.BlockedBalance, (string)result.currency));
-        type.GetProperty("CreatedAt")?.SetValue(account, (DateTime)result.CreatedAt);
-        type.GetProperty("LastUpdated")?.SetValue(account, (DateTime)result.LastUpdated);
-        
+
+        // Verificar se os valores não são null antes de converter
+        if (result.ClientId != null)
+            type.GetProperty("ClientId")?.SetValue(account, (Guid)result.ClientId);
+
+        if (result.AccountId != null)
+            type.GetProperty("AccountId")?.SetValue(account, (string)result.AccountId);
+
+        if (result.AvailableBalance != null && result.currency != null)
+            type.GetProperty("AvailableBalance")?.SetValue(account, new Money((decimal)result.AvailableBalance, (string)result.currency));
+
+        if (result.BlockedBalance != null && result.currency != null)
+            type.GetProperty("BlockedBalance")?.SetValue(account, new Money((decimal)result.BlockedBalance, (string)result.currency));
+
+        if (result.CreatedAt != null)
+            type.GetProperty("CreatedAt")?.SetValue(account, (DateTime)result.CreatedAt);
+
+        if (result.LastUpdated != null)
+            type.GetProperty("LastUpdated")?.SetValue(account, (DateTime)result.LastUpdated);
+
         return account;
     }
 }

@@ -126,4 +126,4 @@ try {
 
 Write-Host ""
 Write-Host "🚀 Sistema pronto para uso!" -ForegroundColor Green
-Write-Host "📝 Aguarde alguns minutos para todos os serviços terminarem de inicializar" -ForegroundColor Yellow
+Write-Host "📝 Aguarde alguns minutos para todos os servicos terminarem de inicializar" -ForegroundColor Yellow

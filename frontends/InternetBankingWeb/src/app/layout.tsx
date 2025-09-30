@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import TokenDebugInfo from '@/components/TokenDebugInfo';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default function RootLayout({
                   },
                 }}
               />
+              <TokenDebugInfo />
             </SidebarProvider>
           </ThemeProvider>
         </AuthProvider>

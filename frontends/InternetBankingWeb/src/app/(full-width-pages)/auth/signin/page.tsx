@@ -10,9 +10,8 @@ import toast from 'react-hot-toast';
 
 // Schema de validação
 const loginSchema = yup.object({
-  client_id: yup.string().required('Client ID é obrigatório'),
-  client_secret: yup.string().required('Client Secret é obrigatório'),
-  scope: yup.string().oneOf(['banking', 'sub-banking'], 'Scope deve ser banking ou sub-banking').required('Scope é obrigatório'),
+  email: yup.string().email('Email inválido').required('Email é obrigatório'),
+  password: yup.string().required('Senha é obrigatória'),
 });
 
 type LoginFormData = yup.InferType<typeof loginSchema>;
@@ -29,15 +28,12 @@ const SignInPage: React.FC = () => {
     setValue,
   } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
-    defaultValues: {
-      scope: 'banking',
-    },
   });
 
   // Redirecionar se já estiver autenticado
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -46,7 +42,7 @@ const SignInPage: React.FC = () => {
     try {
       const success = await login(data);
       if (success) {
-        router.push('/');
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error('Erro no login:', error);
@@ -58,13 +54,11 @@ const SignInPage: React.FC = () => {
   // Função para preencher credenciais de exemplo
   const fillExampleCredentials = (type: 'cliente' | 'sub-cliente') => {
     if (type === 'cliente') {
-      setValue('client_id', 'cliente_banking');
-      setValue('client_secret', 'cliente_secret_000');
-      setValue('scope', 'banking');
+      setValue('email', 'admin@fintechpsp.com');
+      setValue('password', 'admin123');
     } else {
-      setValue('client_id', 'sub_cliente_banking');
-      setValue('client_secret', 'sub_cliente_secret_000');
-      setValue('scope', 'sub-banking');
+      setValue('email', 'cliente@empresa.com');
+      setValue('password', '123456');
     }
   };
 
@@ -100,63 +94,50 @@ const SignInPage: React.FC = () => {
                 onClick={() => fillExampleCredentials('cliente')}
                 className="flex-1 px-3 py-2 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
               >
-                Cliente
+                Admin
               </button>
               <button
                 type="button"
                 onClick={() => fillExampleCredentials('sub-cliente')}
                 className="flex-1 px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
               >
-                Sub-Cliente
+                Senha Mestre
               </button>
             </div>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              💡 Use senha "123456" para qualquer usuário existente (senha mestre)
+            </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">
-                Client ID
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
               </label>
               <input
-                {...register('client_id')}
-                type="text"
+                {...register('email')}
+                type="email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                placeholder="Digite o Client ID"
+                placeholder="Digite seu email"
               />
-              {errors.client_id && (
-                <p className="mt-1 text-sm text-red-600">{errors.client_id.message}</p>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="client_secret" className="block text-sm font-medium text-gray-700 mb-2">
-                Client Secret
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Senha
               </label>
               <input
-                {...register('client_secret')}
+                {...register('password')}
                 type="password"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                placeholder="Digite o Client Secret"
+                placeholder="Digite sua senha"
               />
-              {errors.client_secret && (
-                <p className="mt-1 text-sm text-red-600">{errors.client_secret.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="scope" className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de Acesso
-              </label>
-              <select
-                {...register('scope')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-              >
-                <option value="banking">Cliente Principal</option>
-                <option value="sub-banking">Sub-Cliente</option>
-              </select>
-              {errors.scope && (
-                <p className="mt-1 text-sm text-red-600">{errors.scope.message}</p>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
 

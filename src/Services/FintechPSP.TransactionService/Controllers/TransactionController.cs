@@ -25,6 +25,57 @@ public class TransactionController : ControllerBase
     }
 
     /// <summary>
+    /// Lista transações do cliente
+    /// </summary>
+    /// <param name="page">Página</param>
+    /// <param name="limit">Limite por página</param>
+    /// <param name="type">Tipo de transação (pix, ted, boleto)</param>
+    /// <param name="status">Status da transação</param>
+    /// <returns>Lista de transações</returns>
+    [HttpGet]
+    public async Task<ActionResult> GetTransactions(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] string? type = null,
+        [FromQuery] string? status = null)
+    {
+        try
+        {
+            await Task.Delay(50); // Simular consulta DB
+
+            var transactions = new object[]
+            {
+                new {
+                    id = Guid.NewGuid(),
+                    externalId = "TXN-001",
+                    type = "pix",
+                    amount = 100.50m,
+                    status = "completed",
+                    description = "Pagamento PIX",
+                    createdAt = DateTime.UtcNow.AddHours(-1),
+                    pixKey = "user@example.com"
+                },
+                new {
+                    id = Guid.NewGuid(),
+                    externalId = "TXN-002",
+                    type = "ted",
+                    amount = 250.00m,
+                    status = "processing",
+                    description = "Transferência TED",
+                    createdAt = DateTime.UtcNow.AddHours(-2),
+                    bankCode = "001"
+                }
+            };
+
+            return Ok(new { transactions, total = transactions.Length, page, limit });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
     /// Inicia uma transação PIX
     /// </summary>
     /// <param name="request">Dados da transação PIX</param>
@@ -193,6 +244,68 @@ public class TransactionController : ControllerBase
         catch (ArgumentException ex)
         {
             return BadRequest(new { error = "invalid_request", message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Consulta status de uma transação
+    /// </summary>
+    /// <param name="id">ID da transação</param>
+    /// <returns>Status da transação</returns>
+    /// <response code="200">Status da transação obtido com sucesso</response>
+    /// <response code="404">Transação não encontrada</response>
+    /// <response code="401">Não autorizado</response>
+    [HttpGet("{id}/status")]
+    [ProducesResponseType(typeof(object), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(401)]
+    public async Task<ActionResult> GetTransactionStatus([FromRoute] string id)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return BadRequest(new { error = "invalid_request", message = "ID da transação é obrigatório" });
+            }
+
+            // Simular consulta de status
+            await Task.Delay(50);
+
+            // Mock de status baseado no ID
+            var status = (id.GetHashCode() % 4) switch
+            {
+                0 => "completed",
+                1 => "pending",
+                2 => "processing",
+                _ => "failed"
+            };
+
+            var response = new
+            {
+                transactionId = id,
+                status = status,
+                statusDescription = status switch
+                {
+                    "completed" => "Transação concluída com sucesso",
+                    "pending" => "Transação pendente de processamento",
+                    "processing" => "Transação em processamento",
+                    "failed" => "Transação falhou",
+                    _ => "Status desconhecido"
+                },
+                timestamp = DateTime.UtcNow,
+                details = new
+                {
+                    lastUpdate = DateTime.UtcNow.AddMinutes(-5),
+                    attempts = 1,
+                    nextRetry = status == "failed" ? DateTime.UtcNow.AddMinutes(10) : (DateTime?)null
+                }
+            };
+
+            return Ok(response);
         }
         catch (Exception ex)
         {

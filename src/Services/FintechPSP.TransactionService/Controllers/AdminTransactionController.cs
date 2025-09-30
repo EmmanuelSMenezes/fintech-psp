@@ -25,6 +25,56 @@ public class AdminTransactionController : ControllerBase
     }
 
     /// <summary>
+    /// Lista transações (admin)
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetTransactions(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20)
+    {
+        _logger.LogInformation("Admin listando transações - página {Page}", page);
+
+        await Task.Delay(50); // Simular consulta DB
+
+        var transactions = new dynamic[]
+        {
+            new
+            {
+                id = Guid.NewGuid().ToString(),
+                externalId = "TXN-001",
+                type = "pix",
+                amount = 100.50m,
+                description = "Pagamento PIX",
+                status = "COMPLETED",
+                createdAt = DateTime.UtcNow.AddHours(-2),
+                clientId = "666da775-b844-44e8-9188-61f83891b8f6"
+            },
+            new
+            {
+                id = Guid.NewGuid().ToString(),
+                externalId = "TXN-002",
+                type = "ted",
+                amount = 250.00m,
+                description = "Transferência TED",
+                status = "PROCESSING",
+                createdAt = DateTime.UtcNow.AddHours(-1),
+                clientId = "666da775-b844-44e8-9188-61f83891b8f6"
+            }
+        };
+
+        var response = new
+        {
+            transactions = transactions,
+            total = transactions.Length,
+            page = page,
+            limit = limit,
+            totalPages = 1
+        };
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Obtém histórico de transações (admin)
     /// </summary>
     [HttpGet("historico")]

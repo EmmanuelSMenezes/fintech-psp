@@ -188,15 +188,111 @@ public class QrCodeController : ControllerBase
     }
 
     /// <summary>
+    /// Lista QR Codes PIX do cliente
+    /// </summary>
+    [HttpGet("pix/qr-code")]
+    [Authorize(Policy = "BankingScope")]
+    public async Task<ActionResult> GetQrCodes()
+    {
+        try
+        {
+            var clientId = GetCurrentClientId();
+            if (clientId == Guid.Empty)
+            {
+                return Unauthorized("Cliente não identificado");
+            }
+
+            await Task.Delay(50); // Simular consulta DB
+
+            var qrCodes = new object[]
+            {
+                new {
+                    id = Guid.NewGuid(),
+                    externalId = "QR-001",
+                    type = "static",
+                    pixKey = "user@example.com",
+                    qrcodePayload = "00020126580014BR.GOV.BCB.PIX0136123e4567-e89b-12d3-a456-4266141740005204000053039865802BR5913FULANO DE TAL6008BRASILIA62070503***63041D3D",
+                    createdAt = DateTime.UtcNow.AddDays(-1),
+                    isActive = true
+                },
+                new {
+                    id = Guid.NewGuid(),
+                    externalId = "QR-002",
+                    type = "dynamic",
+                    pixKey = "user@example.com",
+                    amount = 50.00m,
+                    qrcodePayload = "00020126580014BR.GOV.BCB.PIX0136123e4567-e89b-12d3-a456-4266141740005204000053039865802BR5913FULANO DE TAL6008BRASILIA62070503***63041D3D",
+                    createdAt = DateTime.UtcNow.AddHours(-2),
+                    expiresAt = DateTime.UtcNow.AddHours(1),
+                    isActive = true
+                }
+            };
+
+            return Ok(qrCodes);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Lista chaves PIX do cliente
+    /// </summary>
+    [HttpGet("pix/chaves")]
+    [Authorize(Policy = "BankingScope")]
+    public async Task<ActionResult> GetPixKeys()
+    {
+        try
+        {
+            var clientId = GetCurrentClientId();
+            if (clientId == Guid.Empty)
+            {
+                return Unauthorized("Cliente não identificado");
+            }
+
+            await Task.Delay(50); // Simular consulta DB
+
+            var pixKeys = new object[]
+            {
+                new {
+                    id = Guid.NewGuid(),
+                    key = "user@example.com",
+                    type = "email",
+                    status = "active",
+                    createdAt = DateTime.UtcNow.AddDays(-30),
+                    bankCode = "001",
+                    accountNumber = "12345-6"
+                },
+                new {
+                    id = Guid.NewGuid(),
+                    key = "+5511999999999",
+                    type = "phone",
+                    status = "active",
+                    createdAt = DateTime.UtcNow.AddDays(-15),
+                    bankCode = "001",
+                    accountNumber = "12345-6"
+                }
+            };
+
+            return Ok(pixKeys);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
     /// Health check do serviço de QR Code
     /// </summary>
     [HttpGet("qrcode/health")]
     [AllowAnonymous]
     public IActionResult Health()
     {
-        return Ok(new { 
-            status = "healthy", 
-            service = "QrCodeService", 
+        return Ok(new {
+            status = "healthy",
+            service = "QrCodeService",
             timestamp = DateTime.UtcNow,
             features = new[] { "static_qr", "dynamic_qr", "emv_payload", "base64_image" }
         });
@@ -204,7 +300,12 @@ public class QrCodeController : ControllerBase
 
     private Guid GetCurrentClientId()
     {
-        var clientIdClaim = User.FindFirst("client_id")?.Value;
-        return Guid.TryParse(clientIdClaim, out var clientId) ? clientId : Guid.Empty;
+        // Usar o mesmo padrão dos outros controllers - ClaimTypes.NameIdentifier é o 'sub' do JWT
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Guid.Empty;
+        }
+        return userId;
     }
 }

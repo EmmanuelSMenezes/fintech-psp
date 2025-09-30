@@ -51,8 +51,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('🌐 Verificando se estamos no cliente...');
         if (typeof window !== 'undefined') {
           console.log('✅ Estamos no cliente, verificando localStorage...');
-          const token = localStorage.getItem('access_token');
-          const userData = localStorage.getItem('user_data');
+          const token = localStorage.getItem('backoffice_access_token');
+          const userData = localStorage.getItem('backoffice_user_data');
 
           console.log('🎫 Token no localStorage:', token ? 'SIM' : 'NÃO');
           console.log('👤 UserData no localStorage:', userData ? 'SIM' : 'NÃO');
@@ -64,8 +64,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setUser(parsedUser);
             } catch (parseError) {
               console.error('❌ Erro ao fazer parse dos dados do usuário:', parseError);
-              localStorage.removeItem('access_token');
-              localStorage.removeItem('user_data');
+              localStorage.removeItem('backoffice_access_token');
+              localStorage.removeItem('backoffice_user_data');
             }
           } else {
             console.log('ℹ️ Nenhum usuário para restaurar');
@@ -77,8 +77,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Erro ao restaurar usuário:', error);
         // Limpar dados corrompidos
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user_data');
+          localStorage.removeItem('backoffice_access_token');
+          localStorage.removeItem('backoffice_user_data');
         }
       } finally {
         console.log('🏁 Finalizando loading...');
@@ -115,12 +115,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('👤 Dados do usuário:', user);
 
         // Salvar no localStorage
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('user_data', JSON.stringify(user));
+        localStorage.setItem('backoffice_access_token', accessToken);
+        localStorage.setItem('backoffice_user_data', JSON.stringify(user));
 
         // Verificar se salvou
-        const savedToken = localStorage.getItem('access_token');
-        const savedUserData = localStorage.getItem('user_data');
+        const savedToken = localStorage.getItem('backoffice_access_token');
+        const savedUserData = localStorage.getItem('backoffice_user_data');
         console.log('🎫 Token salvo:', savedToken ? 'SIM' : 'NÃO');
         console.log('👤 UserData salvo:', savedUserData ? 'SIM' : 'NÃO');
 
@@ -153,8 +153,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('🚪 Fazendo logout...');
     setUser(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_data');
+      localStorage.removeItem('backoffice_access_token');
+      localStorage.removeItem('backoffice_user_data');
     }
     console.log('✅ Logout concluído');
     toast.success('Logout realizado com sucesso!');
@@ -176,7 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user: user ? { id: user.id, email: user.email, role: user.role } : null,
       isLoading,
       isAuthenticated,
-      hasToken: !!localStorage.getItem('access_token')
+      hasToken: !!localStorage.getItem('backoffice_access_token')
     });
   }
 

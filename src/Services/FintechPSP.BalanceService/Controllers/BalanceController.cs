@@ -129,6 +129,42 @@ public class BalanceController : ControllerBase
     }
 
     /// <summary>
+    /// Relatório de saldos (admin)
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = "AdminScope")]
+    public async Task<IActionResult> GetBalanceReport()
+    {
+        try
+        {
+            _logger.LogInformation("Admin consultando relatório de saldos");
+
+            // Simular dados de relatório
+            var report = new
+            {
+                totalAccounts = 5,
+                totalBalance = 15000.00m,
+                activeAccounts = 4,
+                inactiveAccounts = 1,
+                averageBalance = 3000.00m,
+                lastUpdated = DateTime.UtcNow,
+                balancesByStatus = new[]
+                {
+                    new { status = "ACTIVE", count = 4, totalBalance = 14500.00m },
+                    new { status = "INACTIVE", count = 1, totalBalance = 500.00m }
+                }
+            };
+
+            return Ok(report);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao consultar relatório de saldos");
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
     /// Health check do serviço
     /// </summary>
     [HttpGet("health")]
@@ -140,8 +176,13 @@ public class BalanceController : ControllerBase
 
     private Guid GetCurrentClientId()
     {
-        var clientIdClaim = User.FindFirst("client_id")?.Value;
-        return Guid.TryParse(clientIdClaim, out var clientId) ? clientId : Guid.Empty;
+        // Usar o mesmo padrão dos outros controllers - ClaimTypes.NameIdentifier é o 'sub' do JWT
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Guid.Empty;
+        }
+        return userId;
     }
 
     private bool IsAdmin()

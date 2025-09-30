@@ -305,8 +305,13 @@ public class WebhookController : ControllerBase
 
     private Guid GetCurrentClientId()
     {
-        var clientIdClaim = User.FindFirst("client_id")?.Value;
-        return Guid.TryParse(clientIdClaim, out var clientId) ? clientId : Guid.Empty;
+        // Usar o mesmo padrão dos outros controllers - ClaimTypes.NameIdentifier é o 'sub' do JWT
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Guid.Empty;
+        }
+        return userId;
     }
 
     private bool IsAdmin()

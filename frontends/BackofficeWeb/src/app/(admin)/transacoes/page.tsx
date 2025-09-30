@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth, useRequireAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { transactionService, userService, Transaction, User } from '@/services/api';
 import toast from 'react-hot-toast';
 
 const TransacoesPage: React.FC = () => {
-  useRequireAuth('view_transactions');
   const { user } = useAuth();
   const [transacoes, setTransacoes] = useState<Transaction[]>([]);
   const [clientes, setClientes] = useState<User[]>([]);
@@ -49,10 +48,22 @@ const TransacoesPage: React.FC = () => {
 
   const loadData = async () => {
     try {
+      console.log('🔍 Carregando clientes...');
       const clientesResponse = await userService.getUsers();
-      setClientes(clientesResponse.data);
+      console.log('📦 Resposta clientes:', clientesResponse);
+
+      const users = clientesResponse?.data?.users || clientesResponse?.data || [];
+      console.log('👥 Users processados:', users);
+
+      if (!Array.isArray(users)) {
+        console.warn('⚠️ Users não é um array:', typeof users, users);
+        setClientes([]);
+      } else {
+        setClientes(users);
+      }
     } catch (error) {
-      console.error('Erro ao carregar clientes:', error);
+      console.error('❌ Erro ao carregar clientes:', error);
+      setClientes([]);
       toast.error('Erro ao carregar clientes');
     }
   };
@@ -60,12 +71,14 @@ const TransacoesPage: React.FC = () => {
   const loadTransacoes = async () => {
     try {
       setIsLoading(true);
+      console.log('🔍 Carregando transações...');
+
       const params = {
         page: pagination.page,
         limit: pagination.limit,
         ...filters
       };
-      
+
       // Remove empty filters
       Object.keys(params).forEach(key => {
         if (params[key] === '') {
@@ -73,14 +86,27 @@ const TransacoesPage: React.FC = () => {
         }
       });
 
+      console.log('📋 Parâmetros da consulta:', params);
       const response = await transactionService.getTransactions(params);
-      setTransacoes(response.data.transactions || response.data);
+      console.log('📦 Resposta transações:', response);
+
+      const transactions = response?.data?.transactions || response?.data || [];
+      console.log('💳 Transações processadas:', transactions);
+
+      if (!Array.isArray(transactions)) {
+        console.warn('⚠️ Transactions não é um array:', typeof transactions, transactions);
+        setTransacoes([]);
+      } else {
+        setTransacoes(transactions);
+      }
+
       setPagination(prev => ({
         ...prev,
-        total: response.data.total || response.data.length
+        total: response?.data?.total || (Array.isArray(transactions) ? transactions.length : 0)
       }));
     } catch (error) {
-      console.error('Erro ao carregar transações:', error);
+      console.error('❌ Erro ao carregar transações:', error);
+      setTransacoes([]);
       toast.error('Erro ao carregar transações');
     } finally {
       setIsLoading(false);

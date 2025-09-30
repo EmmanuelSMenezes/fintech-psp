@@ -57,6 +57,48 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
+    /// Obtém dados do usuário atual autenticado
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        _logger.LogInformation("Obtendo dados do usuário atual");
+
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            var user = await _systemUserRepository.GetByIdAsync(currentUserId);
+
+            if (user == null)
+            {
+                return NotFound(new { message = "Usuário não encontrado" });
+            }
+
+            var userResponse = new UserResponse
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Document = user.Document ?? "",
+                Active = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                Phone = user.Phone ?? "",
+                Address = user.Address ?? "",
+                Role = user.Role,
+                LastLoginAt = user.LastLoginAt
+            };
+
+            return Ok(userResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter dados do usuário atual");
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
     /// Obtém usuário por ID
     /// </summary>
     [HttpGet("{id}")]
@@ -255,6 +297,16 @@ public class UserController : ControllerBase
     public IActionResult Health()
     {
         return Ok(new { status = "healthy", service = "UserService", timestamp = DateTime.UtcNow });
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            throw new UnauthorizedAccessException("UserId não encontrado no token");
+        }
+        return userId;
     }
 }
 

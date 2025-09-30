@@ -12,7 +12,22 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApplicationPartManager(manager =>
+    {
+        var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("ControllerDiscovery");
+        logger.LogInformation("Descobrindo controllers...");
+
+        // Adicionar explicitamente o assembly atual
+        var currentAssembly = typeof(Program).Assembly;
+        manager.ApplicationParts.Add(new Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart(currentAssembly));
+        logger.LogInformation("Adicionado assembly: {AssemblyName}", currentAssembly.FullName);
+
+        foreach (var part in manager.ApplicationParts)
+        {
+            logger.LogInformation("ApplicationPart: {PartName}", part.Name);
+        }
+    });
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -77,6 +92,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
                 "mortadela-super-secret-key-that-should-be-at-least-256-bits"))
         };
+
+        // Adicionar logs de debug para autenticação
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError("JWT Authentication failed: {Error}", context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                var claims = context.Principal?.Claims.Select(c => $"{c.Type}={c.Value}").ToList();
+                logger.LogInformation("JWT Token validated successfully. Claims: {Claims}", string.Join(", ", claims ?? new List<string>()));
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // Authorization Policies
@@ -85,6 +118,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminScope", policy =>
         policy.RequireAuthenticatedUser()
               .RequireClaim("scope", "admin"));
+
+    options.AddPolicy("BankingScope", policy =>
+        policy.RequireAuthenticatedUser()
+              .RequireClaim("scope", "banking", "admin"));
 });
 
 // Swagger/OpenAPI
@@ -136,7 +173,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Desabilitado para Docker
 
 // Use CORS (deve vir antes de Authentication/Authorization)
 app.UseCors();

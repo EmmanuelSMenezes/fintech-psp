@@ -29,7 +29,7 @@ const createApiInstance = (baseURL: string): AxiosInstance => {
 
       // Só acessar localStorage no lado do cliente
       if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('backoffice_access_token');
         console.log('🔑 Interceptor - Token encontrado:', token ? 'SIM' : 'NÃO');
 
         if (token) {
@@ -82,11 +82,12 @@ const createApiInstance = (baseURL: string): AxiosInstance => {
         console.log('🔍 Headers enviados na requisição:', error.config?.headers?.Authorization ? 'Authorization PRESENTE' : 'Authorization AUSENTE');
 
         // Token expirado ou inválido - só executar no cliente
-        // if (typeof window !== 'undefined') {
-        //   localStorage.removeItem('access_token');
-        //   localStorage.removeItem('user_data');
-        //   window.location.href = '/auth/signin';
-        // }
+        if (typeof window !== 'undefined') {
+          console.log('🚪 [BackofficeWeb] Fazendo logout automático devido ao erro 401...');
+          localStorage.removeItem('backoffice_access_token');
+          localStorage.removeItem('backoffice_user_data');
+          window.location.href = '/auth/signin';
+        }
       }
       return Promise.reject(error);
     }
@@ -212,7 +213,9 @@ export interface PriorityConfig {
   clienteId: string;
   prioridades: Array<{
     contaId: string;
+    banco: string;
     percentual: number;
+    ativo: boolean;
   }>;
   totalPercentual: number;
   isValid: boolean;
@@ -221,12 +224,14 @@ export interface PriorityConfig {
 
 // Tipos para transações
 export interface Transaction {
-  transactionId: string;
+  id: string;
+  transactionId?: string;
   externalId: string;
   amount: number;
   type: 'pix' | 'ted' | 'boleto' | 'crypto';
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-  bankCode: string;
+  bankCode?: string;
+  clienteId: string;
   contaId?: string;
   createdAt: string;
   updatedAt?: string;
@@ -322,8 +327,8 @@ export const authService = {
 
   logout: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_data');
+      localStorage.removeItem('backoffice_access_token');
+      localStorage.removeItem('backoffice_user_data');
     }
   },
 };
@@ -599,7 +604,7 @@ export const bankAccountService = {
   getAccounts: (clienteId?: string): Promise<AxiosResponse<{ contas: BankAccount[], total: number }>> =>
     api.get(`/admin/contas${clienteId ? `?clienteId=${clienteId}` : ''}`),
 
-  getAccountsByClient: (clienteId: string): Promise<AxiosResponse<{ clienteId: string, contas: BankAccount[] }>> =>
+  getAccountsByClient: (clienteId: string): Promise<AxiosResponse<{ data: BankAccount[] }>> =>
     api.get(`/admin/contas/${clienteId}`),
 
   createAccount: (data: CreateBankAccountRequest): Promise<AxiosResponse<BankAccount>> =>
@@ -631,7 +636,7 @@ export const transactionService = {
     page?: number;
     limit?: number;
   }): Promise<AxiosResponse<{ transactions: Transaction[]; total: number; page: number; limit: number }>> =>
-    transactionApi.get('/admin/transacoes/historico', { params }),
+    api.get('/admin/transacoes', { params }),
 
   getTransactionStatus: (id: string): Promise<AxiosResponse<{ status: string; details: any }>> =>
     transactionApi.get(`/transacoes/${id}/status`),

@@ -61,6 +61,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminScope", policy =>
+        policy.RequireClaim("scope", "admin"));
+
+    options.AddPolicy("BankingScope", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim("scope", "banking") ||
+            context.User.HasClaim("scope", "admin")));
+
+    options.AddPolicy("ClientScope", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim("scope", "client") ||
+            context.User.HasClaim("scope", "admin")));
+});
+
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

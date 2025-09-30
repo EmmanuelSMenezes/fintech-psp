@@ -1,6 +1,30 @@
 {
   "Routes": [
     {
+      "UpstreamPathTemplate": "/banking/contas",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/banking/contas",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "user-service", "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/banking/contas/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/banking/contas/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "user-service", "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
       "UpstreamPathTemplate": "/auth/login",
       "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/auth/login",
@@ -45,8 +69,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
-          "Port": 8080
+          "Host": "user-service", "Port": 8080
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -59,8 +82,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
-          "Port": 8080
+          "Host": "user-service", "Port": 8080
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -72,7 +94,34 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
+          "Host": "user-service", "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+
+    {
+      "UpstreamPathTemplate": "/banking/configs/roteamento",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/banking/configs/roteamento",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "config-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/banking/bancos",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/banking/bancos",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "config-service",
           "Port": 8080
         }
       ],
@@ -86,8 +135,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
-          "Port": 8080
+          "Host": "user-service", "Port": 8080
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -99,8 +147,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
-          "Port": 8080
+          "Host": "user-service", "Port": 8080
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -293,35 +340,6 @@
     },
 
     {
-      "UpstreamPathTemplate": "/banking/configs/roteamento",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "DownstreamPathTemplate": "/banking/configs/roteamento",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "config-service",
-          "Port": 8080
-        }
-      ],
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
-    },
-    {
-      "UpstreamPathTemplate": "/banking/bancos",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "DownstreamPathTemplate": "/banking/bancos",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "config-service",
-          "Port": 8080
-        }
-      ],
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
-    },
-
-
-
-    {
       "UpstreamPathTemplate": "/admin/companies",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ],
       "DownstreamPathTemplate": "/admin/companies",
@@ -355,8 +373,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
-          "Port": 8080
+          "Host": "user-service", "Port": 8080
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -368,7 +385,291 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
+          "Host": "user-service", "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/api/acessos/banking",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/acessos/banking",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
           "Host": "user-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/acessos/banking/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/acessos/banking/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "user-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/acessos/admin",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/acessos/admin",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "user-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/acessos/admin/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/acessos/admin/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "user-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/acessos/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/acessos/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "user-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/banking/transacoes",
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "DownstreamPathTemplate": "/transacoes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/banking/transacoes/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/transacoes/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/banking/balance/{clientId}",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/saldo/{clientId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "balance-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/banking/balance/{clientId}/extrato",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/saldo/{clientId}/extrato",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "balance-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/banking/transacoes/historico",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/admin/transacoes/historico",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/admin/transacoes",
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "DownstreamPathTemplate": "/admin/transacoes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/admin/transacoes/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/admin/transacoes/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/admin/reports",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/saldo",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "balance-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/admin/reports/{everything}",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/saldo/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "balance-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/admin/configs",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/banking/configs",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "config-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/admin/configs/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/banking/configs/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "config-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    // Banking PIX routes
+    {
+      "UpstreamPathTemplate": "/banking/pix/qr-code",
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "DownstreamPathTemplate": "/pix/qr-code",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/banking/pix/chaves",
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "DownstreamPathTemplate": "/pix/chaves",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    // Banking Webhooks routes
+    {
+      "UpstreamPathTemplate": "/banking/webhooks",
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "DownstreamPathTemplate": "/webhooks",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webhook-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/admin/webhooks",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/admin/webhooks",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webhook-service",
+          "Port": 8080
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/admin/webhooks/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamPathTemplate": "/admin/webhooks/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webhook-service",
           "Port": 8080
         }
       ],
@@ -380,3 +681,4 @@
     "BaseUrl": "http://localhost:5000"
   }
 }
+

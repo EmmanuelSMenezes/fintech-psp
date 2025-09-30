@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth, useRequireAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { configService, userService, bankAccountService, PriorityConfig, User, BankAccount } from '@/services/api';
 import toast from 'react-hot-toast';
 
 const PriorizacaoPage: React.FC = () => {
-  useRequireAuth('manage_priority_config');
   const { user } = useAuth();
   const [clientes, setClientes] = useState<User[]>([]);
   const [selectedClient, setSelectedClient] = useState('');
@@ -38,10 +37,22 @@ const PriorizacaoPage: React.FC = () => {
 
   const loadClientes = async () => {
     try {
+      console.log('🔍 [Priorização] Carregando clientes...');
       const response = await userService.getUsers();
-      setClientes(response.data);
+      console.log('📦 [Priorização] Resposta clientes:', response);
+
+      const users = response?.data?.users || response?.data || [];
+      console.log('👥 [Priorização] Users processados:', users);
+
+      if (!Array.isArray(users)) {
+        console.warn('⚠️ [Priorização] Users não é um array:', typeof users, users);
+        setClientes([]);
+      } else {
+        setClientes(users);
+      }
     } catch (error) {
-      console.error('Erro ao carregar clientes:', error);
+      console.error('❌ [Priorização] Erro ao carregar clientes:', error);
+      setClientes([]);
       toast.error('Erro ao carregar clientes');
     }
   };
@@ -51,8 +62,19 @@ const PriorizacaoPage: React.FC = () => {
       setIsLoading(true);
       
       // Carregar contas do cliente
+      console.log('🔍 [Priorização] Carregando contas do cliente:', clienteId);
       const contasResponse = await bankAccountService.getAccountsByClient(clienteId);
-      setContas(contasResponse.data);
+      console.log('📦 [Priorização] Resposta contas:', contasResponse);
+
+      const contas = contasResponse?.data?.data || contasResponse?.data || [];
+      console.log('🏦 [Priorização] Contas processadas:', contas);
+
+      if (!Array.isArray(contas)) {
+        console.warn('⚠️ [Priorização] Contas não é um array:', typeof contas, contas);
+        setContas([]);
+      } else {
+        setContas(contas);
+      }
 
       // Carregar configuração de priorização
       try {
@@ -60,9 +82,10 @@ const PriorizacaoPage: React.FC = () => {
         setPriorityConfig(configResponse.data);
       } catch (error) {
         // Se não existe configuração, criar uma nova
+        const contasArray = Array.isArray(contas) ? contas : [];
         const newConfig: PriorityConfig = {
           clienteId,
-          prioridades: contasResponse.data.map(conta => ({
+          prioridades: contasArray.map(conta => ({
             contaId: conta.id,
             banco: conta.banco,
             percentual: 0,

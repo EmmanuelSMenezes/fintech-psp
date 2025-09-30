@@ -25,7 +25,7 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Progr
 // Database
 builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
     new PostgreSqlConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Host=localhost;Database=fintech_psp_config;Username=postgres;Password=postgres"));
+        ?? "Host=localhost:5433;Database=fintech_psp;Username=postgres;Password=postgres"));
 
 // Repositories
 builder.Services.AddScoped<IPriorizacaoRepository, PriorizacaoRepository>();
@@ -65,7 +65,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("BankingScope", policy =>
         policy.RequireAuthenticatedUser()
-              .RequireClaim("scope", "banking"));
+              .RequireClaim("scope", "banking", "admin"));
 
     options.AddPolicy("AdminScope", policy =>
         policy.RequireAuthenticatedUser()

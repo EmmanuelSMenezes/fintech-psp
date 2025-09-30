@@ -143,8 +143,13 @@ public class RoteamentoBankingController : ControllerBase
 
     private Guid GetCurrentClientId()
     {
-        var clientIdClaim = User.FindFirst("clienteId")?.Value ?? User.FindFirst("sub")?.Value;
-        return Guid.TryParse(clientIdClaim, out var clienteId) ? clienteId : Guid.Empty;
+        // Usar o mesmo padrão dos outros controllers - ClaimTypes.NameIdentifier é o 'sub' do JWT
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Guid.Empty;
+        }
+        return userId;
     }
 }
 
@@ -219,7 +224,12 @@ public class BancosBankingController : ControllerBase
 
     private Guid GetCurrentClientId()
     {
-        var clientIdClaim = User.FindFirst("clienteId")?.Value ?? User.FindFirst("sub")?.Value;
-        return Guid.TryParse(clientIdClaim, out var clienteId) ? clienteId : Guid.Empty;
+        // Usar o mesmo padrão dos outros controllers - ClaimTypes.NameIdentifier é o 'sub' do JWT
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Guid.Empty;
+        }
+        return userId;
     }
 }

@@ -12,16 +12,56 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// Função para verificar se o token é válido
+const isValidToken = (token: string): boolean => {
+  if (!token) return false;
+
+  // Rejeitar tokens temporários
+  if (token.startsWith('temp-master-token-')) {
+    return false;
+  }
+
+  // Verificar se é um JWT válido (formato básico)
+  const jwtPattern = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/;
+  return jwtPattern.test(token);
+};
+
+// Função para limpar dados inválidos
+const clearInvalidAuth = () => {
+  console.log('🧹 [InternetBanking] Limpando dados de autenticação inválidos...');
+  localStorage.removeItem('internetbanking_access_token');
+  localStorage.removeItem('internetbanking_user_data');
+  // Recarregar a página para forçar logout
+  window.location.href = '/auth/signin';
+};
+
 // Interceptor para adicionar token JWT automaticamente
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    console.log('🚀 [InternetBanking] Interceptor executado para:', config.method?.toUpperCase(), config.url);
+
+    const token = localStorage.getItem('internetbanking_access_token');
+    console.log('🔑 [InternetBanking] Token encontrado:', token ? 'SIM' : 'NÃO');
+
     if (token) {
+      // Verificar se o token é válido antes de usar
+      if (!isValidToken(token)) {
+        console.error('❌ [InternetBanking] Token inválido detectado no interceptor!');
+        clearInvalidAuth();
+        return Promise.reject(new Error('Token inválido'));
+      }
+
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ [InternetBanking] Authorization header adicionado');
+      console.log('🎫 [InternetBanking] Token JWT válido (primeiros 20 chars):', token.substring(0, 20) + '...');
+    } else {
+      console.log('❌ [InternetBanking] Nenhum token para adicionar');
     }
+
     return config;
   },
   (error) => {
+    console.error('❌ [InternetBanking] Erro no interceptor de request:', error);
     return Promise.reject(error);
   }
 );
@@ -29,32 +69,42 @@ api.interceptors.request.use(
 // Interceptor para tratar respostas e erros
 api.interceptors.response.use(
   (response: AxiosResponse) => {
+    console.log('✅ [InternetBanking] Resposta recebida:', response.status, response.config.url);
     return response;
   },
   (error) => {
+    console.error('❌ [InternetBanking] Erro na resposta:', error.response?.status, error.config?.url);
+
     if (error.response?.status === 401) {
-      // Token expirado ou inválido
-      // localStorage.removeItem('access_token');
-      // localStorage.removeItem('user_data');
-      // window.location.href = '/auth/signin';
+      const token = localStorage.getItem('internetbanking_access_token');
+      console.error('🚫 [InternetBanking] Token rejeitado (401):', token?.substring(0, 20) + '...');
+
+      // Fazer logout automático em caso de 401
+      console.log('🚪 [InternetBanking] Fazendo logout automático devido ao erro 401...');
+      clearInvalidAuth();
     }
+
     return Promise.reject(error);
   }
 );
 
 // Tipos para autenticação
 export interface LoginRequest {
-  grant_type: 'client_credentials';
-  client_id: string;
-  client_secret: string;
-  scope: string;
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    isMaster: boolean;
+  };
 }
 
 // Tipos para usuários
@@ -203,12 +253,16 @@ export interface CreateSubUserRequest {
 // Serviços da API
 export const authService = {
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    api.post('/auth/token', data),
-  
+    api.post('/auth/login', data),
+
   logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
+    localStorage.removeItem('internetbanking_access_token');
+    localStorage.removeItem('internetbanking_user_data');
   },
+
+  // Buscar dados do usuário atual
+  getCurrentUser: (): Promise<AxiosResponse<User>> =>
+    api.get('/client-users/me'),
 };
 
 export const userService = {
@@ -286,9 +340,32 @@ export const transactionService = {
     accountNumber: string;
     taxId: string;
     name: string;
+    description?: string;
     contaId?: string;
   }): Promise<AxiosResponse<Transaction>> =>
     api.post('/banking/transacoes/ted', data),
+
+  createBoletoTransaction: (data: {
+    externalId: string;
+    amount: number;
+    dueDate: string;
+    payerTaxId: string;
+    payerName: string;
+    instructions?: string;
+    contaId?: string;
+  }): Promise<AxiosResponse<Transaction>> =>
+    api.post('/banking/transacoes/boleto', data),
+
+  createCryptoTransaction: (data: {
+    externalId: string;
+    amount: number;
+    cryptoType: 'bitcoin' | 'ethereum' | 'usdt' | 'usdc';
+    walletAddress: string;
+    fiatCurrency?: string;
+    description?: string;
+    contaId?: string;
+  }): Promise<AxiosResponse<Transaction>> =>
+    api.post('/banking/transacoes/crypto', data),
 };
 
 export const reportService = {
@@ -320,6 +397,155 @@ export const accessService = {
 
   getAvailablePermissions: (): Promise<AxiosResponse<PermissionsResponse>> =>
     api.get('/api/acessos/permissions'),
+};
+
+// Interfaces para Configurações da Empresa
+export interface CompanySettings {
+  settingsId: string;
+  companyId: string;
+
+  // Informações da Empresa
+  companyName: string;
+  cnpj: string;
+  email: string;
+  phone: string;
+
+  // Configurações de Segurança
+  maxDailyTransactionAmount: number;
+  maxSingleTransactionAmount: number;
+  requireTwoFactorAuth: boolean;
+  sessionTimeoutMinutes: number;
+
+  // Configurações de Notificação
+  emailNotifications: {
+    transactionConfirmation: boolean;
+    dailyReport: boolean;
+    securityAlerts: boolean;
+    systemMaintenance: boolean;
+  };
+
+  // Configurações SMTP
+  smtpSettings: {
+    enabled: boolean;
+    host: string;
+    port: number;
+    username: string;
+    password: string; // Será mascarado na resposta
+    fromEmail: string;
+    fromName: string;
+    useTLS: boolean;
+  };
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateCompanySettingsRequest {
+  // Informações da Empresa
+  companyName: string;
+  cnpj: string;
+  email: string;
+  phone: string;
+
+  // Configurações de Segurança
+  maxDailyTransactionAmount: number;
+  maxSingleTransactionAmount: number;
+  requireTwoFactorAuth: boolean;
+  sessionTimeoutMinutes: number;
+
+  // Configurações de Notificação
+  emailNotifications: {
+    transactionConfirmation: boolean;
+    dailyReport: boolean;
+    securityAlerts: boolean;
+    systemMaintenance: boolean;
+  };
+
+  // Configurações SMTP
+  smtpSettings: {
+    enabled: boolean;
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    fromEmail: string;
+    fromName: string;
+    useTLS: boolean;
+  };
+}
+
+export interface TestSmtpRequest {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  fromEmail: string;
+  fromName: string;
+  useTLS: boolean;
+  testEmail: string;
+}
+
+// Serviço de Configurações da Empresa
+export const companySettingsService = {
+  // Obter configurações da empresa
+  getSettings: (): Promise<AxiosResponse<CompanySettings>> =>
+    api.get('/api/empresa/configuracoes'),
+
+  // Atualizar configurações da empresa
+  updateSettings: (data: UpdateCompanySettingsRequest): Promise<AxiosResponse<CompanySettings>> =>
+    api.put('/api/empresa/configuracoes', data),
+
+  // Testar configurações SMTP
+  testSmtp: (data: TestSmtpRequest): Promise<AxiosResponse<{ success: boolean; message: string }>> =>
+    api.post('/api/empresa/configuracoes/test-smtp', data),
+
+  // Obter histórico de alterações
+  getSettingsHistory: (): Promise<AxiosResponse<any[]>> =>
+    api.get('/api/empresa/configuracoes/historico'),
+};
+
+// Interfaces para Priorização
+export interface PrioritizationRule {
+  contaId: string;
+  percentage: number;
+  isActive: boolean;
+  accountName?: string;
+  accountNumber?: string;
+  bankCode?: string;
+}
+
+export interface CreatePrioritizationRequest {
+  rules: PrioritizationRule[];
+}
+
+export interface PrioritizationConfiguration {
+  configurationId: string;
+  clienteId: string;
+  rules: PrioritizationRule[];
+  isActive: boolean;
+  totalPercentage: number;
+  isValid: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Serviço de Priorização
+export const prioritizationService = {
+  // Banking scope - configuração de priorização do usuário
+  getMyConfiguration: (): Promise<AxiosResponse<PrioritizationConfiguration>> =>
+    api.get('/banking/priorizacao'),
+
+  createConfiguration: (data: CreatePrioritizationRequest): Promise<AxiosResponse<PrioritizationConfiguration>> =>
+    api.post('/banking/priorizacao', data),
+
+  updateConfiguration: (data: CreatePrioritizationRequest): Promise<AxiosResponse<PrioritizationConfiguration>> =>
+    api.put('/banking/priorizacao', data),
+
+  deleteConfiguration: (): Promise<AxiosResponse<void>> =>
+    api.delete('/banking/priorizacao'),
+
+  validateConfiguration: (rules: PrioritizationRule[]): Promise<AxiosResponse<{ isValid: boolean; errors: string[]; totalPercentage: number }>> =>
+    api.post('/banking/priorizacao/validate', { rules }),
 };
 
 export default api;
