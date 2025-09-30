@@ -30,6 +30,7 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
 // Repositories
 builder.Services.AddScoped<IPriorizacaoRepository, PriorizacaoRepository>();
 builder.Services.AddScoped<IBancoPersonalizadoRepository, BancoPersonalizadoRepository>();
+builder.Services.AddScoped<IBankingConfigRepository, BankingConfigRepository>();
 
 // MassTransit
 builder.Services.AddMassTransit(x =>

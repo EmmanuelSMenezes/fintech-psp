@@ -256,23 +256,37 @@ public class AdminUserController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUser([FromRoute] Guid id)
     {
-        _logger.LogInformation("Admin obtendo usuário {UserId}", id);
-        
-        await Task.Delay(30); // Simular consulta DB
-        
-        var user = new UserResponse 
-        { 
-            Id = id, 
-            Name = "João Silva", 
-            Email = "joao@exemplo.com", 
-            Document = "12345678901", 
-            Active = true, 
-            CreatedAt = DateTime.UtcNow.AddDays(-30),
-            Phone = "+5511999887766",
-            Address = "Rua das Flores, 123 - São Paulo/SP"
-        };
+        try
+        {
+            _logger.LogInformation("Admin obtendo usuário {UserId}", id);
 
-        return Ok(user);
+            var systemUser = await _systemUserRepository.GetByIdAsync(id);
+
+            if (systemUser == null)
+            {
+                _logger.LogWarning("Usuário {UserId} não encontrado", id);
+                return NotFound(new { error = "not_found", message = "Usuário não encontrado" });
+            }
+
+            var user = new UserResponse
+            {
+                Id = systemUser.Id,
+                Name = systemUser.Name,
+                Email = systemUser.Email,
+                Document = systemUser.Document,
+                Active = systemUser.Active,
+                CreatedAt = systemUser.CreatedAt,
+                Phone = systemUser.Phone,
+                Address = systemUser.Address
+            };
+
+            return Ok(user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter usuário {UserId}", id);
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
     }
 
 

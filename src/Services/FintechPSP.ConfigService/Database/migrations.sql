@@ -58,3 +58,36 @@ ON CONFLICT (config_key) DO NOTHING;
 INSERT INTO system_configs (config_key, config_value, description) VALUES
 ('qr_code_expiration_minutes', '30', 'Tempo de expiração padrão para QR codes dinâmicos em minutos')
 ON CONFLICT (config_key) DO NOTHING;
+
+-- =====================================================
+-- Tabela: banking_configs
+-- Descrição: Configurações bancárias do sistema
+-- =====================================================
+CREATE TABLE IF NOT EXISTS banking_configs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT true,
+    settings JSONB,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    created_by VARCHAR(100),
+    updated_by VARCHAR(100),
+
+    -- Constraints
+    CONSTRAINT uk_banking_configs_name UNIQUE (name)
+);
+
+-- Índices para banking_configs
+CREATE INDEX IF NOT EXISTS idx_banking_configs_type ON banking_configs(type);
+CREATE INDEX IF NOT EXISTS idx_banking_configs_enabled ON banking_configs(enabled);
+CREATE INDEX IF NOT EXISTS idx_banking_configs_created_at ON banking_configs(created_at);
+
+-- Dados iniciais para banking_configs
+INSERT INTO banking_configs (id, name, type, enabled, settings, created_by) VALUES
+(gen_random_uuid(), 'Stark Bank PIX', 'pix', true, '{"api_key": "sk_test_***", "environment": "sandbox", "timeout": 30}', 'system'),
+(gen_random_uuid(), 'Sicoob PIX', 'pix', true, '{"client_id": "sicoob_***", "client_secret": "***", "environment": "sandbox"}', 'system'),
+(gen_random_uuid(), 'Banco Genial TED', 'ted', true, '{"agency": "0001", "account": "123456", "environment": "sandbox"}', 'system'),
+(gen_random_uuid(), 'Efí Boleto', 'boleto', true, '{"client_id": "efi_***", "client_secret": "***", "certificate_path": "/certs/efi.p12"}', 'system'),
+(gen_random_uuid(), 'Celcoin Crypto', 'crypto', false, '{"api_key": "celcoin_***", "webhook_url": "https://api.fintech.com/webhooks/celcoin"}', 'system')
+ON CONFLICT (name) DO NOTHING;

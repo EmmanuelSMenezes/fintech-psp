@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using FintechPSP.CompanyService.Converters;
+using FintechPSP.CompanyService.Repositories;
+using FintechPSP.Shared.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,17 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(context.ModelState);
         };
     });
+
+// MediatR para CQRS
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+// Database
+builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
+    new PostgreSqlConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")!));
+
+// Repositories
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddScoped<ILegalRepresentativeRepository, LegalRepresentativeRepository>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

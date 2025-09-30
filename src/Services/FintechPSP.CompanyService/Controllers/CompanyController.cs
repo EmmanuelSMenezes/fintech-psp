@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FintechPSP.CompanyService.Models;
+using FintechPSP.CompanyService.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,112 +19,14 @@ namespace FintechPSP.CompanyService.Controllers;
 public class CompanyController : ControllerBase
 {
     private readonly ILogger<CompanyController> _logger;
+    private readonly ICompanyRepository _companyRepository;
 
-    // Armazenamento temporário em memória (substituir por banco de dados real)
-    private static readonly List<Company> _companies = new();
-    private static readonly object _lock = new object();
-
-    public CompanyController(ILogger<CompanyController> logger)
+    public CompanyController(
+        ILogger<CompanyController> logger,
+        ICompanyRepository companyRepository)
     {
         _logger = logger;
-
-        // Inicializar com dados de exemplo se estiver vazio
-        lock (_lock)
-        {
-            if (_companies.Count == 0)
-            {
-                _companies.AddRange(new[]
-                {
-                    new Company
-                    {
-                        Id = Guid.Parse("b79fda6d-1642-4c05-b81f-7d065a2e28a1"),
-                        RazaoSocial = "Tech Solutions Ltda",
-                        NomeFantasia = "TechSol",
-                        Cnpj = "12.345.678/0001-90",
-                        InscricaoEstadual = "123.456.789.012",
-                        Email = "contato@techsol.com.br",
-                        Telefone = "(11) 3000-0000",
-                        Status = CompanyStatus.Active,
-                        CreatedAt = DateTime.UtcNow.AddDays(-30),
-                        Address = new CompanyAddress
-                        {
-                            Cep = "01310-100",
-                            Logradouro = "Av. Paulista",
-                            Numero = "1000",
-                            Bairro = "Bela Vista",
-                            Cidade = "São Paulo",
-                            Estado = "SP",
-                            Pais = "Brasil"
-                        },
-                        ContractData = new ContractData
-                        {
-                            NumeroContrato = "123456789",
-                            DataContrato = DateTime.UtcNow.AddDays(-30),
-                            CapitalSocial = 100000.00m,
-                            AtividadePrincipal = "6201-5/00 - Desenvolvimento de programas de computador sob encomenda",
-                            AtividadesSecundarias = new List<string>()
-                        },
-                        Applicant = new ApplicantData
-                        {
-                            NomeCompleto = "João Silva Santos",
-                            Cpf = "123.456.789-01",
-                            Email = "joao.silva@techsol.com.br",
-                            Telefone = "(11) 99999-8888",
-                            Address = new ApplicantAddress
-                            {
-                                Cep = "01310-100",
-                                Logradouro = "Av. Paulista",
-                                Numero = "1000",
-                                Bairro = "Bela Vista",
-                                Cidade = "São Paulo",
-                                Estado = "SP",
-                                Pais = "Brasil"
-                            },
-                            IsMainRepresentative = true
-                        }
-                    },
-                    new Company
-                    {
-                        Id = Guid.NewGuid(),
-                        RazaoSocial = "Inovação Digital S.A.",
-                        NomeFantasia = "InovaDigital",
-                        Cnpj = "98.765.432/0001-10",
-                        Status = CompanyStatus.UnderReview,
-                        CreatedAt = DateTime.UtcNow.AddDays(-15),
-                        Address = new CompanyAddress
-                        {
-                            Cep = "20040-020",
-                            Logradouro = "Rua das Flores, 500",
-                            Cidade = "Rio de Janeiro",
-                            Estado = "RJ",
-                            Pais = "Brasil"
-                        },
-                        ContractData = new ContractData
-                        {
-                            AtividadesSecundarias = new List<string>()
-                        },
-                        Applicant = new ApplicantData
-                        {
-                            NomeCompleto = "Maria Oliveira Costa",
-                            Cpf = "987.654.321-00",
-                            Email = "maria.oliveira@inovadigital.com.br",
-                            Telefone = "(21) 98888-7777",
-                            Address = new ApplicantAddress
-                            {
-                                Cep = "20040-020",
-                                Logradouro = "Rua das Flores",
-                                Numero = "500",
-                                Bairro = "Centro",
-                                Cidade = "Rio de Janeiro",
-                                Estado = "RJ",
-                                Pais = "Brasil"
-                            },
-                            IsMainRepresentative = true
-                        }
-                    }
-                });
-            }
-        }
+        _companyRepository = companyRepository;
     }
 
     /// <summary>
@@ -168,45 +71,30 @@ public class CompanyController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] CompanyStatus? status = null)
     {
-        _logger.LogInformation("Listando empresas - Página: {Page}, Limite: {Limit}, Busca: {Search}, Status: {Status}",
-            page, limit, search, status);
-
-        await Task.Delay(50); // Simular consulta DB
-
-        List<Company> companies;
-        lock (_lock)
+        try
         {
-            companies = _companies.ToList(); // Criar cópia para evitar problemas de concorrência
+            _logger.LogInformation("Listando empresas - Página: {Page}, Limite: {Limit}, Busca: {Search}, Status: {Status}",
+                page, limit, search, status);
+
+            var result = await _companyRepository.GetPagedAsync(page, limit, status, search);
+
+            _logger.LogInformation("Encontradas {TotalCount} empresas (página {Page}/{TotalPages})",
+                result.TotalCount, result.CurrentPage, result.TotalPages);
+
+            return Ok(new
+            {
+                companies = result.Data,
+                total = result.TotalCount,
+                page = result.CurrentPage,
+                limit = result.PageSize,
+                totalPages = result.TotalPages
+            });
         }
-
-        var filteredCompanies = companies;
-        if (!string.IsNullOrEmpty(search))
+        catch (Exception ex)
         {
-            filteredCompanies = companies.Where(c => 
-                c.RazaoSocial.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                c.NomeFantasia?.Contains(search, StringComparison.OrdinalIgnoreCase) == true ||
-                c.Cnpj.Contains(search)).ToList();
+            _logger.LogError(ex, "Erro ao listar empresas");
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
         }
-
-        if (status.HasValue)
-        {
-            filteredCompanies = filteredCompanies.Where(c => c.Status == status.Value).ToList();
-        }
-
-        var total = filteredCompanies.Count;
-        var pagedCompanies = filteredCompanies
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToList();
-
-        return Ok(new
-        {
-            companies = pagedCompanies,
-            total,
-            page,
-            limit,
-            totalPages = (int)Math.Ceiling((double)total / limit)
-        });
     }
 
     /// <summary>
@@ -215,23 +103,25 @@ public class CompanyController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCompany([FromRoute] Guid id)
     {
-        _logger.LogInformation("Obtendo empresa {CompanyId}", id);
-
-        await Task.Delay(30); // Simular consulta DB
-
-        Company? company;
-        lock (_lock)
+        try
         {
-            company = _companies.FirstOrDefault(c => c.Id == id);
-        }
+            _logger.LogInformation("Obtendo empresa {CompanyId}", id);
 
-        if (company == null)
+            var company = await _companyRepository.GetByIdAsync(id);
+
+            if (company == null)
+            {
+                _logger.LogWarning("Empresa {CompanyId} não encontrada", id);
+                return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
+            }
+
+            return Ok(company);
+        }
+        catch (Exception ex)
         {
-            _logger.LogWarning("Empresa {CompanyId} não encontrada", id);
-            return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
+            _logger.LogError(ex, "Erro ao obter empresa {CompanyId}", id);
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
         }
-
-        return Ok(company);
     }
 
     /// <summary>
@@ -244,7 +134,13 @@ public class CompanyController : ControllerBase
         {
             _logger.LogInformation("Criando nova empresa: {RazaoSocial}", request.Company.RazaoSocial);
 
-            await Task.Delay(100); // Simular criação no DB
+            // Verificar se CNPJ já existe
+            var existingCompany = await _companyRepository.GetByCnpjAsync(request.Company.Cnpj);
+            if (existingCompany != null)
+            {
+                _logger.LogWarning("CNPJ {Cnpj} já existe", request.Company.Cnpj);
+                return BadRequest(new { error = "cnpj_exists", message = "CNPJ já cadastrado" });
+            }
 
             var company = new Company
             {
@@ -254,25 +150,21 @@ public class CompanyController : ControllerBase
                 Cnpj = request.Company.Cnpj,
                 InscricaoEstadual = request.Company.InscricaoEstadual,
                 InscricaoMunicipal = request.Company.InscricaoMunicipal,
-                Address = request.Company.Address,
+                Address = request.Company.Address ?? new CompanyAddress(),
                 Telefone = request.Company.Telefone,
                 Email = request.Company.Email,
                 Website = request.Company.Website,
-                ContractData = request.Company.ContractData,
+                ContractData = request.Company.ContractData ?? new ContractData(),
                 Status = CompanyStatus.PendingDocuments,
                 CreatedAt = DateTime.UtcNow,
                 Observacoes = request.Company.Observacoes
             };
 
-            // Adicionar à lista em memória
-            lock (_lock)
-            {
-                _companies.Add(company);
-            }
+            var createdCompany = await _companyRepository.CreateAsync(company);
 
-            _logger.LogInformation("Empresa criada com sucesso: {CompanyId}", company.Id);
+            _logger.LogInformation("Empresa criada com sucesso: {CompanyId}", createdCompany.Id);
 
-            return CreatedAtAction(nameof(GetCompany), new { id = company.Id }, company);
+            return CreatedAtAction(nameof(GetCompany), new { id = createdCompany.Id }, createdCompany);
         }
         catch (Exception ex)
         {
@@ -312,45 +204,49 @@ public class CompanyController : ControllerBase
                 return BadRequest(ModelState);
             }
 
-            await Task.Delay(80); // Simular atualização no DB
-
-            Company company;
-            lock (_lock)
+            // Verificar se a empresa existe
+            var existingCompany = await _companyRepository.GetByIdAsync(id);
+            if (existingCompany == null)
             {
-                // Encontrar a empresa existente
-                var existingCompany = _companies.FirstOrDefault(c => c.Id == id);
-                if (existingCompany == null)
-                {
-                    _logger.LogWarning("Empresa {CompanyId} não encontrada", id);
-                    return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
-                }
-
-                // Atualizar os dados
-                existingCompany.RazaoSocial = request.RazaoSocial;
-                existingCompany.NomeFantasia = request.NomeFantasia;
-                existingCompany.Cnpj = request.Cnpj;
-                existingCompany.InscricaoEstadual = request.InscricaoEstadual;
-                existingCompany.InscricaoMunicipal = request.InscricaoMunicipal;
-                existingCompany.Address = request.Address;
-                existingCompany.Telefone = request.Telefone;
-                existingCompany.Email = request.Email;
-                existingCompany.Website = request.Website;
-                existingCompany.ContractData = request.ContractData;
-                existingCompany.UpdatedAt = DateTime.UtcNow;
-                existingCompany.Observacoes = request.Observacoes;
-
-                // Atualizar dados do solicitante se fornecidos
-                if (request.Applicant != null)
-                {
-                    existingCompany.Applicant = request.Applicant;
-                    _logger.LogInformation("📝 Dados do solicitante atualizados: {ApplicantName}", request.Applicant.NomeCompleto);
-                }
-
-                company = existingCompany;
+                _logger.LogWarning("Empresa {CompanyId} não encontrada", id);
+                return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
             }
 
+            // Verificar se CNPJ já existe para outra empresa
+            if (existingCompany.Cnpj != request.Cnpj)
+            {
+                var cnpjExists = await _companyRepository.CnpjExistsAsync(request.Cnpj);
+                if (cnpjExists)
+                {
+                    _logger.LogWarning("CNPJ {Cnpj} já existe para outra empresa", request.Cnpj);
+                    return BadRequest(new { error = "cnpj_exists", message = "CNPJ já cadastrado para outra empresa" });
+                }
+            }
+
+            // Atualizar os dados
+            existingCompany.RazaoSocial = request.RazaoSocial;
+            existingCompany.NomeFantasia = request.NomeFantasia;
+            existingCompany.Cnpj = request.Cnpj;
+            existingCompany.InscricaoEstadual = request.InscricaoEstadual;
+            existingCompany.InscricaoMunicipal = request.InscricaoMunicipal;
+            existingCompany.Address = request.Address ?? new CompanyAddress();
+            existingCompany.Telefone = request.Telefone;
+            existingCompany.Email = request.Email;
+            existingCompany.Website = request.Website;
+            existingCompany.ContractData = request.ContractData ?? new ContractData();
+            existingCompany.Observacoes = request.Observacoes;
+
+            // Atualizar dados do solicitante se fornecidos
+            if (request.Applicant != null)
+            {
+                existingCompany.Applicant = request.Applicant;
+                _logger.LogInformation("📝 Dados do solicitante atualizados: {ApplicantName}", request.Applicant.NomeCompleto);
+            }
+
+            var updatedCompany = await _companyRepository.UpdateAsync(existingCompany);
+
             _logger.LogInformation("✅ Empresa {CompanyId} atualizada com sucesso", id);
-            return Ok(company);
+            return Ok(updatedCompany);
         }
         catch (Exception ex)
         {
@@ -369,19 +265,19 @@ public class CompanyController : ControllerBase
         {
             _logger.LogInformation("Atualizando status da empresa {CompanyId} para {Status}", id, request.Status);
 
-            await Task.Delay(50); // Simular atualização no DB
-
-            var company = new Company
+            // Verificar se a empresa existe
+            var existingCompany = await _companyRepository.GetByIdAsync(id);
+            if (existingCompany == null)
             {
-                Id = id,
-                RazaoSocial = "Tech Solutions Ltda",
-                Status = request.Status,
-                UpdatedAt = DateTime.UtcNow,
-                ApprovedAt = request.Status == CompanyStatus.Approved ? DateTime.UtcNow : null,
-                ApprovedBy = request.Status == CompanyStatus.Approved ? GetCurrentUserId() : null
-            };
+                _logger.LogWarning("Empresa {CompanyId} não encontrada", id);
+                return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
+            }
 
-            return Ok(company);
+            var updatedCompany = await _companyRepository.UpdateStatusAsync(id, request.Status, GetCurrentUserId());
+
+            _logger.LogInformation("Status da empresa {CompanyId} atualizado para {Status}", id, request.Status);
+
+            return Ok(updatedCompany);
         }
         catch (Exception ex)
         {
@@ -400,21 +296,22 @@ public class CompanyController : ControllerBase
         {
             _logger.LogInformation("Excluindo empresa {CompanyId}", id);
 
-            // Buscar e remover da lista em memória
-            lock (_lock)
+            // Verificar se a empresa existe
+            var existingCompany = await _companyRepository.GetByIdAsync(id);
+            if (existingCompany == null)
             {
-                var company = _companies.FirstOrDefault(c => c.Id == id);
-                if (company == null)
-                {
-                    _logger.LogWarning("Empresa {CompanyId} não encontrada para exclusão", id);
-                    return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
-                }
-
-                _companies.Remove(company);
-                _logger.LogInformation("Empresa {CompanyId} removida da lista. Total restante: {Count}", id, _companies.Count);
+                _logger.LogWarning("Empresa {CompanyId} não encontrada para exclusão", id);
+                return NotFound(new { error = "not_found", message = "Empresa não encontrada" });
             }
 
-            await Task.Delay(50); // Simular exclusão no DB
+            var deleted = await _companyRepository.DeleteAsync(id);
+            if (!deleted)
+            {
+                _logger.LogWarning("Falha ao excluir empresa {CompanyId}", id);
+                return StatusCode(500, new { error = "delete_failed", message = "Falha ao excluir empresa" });
+            }
+
+            _logger.LogInformation("Empresa {CompanyId} excluída com sucesso", id);
 
             return NoContent();
         }

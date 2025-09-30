@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FintechPSP.CompanyService.Models;
+using FintechPSP.CompanyService.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -19,10 +20,14 @@ namespace FintechPSP.CompanyService.Controllers;
 public class LegalRepresentativeController : ControllerBase
 {
     private readonly ILogger<LegalRepresentativeController> _logger;
+    private readonly ILegalRepresentativeRepository _representativeRepository;
 
-    public LegalRepresentativeController(ILogger<LegalRepresentativeController> logger)
+    public LegalRepresentativeController(
+        ILogger<LegalRepresentativeController> logger,
+        ILegalRepresentativeRepository representativeRepository)
     {
         _logger = logger;
+        _representativeRepository = representativeRepository;
     }
 
     /// <summary>
@@ -31,77 +36,22 @@ public class LegalRepresentativeController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetRepresentatives([FromRoute] Guid companyId)
     {
-        _logger.LogInformation("Listando representantes legais da empresa {CompanyId}", companyId);
-
-        await Task.Delay(30); // Simular consulta DB
-
-        var representatives = new List<LegalRepresentative>
+        try
         {
-            new LegalRepresentative
-            {
-                Id = Guid.NewGuid(),
-                CompanyId = companyId,
-                NomeCompleto = "João Silva Santos",
-                Cpf = "123.456.789-01",
-                Rg = "12.345.678-9",
-                OrgaoExpedidor = "SSP/SP",
-                DataNascimento = new DateTime(1980, 5, 15),
-                EstadoCivil = "Casado",
-                Nacionalidade = "Brasileira",
-                Profissao = "Empresário",
-                Email = "joao@techsol.com.br",
-                Telefone = "(11) 99999-9999",
-                Cargo = "Diretor Presidente",
-                Type = RepresentationType.President,
-                PercentualParticipacao = 60.0m,
-                PodeAssinarSozinho = true,
-                LimiteAlcada = 1000000.00m,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow.AddDays(-30),
-                Address = new RepresentativeAddress
-                {
-                    Cep = "01310-100",
-                    Logradouro = "Rua das Palmeiras",
-                    Numero = "123",
-                    Bairro = "Jardins",
-                    Cidade = "São Paulo",
-                    Estado = "SP"
-                }
-            },
-            new LegalRepresentative
-            {
-                Id = Guid.NewGuid(),
-                CompanyId = companyId,
-                NomeCompleto = "Maria Oliveira Costa",
-                Cpf = "987.654.321-09",
-                Rg = "98.765.432-1",
-                OrgaoExpedidor = "SSP/SP",
-                DataNascimento = new DateTime(1985, 8, 22),
-                EstadoCivil = "Solteira",
-                Nacionalidade = "Brasileira",
-                Profissao = "Administradora",
-                Email = "maria@techsol.com.br",
-                Telefone = "(11) 88888-8888",
-                Cargo = "Diretora Financeira",
-                Type = RepresentationType.Director,
-                PercentualParticipacao = 40.0m,
-                PodeAssinarSozinho = false,
-                LimiteAlcada = 500000.00m,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow.AddDays(-30),
-                Address = new RepresentativeAddress
-                {
-                    Cep = "04567-890",
-                    Logradouro = "Av. Brigadeiro Faria Lima",
-                    Numero = "456",
-                    Bairro = "Itaim Bibi",
-                    Cidade = "São Paulo",
-                    Estado = "SP"
-                }
-            }
-        };
+            _logger.LogInformation("Listando representantes legais da empresa {CompanyId}", companyId);
 
-        return Ok(representatives);
+            var representatives = await _representativeRepository.GetByCompanyIdAsync(companyId);
+
+            _logger.LogInformation("Encontrados {Count} representantes legais para empresa {CompanyId}",
+                representatives.Count(), companyId);
+
+            return Ok(representatives);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar representantes legais da empresa {CompanyId}", companyId);
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -110,48 +60,27 @@ public class LegalRepresentativeController : ControllerBase
     [HttpGet("{representativeId}")]
     public async Task<IActionResult> GetRepresentative([FromRoute] Guid companyId, [FromRoute] Guid representativeId)
     {
-        _logger.LogInformation("Obtendo representante legal {RepresentativeId} da empresa {CompanyId}", 
-            representativeId, companyId);
-
-        await Task.Delay(30); // Simular consulta DB
-
-        var representative = new LegalRepresentative
+        try
         {
-            Id = representativeId,
-            CompanyId = companyId,
-            NomeCompleto = "João Silva Santos",
-            Cpf = "123.456.789-01",
-            Rg = "12.345.678-9",
-            OrgaoExpedidor = "SSP/SP",
-            DataNascimento = new DateTime(1980, 5, 15),
-            EstadoCivil = "Casado",
-            Nacionalidade = "Brasileira",
-            Profissao = "Empresário",
-            Email = "joao@techsol.com.br",
-            Telefone = "(11) 99999-9999",
-            Celular = "(11) 99999-9999",
-            Cargo = "Diretor Presidente",
-            Type = RepresentationType.President,
-            PercentualParticipacao = 60.0m,
-            PoderesRepresentacao = "Poderes gerais de administração",
-            PodeAssinarSozinho = true,
-            LimiteAlcada = 1000000.00m,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow.AddDays(-30),
-            Address = new RepresentativeAddress
-            {
-                Cep = "01310-100",
-                Logradouro = "Rua das Palmeiras",
-                Numero = "123",
-                Complemento = "Apto 45",
-                Bairro = "Jardins",
-                Cidade = "São Paulo",
-                Estado = "SP",
-                Pais = "Brasil"
-            }
-        };
+            _logger.LogInformation("Obtendo representante legal {RepresentativeId} da empresa {CompanyId}",
+                representativeId, companyId);
 
-        return Ok(representative);
+            var representative = await _representativeRepository.GetByIdAsync(representativeId);
+
+            if (representative == null || representative.CompanyId != companyId)
+            {
+                _logger.LogWarning("Representante legal {RepresentativeId} não encontrado para empresa {CompanyId}",
+                    representativeId, companyId);
+                return NotFound(new { error = "not_found", message = "Representante legal não encontrado" });
+            }
+
+            return Ok(representative);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter representante legal {RepresentativeId}", representativeId);
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -162,10 +91,16 @@ public class LegalRepresentativeController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Criando representante legal para empresa {CompanyId}: {Nome}", 
+            _logger.LogInformation("Criando representante legal para empresa {CompanyId}: {Nome}",
                 companyId, request.NomeCompleto);
 
-            await Task.Delay(80); // Simular criação no DB
+            // Verificar se CPF já existe para esta empresa
+            var existingRepresentative = await _representativeRepository.GetByCpfAndCompanyAsync(request.Cpf, companyId);
+            if (existingRepresentative != null)
+            {
+                _logger.LogWarning("CPF {Cpf} já existe para empresa {CompanyId}", request.Cpf, companyId);
+                return BadRequest(new { error = "cpf_exists", message = "CPF já cadastrado para esta empresa" });
+            }
 
             var representative = new LegalRepresentative
             {
@@ -182,7 +117,7 @@ public class LegalRepresentativeController : ControllerBase
                 Email = request.Email,
                 Telefone = request.Telefone,
                 Celular = request.Celular,
-                Address = request.Address,
+                Address = request.Address ?? new RepresentativeAddress(),
                 Cargo = request.Cargo,
                 Type = request.Type,
                 PercentualParticipacao = request.PercentualParticipacao,
@@ -193,10 +128,12 @@ public class LegalRepresentativeController : ControllerBase
                 CreatedAt = DateTime.UtcNow
             };
 
-            _logger.LogInformation("Representante legal criado com sucesso: {RepresentativeId}", representative.Id);
+            var createdRepresentative = await _representativeRepository.CreateAsync(representative);
 
-            return CreatedAtAction(nameof(GetRepresentative), 
-                new { companyId, representativeId = representative.Id }, representative);
+            _logger.LogInformation("Representante legal criado com sucesso: {RepresentativeId}", createdRepresentative.Id);
+
+            return CreatedAtAction(nameof(GetRepresentative),
+                new { companyId, representativeId = createdRepresentative.Id }, createdRepresentative);
         }
         catch (Exception ex)
         {
@@ -209,44 +146,59 @@ public class LegalRepresentativeController : ControllerBase
     /// Atualiza representante legal
     /// </summary>
     [HttpPut("{representativeId}")]
-    public async Task<IActionResult> UpdateRepresentative([FromRoute] Guid companyId, [FromRoute] Guid representativeId, 
+    public async Task<IActionResult> UpdateRepresentative([FromRoute] Guid companyId, [FromRoute] Guid representativeId,
         [FromBody] LegalRepresentativeData request)
     {
         try
         {
-            _logger.LogInformation("Atualizando representante legal {RepresentativeId} da empresa {CompanyId}", 
+            _logger.LogInformation("Atualizando representante legal {RepresentativeId} da empresa {CompanyId}",
                 representativeId, companyId);
 
-            await Task.Delay(80); // Simular atualização no DB
-
-            var representative = new LegalRepresentative
+            // Verificar se o representante existe
+            var existingRepresentative = await _representativeRepository.GetByIdAsync(representativeId);
+            if (existingRepresentative == null || existingRepresentative.CompanyId != companyId)
             {
-                Id = representativeId,
-                CompanyId = companyId,
-                NomeCompleto = request.NomeCompleto,
-                Cpf = request.Cpf,
-                Rg = request.Rg,
-                OrgaoExpedidor = request.OrgaoExpedidor,
-                DataNascimento = request.DataNascimento,
-                EstadoCivil = request.EstadoCivil,
-                Nacionalidade = request.Nacionalidade,
-                Profissao = request.Profissao,
-                Email = request.Email,
-                Telefone = request.Telefone,
-                Celular = request.Celular,
-                Address = request.Address,
-                Cargo = request.Cargo,
-                Type = request.Type,
-                PercentualParticipacao = request.PercentualParticipacao,
-                PoderesRepresentacao = request.PoderesRepresentacao,
-                PodeAssinarSozinho = request.PodeAssinarSozinho,
-                LimiteAlcada = request.LimiteAlcada,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow.AddDays(-30),
-                UpdatedAt = DateTime.UtcNow
-            };
+                _logger.LogWarning("Representante legal {RepresentativeId} não encontrado para empresa {CompanyId}",
+                    representativeId, companyId);
+                return NotFound(new { error = "not_found", message = "Representante legal não encontrado" });
+            }
 
-            return Ok(representative);
+            // Verificar se CPF já existe para outro representante da mesma empresa
+            if (existingRepresentative.Cpf != request.Cpf)
+            {
+                var cpfExists = await _representativeRepository.CpfExistsForCompanyAsync(request.Cpf, companyId, representativeId);
+                if (cpfExists)
+                {
+                    _logger.LogWarning("CPF {Cpf} já existe para outro representante da empresa {CompanyId}", request.Cpf, companyId);
+                    return BadRequest(new { error = "cpf_exists", message = "CPF já cadastrado para outro representante desta empresa" });
+                }
+            }
+
+            // Atualizar dados
+            existingRepresentative.NomeCompleto = request.NomeCompleto;
+            existingRepresentative.Cpf = request.Cpf;
+            existingRepresentative.Rg = request.Rg;
+            existingRepresentative.OrgaoExpedidor = request.OrgaoExpedidor;
+            existingRepresentative.DataNascimento = request.DataNascimento;
+            existingRepresentative.EstadoCivil = request.EstadoCivil;
+            existingRepresentative.Nacionalidade = request.Nacionalidade;
+            existingRepresentative.Profissao = request.Profissao;
+            existingRepresentative.Email = request.Email;
+            existingRepresentative.Telefone = request.Telefone;
+            existingRepresentative.Celular = request.Celular;
+            existingRepresentative.Address = request.Address ?? new RepresentativeAddress();
+            existingRepresentative.Cargo = request.Cargo;
+            existingRepresentative.Type = request.Type;
+            existingRepresentative.PercentualParticipacao = request.PercentualParticipacao;
+            existingRepresentative.PoderesRepresentacao = request.PoderesRepresentacao;
+            existingRepresentative.PodeAssinarSozinho = request.PodeAssinarSozinho;
+            existingRepresentative.LimiteAlcada = request.LimiteAlcada;
+
+            var updatedRepresentative = await _representativeRepository.UpdateAsync(existingRepresentative);
+
+            _logger.LogInformation("Representante legal {RepresentativeId} atualizado com sucesso", representativeId);
+
+            return Ok(updatedRepresentative);
         }
         catch (Exception ex)
         {
@@ -263,10 +215,26 @@ public class LegalRepresentativeController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Excluindo representante legal {RepresentativeId} da empresa {CompanyId}", 
+            _logger.LogInformation("Excluindo representante legal {RepresentativeId} da empresa {CompanyId}",
                 representativeId, companyId);
 
-            await Task.Delay(50); // Simular exclusão no DB
+            // Verificar se o representante existe e pertence à empresa
+            var existingRepresentative = await _representativeRepository.GetByIdAsync(representativeId);
+            if (existingRepresentative == null || existingRepresentative.CompanyId != companyId)
+            {
+                _logger.LogWarning("Representante legal {RepresentativeId} não encontrado para empresa {CompanyId}",
+                    representativeId, companyId);
+                return NotFound(new { error = "not_found", message = "Representante legal não encontrado" });
+            }
+
+            var deleted = await _representativeRepository.DeleteAsync(representativeId);
+            if (!deleted)
+            {
+                _logger.LogWarning("Falha ao excluir representante legal {RepresentativeId}", representativeId);
+                return StatusCode(500, new { error = "delete_failed", message = "Falha ao excluir representante legal" });
+            }
+
+            _logger.LogInformation("Representante legal {RepresentativeId} excluído com sucesso", representativeId);
 
             return NoContent();
         }

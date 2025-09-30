@@ -2,9 +2,11 @@ using System;
 using System.Threading.Tasks;
 using FintechPSP.TransactionService.Commands;
 using FintechPSP.TransactionService.DTOs;
+using FintechPSP.TransactionService.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace FintechPSP.TransactionService.Controllers;
 
@@ -18,10 +20,17 @@ namespace FintechPSP.TransactionService.Controllers;
 public class TransactionController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ITransactionRepository _transactionRepository;
+    private readonly ILogger<TransactionController> _logger;
 
-    public TransactionController(IMediator mediator)
+    public TransactionController(
+        IMediator mediator,
+        ITransactionRepository transactionRepository,
+        ILogger<TransactionController> logger)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _transactionRepository = transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -41,36 +50,33 @@ public class TransactionController : ControllerBase
     {
         try
         {
-            await Task.Delay(50); // Simular consulta DB
+            _logger.LogInformation("Listando transações - Página: {Page}, Limite: {Limit}, Tipo: {Type}, Status: {Status}",
+                page, limit, type, status);
 
-            var transactions = new object[]
+            // Obter ID do usuário do token JWT
+            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
             {
-                new {
-                    id = Guid.NewGuid(),
-                    externalId = "TXN-001",
-                    type = "pix",
-                    amount = 100.50m,
-                    status = "completed",
-                    description = "Pagamento PIX",
-                    createdAt = DateTime.UtcNow.AddHours(-1),
-                    pixKey = "user@example.com"
-                },
-                new {
-                    id = Guid.NewGuid(),
-                    externalId = "TXN-002",
-                    type = "ted",
-                    amount = 250.00m,
-                    status = "processing",
-                    description = "Transferência TED",
-                    createdAt = DateTime.UtcNow.AddHours(-2),
-                    bankCode = "001"
-                }
-            };
+                _logger.LogWarning("ID do usuário não encontrado no token");
+                return Unauthorized("Usuário não identificado");
+            }
 
-            return Ok(new { transactions, total = transactions.Length, page, limit });
+            var result = await _transactionRepository.GetPagedAsync(userId, page, limit, type, status);
+
+            _logger.LogInformation("Encontradas {TotalCount} transações para usuário {UserId}",
+                result.TotalCount, userId);
+
+            return Ok(new {
+                transactions = result.Data,
+                total = result.TotalCount,
+                page = result.CurrentPage,
+                limit = result.PageSize,
+                totalPages = result.TotalPages
+            });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao listar transações");
             return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
         }
     }
@@ -272,43 +278,50 @@ public class TransactionController : ControllerBase
                 return BadRequest(new { error = "invalid_request", message = "ID da transação é obrigatório" });
             }
 
-            // Simular consulta de status
-            await Task.Delay(50);
+            _logger.LogInformation("Consultando status da transação {TransactionId}", id);
 
-            // Mock de status baseado no ID
-            var status = (id.GetHashCode() % 4) switch
+            // Tentar converter o ID para Guid
+            if (!Guid.TryParse(id, out var transactionId))
             {
-                0 => "completed",
-                1 => "pending",
-                2 => "processing",
-                _ => "failed"
-            };
+                _logger.LogWarning("ID da transação inválido: {TransactionId}", id);
+                return BadRequest(new { error = "invalid_id", message = "ID da transação deve ser um GUID válido" });
+            }
+
+            var transaction = await _transactionRepository.GetByIdAsync(transactionId);
+
+            if (transaction == null)
+            {
+                _logger.LogWarning("Transação {TransactionId} não encontrada", transactionId);
+                return NotFound(new { error = "not_found", message = "Transação não encontrada" });
+            }
 
             var response = new
             {
-                transactionId = id,
-                status = status,
-                statusDescription = status switch
+                transactionId = transaction.Id,
+                externalId = transaction.ExternalId,
+                status = transaction.Status.ToString().ToLower(),
+                statusDescription = transaction.Status switch
                 {
-                    "completed" => "Transação concluída com sucesso",
-                    "pending" => "Transação pendente de processamento",
-                    "processing" => "Transação em processamento",
-                    "failed" => "Transação falhou",
+                    Models.TransactionStatus.Completed => "Transação concluída com sucesso",
+                    Models.TransactionStatus.Pending => "Transação pendente de processamento",
+                    Models.TransactionStatus.Processing => "Transação em processamento",
+                    Models.TransactionStatus.Failed => "Transação falhou",
+                    Models.TransactionStatus.Cancelled => "Transação cancelada",
                     _ => "Status desconhecido"
                 },
-                timestamp = DateTime.UtcNow,
-                details = new
-                {
-                    lastUpdate = DateTime.UtcNow.AddMinutes(-5),
-                    attempts = 1,
-                    nextRetry = status == "failed" ? DateTime.UtcNow.AddMinutes(10) : (DateTime?)null
-                }
+                amount = transaction.Amount,
+                type = transaction.Type.ToString().ToLower(),
+                description = transaction.Description,
+                createdAt = transaction.CreatedAt,
+                updatedAt = transaction.UpdatedAt,
+                timestamp = DateTime.UtcNow
             };
 
             return Ok(response);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao consultar status da transação {TransactionId}", id);
             return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
         }
     }

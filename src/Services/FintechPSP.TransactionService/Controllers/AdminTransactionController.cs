@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FintechPSP.TransactionService.DTOs;
+using FintechPSP.TransactionService.Repositories;
+using FintechPSP.Shared.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,10 +20,14 @@ namespace FintechPSP.TransactionService.Controllers;
 public class AdminTransactionController : ControllerBase
 {
     private readonly ILogger<AdminTransactionController> _logger;
+    private readonly ITransactionRepository _transactionRepository;
 
-    public AdminTransactionController(ILogger<AdminTransactionController> logger)
+    public AdminTransactionController(
+        ILogger<AdminTransactionController> logger,
+        ITransactionRepository transactionRepository)
     {
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _transactionRepository = transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
     }
 
     /// <summary>
@@ -32,46 +38,51 @@ public class AdminTransactionController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int limit = 20)
     {
-        _logger.LogInformation("Admin listando transações - página {Page}", page);
-
-        await Task.Delay(50); // Simular consulta DB
-
-        var transactions = new dynamic[]
+        try
         {
-            new
-            {
-                id = Guid.NewGuid().ToString(),
-                externalId = "TXN-001",
-                type = "pix",
-                amount = 100.50m,
-                description = "Pagamento PIX",
-                status = "COMPLETED",
-                createdAt = DateTime.UtcNow.AddHours(-2),
-                clientId = "666da775-b844-44e8-9188-61f83891b8f6"
-            },
-            new
-            {
-                id = Guid.NewGuid().ToString(),
-                externalId = "TXN-002",
-                type = "ted",
-                amount = 250.00m,
-                description = "Transferência TED",
-                status = "PROCESSING",
-                createdAt = DateTime.UtcNow.AddHours(-1),
-                clientId = "666da775-b844-44e8-9188-61f83891b8f6"
-            }
-        };
+            _logger.LogInformation("Admin listando transações - página {Page}", page);
 
-        var response = new
+            if (page < 1) page = 1;
+            if (limit < 1 || limit > 100) limit = 20;
+
+            // Buscar transações dos últimos 30 dias
+            var allTransactions = await _transactionRepository.GetByDateRangeAsync(
+                DateTime.UtcNow.AddDays(-30),
+                DateTime.UtcNow);
+
+            var transactionsList = allTransactions.ToList();
+            var skip = (page - 1) * limit;
+            var pagedTransactions = transactionsList.Skip(skip).Take(limit);
+
+            var response = new
+            {
+                transactions = pagedTransactions.Select(t => new
+                {
+                    id = t.TransactionId.ToString(),
+                    externalId = t.ExternalId,
+                    type = t.Type.ToString().ToLower(),
+                    amount = t.Amount.Amount,
+                    description = t.Description ?? "",
+                    status = t.Status.ToString(),
+                    createdAt = t.CreatedAt,
+                    updatedAt = t.UpdatedAt,
+                    bankCode = t.BankCode,
+                    pixKey = t.PixKey,
+                    endToEndId = t.EndToEndId
+                }),
+                total = transactionsList.Count,
+                page,
+                limit,
+                totalPages = (int)Math.Ceiling((double)transactionsList.Count / limit)
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
         {
-            transactions = transactions,
-            total = transactions.Length,
-            page = page,
-            limit = limit,
-            totalPages = 1
-        };
-
-        return Ok(response);
+            _logger.LogError(ex, "Erro ao listar transações para admin");
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -88,96 +99,92 @@ public class AdminTransactionController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int limit = 20)
     {
-        _logger.LogInformation("Admin obtendo histórico de transações - página {Page}", page);
-        
-        await Task.Delay(100); // Simular consulta DB
-        
-        var transactions = new dynamic[]
+        try
         {
-            new
+            _logger.LogInformation("Admin obtendo histórico de transações - página {Page}", page);
+
+            if (page < 1) page = 1;
+            if (limit < 1 || limit > 100) limit = 20;
+
+            // Definir período de busca
+            var startDateTime = DateTime.UtcNow.AddDays(-90); // Últimos 90 dias por padrão
+            var endDateTime = DateTime.UtcNow;
+
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var parsedStartDate))
+                startDateTime = parsedStartDate;
+
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var parsedEndDate))
+                endDateTime = parsedEndDate;
+
+            // Buscar transações no período
+            var allTransactions = await _transactionRepository.GetByDateRangeAsync(startDateTime, endDateTime);
+            var transactionsList = allTransactions.ToList();
+
+            // Aplicar filtros se fornecidos
+            if (!string.IsNullOrEmpty(type) && Enum.TryParse<TransactionType>(type, true, out var transactionType))
             {
-                id = Guid.NewGuid().ToString(),
-                externalId = "TXN-001",
-                type = "pix",
-                amount = 150.00m,
-                description = "Pagamento PIX",
-                status = "completed",
-                clienteId = Guid.NewGuid().ToString(),
-                contaId = Guid.NewGuid().ToString(),
-                bankCode = "001",
-                createdAt = DateTime.UtcNow.AddHours(-2),
-                completedAt = DateTime.UtcNow.AddHours(-2).AddMinutes(1),
-                pixKey = "user@example.com",
-                endToEndId = "E12345678202312151400000000001"
-            },
-            new
-            {
-                id = Guid.NewGuid().ToString(),
-                externalId = "TXN-002",
-                type = "ted",
-                amount = 500.00m,
-                description = "Transferência TED",
-                status = "processing",
-                clienteId = Guid.NewGuid().ToString(),
-                contaId = Guid.NewGuid().ToString(),
-                bankCode = "237",
-                createdAt = DateTime.UtcNow.AddHours(-1),
-                completedAt = (DateTime?)null,
-                accountBranch = "1234",
-                accountNumber = "567890",
-                taxId = "12345678901",
-                name = "João Silva"
-            },
-            new
-            {
-                id = Guid.NewGuid().ToString(),
-                externalId = "TXN-003",
-                type = "boleto",
-                amount = 250.00m,
-                description = "Pagamento Boleto",
-                status = "failed",
-                clienteId = Guid.NewGuid().ToString(),
-                contaId = Guid.NewGuid().ToString(),
-                bankCode = "341",
-                createdAt = DateTime.UtcNow.AddHours(-3),
-                completedAt = DateTime.UtcNow.AddHours(-3).AddMinutes(5),
-                boletoNumber = "12345678901234567890123456789012345678901234567890",
-                dueDate = DateTime.UtcNow.AddDays(7)
-            },
-            new
-            {
-                id = Guid.NewGuid().ToString(),
-                externalId = "TXN-004",
-                type = "crypto",
-                amount = 1000.00m,
-                description = "Compra Bitcoin",
-                status = "completed",
-                clienteId = Guid.NewGuid().ToString(),
-                contaId = Guid.NewGuid().ToString(),
-                bankCode = "104",
-                createdAt = DateTime.UtcNow.AddDays(-1),
-                completedAt = DateTime.UtcNow.AddDays(-1).AddMinutes(15),
-                cryptoType = "BTC",
-                walletAddress = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-                fiatCurrency = "BRL"
+                transactionsList = transactionsList.Where(t => t.Type == transactionType).ToList();
             }
-        };
 
-        // Aplicar paginação simples (filtros serão implementados posteriormente)
-        var total = transactions.Length;
-        var pagedTransactions = transactions
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToArray();
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<TransactionStatus>(status, true, out var transactionStatus))
+            {
+                transactionsList = transactionsList.Where(t => t.Status == transactionStatus).ToList();
+            }
 
-        return Ok(new
+            // Aplicar paginação
+            var total = transactionsList.Count;
+            var pagedTransactions = transactionsList
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .Select(t => new
+                {
+                    id = t.TransactionId.ToString(),
+                    externalId = t.ExternalId,
+                    type = t.Type.ToString().ToLower(),
+                    amount = t.Amount.Amount,
+                    description = t.Description ?? "",
+                    status = t.Status.ToString().ToLower(),
+                    bankCode = t.BankCode,
+                    createdAt = t.CreatedAt,
+                    updatedAt = t.UpdatedAt,
+                    // Campos específicos por tipo
+                    pixKey = t.PixKey,
+                    endToEndId = t.EndToEndId,
+                    accountBranch = t.AccountBranch,
+                    accountNumber = t.AccountNumber,
+                    taxId = t.TaxId,
+                    name = t.Name,
+                    dueDate = t.DueDate,
+                    payerTaxId = t.PayerTaxId,
+                    payerName = t.PayerName,
+                    boletoBarcode = t.BoletoBarcode,
+                    boletoUrl = t.BoletoUrl,
+                    cryptoType = t.CryptoType,
+                    walletAddress = t.WalletAddress,
+                    cryptoTxHash = t.CryptoTxHash
+                });
+
+            return Ok(new
+            {
+                transactions = pagedTransactions,
+                total,
+                page,
+                limit,
+                totalPages = (int)Math.Ceiling((double)total / limit),
+                filters = new
+                {
+                    type,
+                    status,
+                    startDate = startDateTime.ToString("yyyy-MM-dd"),
+                    endDate = endDateTime.ToString("yyyy-MM-dd")
+                }
+            });
+        }
+        catch (Exception ex)
         {
-            transactions = pagedTransactions,
-            total,
-            page,
-            limit,
-            totalPages = (int)Math.Ceiling((double)total / limit)
-        });
+            _logger.LogError(ex, "Erro ao obter histórico de transações para admin");
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -186,44 +193,70 @@ public class AdminTransactionController : ControllerBase
     [HttpGet("report")]
     public async Task<IActionResult> GetTransactionReport()
     {
-        _logger.LogInformation("Admin obtendo relatório de transações");
-        
-        await Task.Delay(50); // Simular consulta DB
-        
-        var report = new
+        try
         {
-            totalTransactions = 1247,
-            totalVolume = 125750.50m,
-            successfulTransactions = 1198,
-            failedTransactions = 49,
-            pendingTransactions = 12,
-            averageAmount = 100.84m,
-            transactionsByType = new[]
-            {
-                new { type = "pix", count = 856, volume = 85600.00m },
-                new { type = "ted", count = 234, volume = 23400.00m },
-                new { type = "boleto", count = 123, volume = 12300.00m },
-                new { type = "crypto", count = 34, volume = 4450.50m }
-            },
-            transactionsByStatus = new[]
-            {
-                new { status = "completed", count = 1198, percentage = 96.1 },
-                new { status = "failed", count = 49, percentage = 3.9 },
-                new { status = "processing", count = 12, percentage = 1.0 }
-            },
-            dailyVolume = new[]
-            {
-                new { date = DateTime.UtcNow.AddDays(-6).ToString("yyyy-MM-dd"), volume = 15420.30m, count = 154 },
-                new { date = DateTime.UtcNow.AddDays(-5).ToString("yyyy-MM-dd"), volume = 18750.80m, count = 187 },
-                new { date = DateTime.UtcNow.AddDays(-4).ToString("yyyy-MM-dd"), volume = 22100.50m, count = 221 },
-                new { date = DateTime.UtcNow.AddDays(-3).ToString("yyyy-MM-dd"), volume = 19850.20m, count = 198 },
-                new { date = DateTime.UtcNow.AddDays(-2).ToString("yyyy-MM-dd"), volume = 21340.70m, count = 213 },
-                new { date = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-dd"), volume = 17890.40m, count = 178 },
-                new { date = DateTime.UtcNow.ToString("yyyy-MM-dd"), volume = 10397.50m, count = 96 }
-            }
-        };
+            _logger.LogInformation("Admin obtendo relatório de transações");
 
-        return Ok(report);
+            // Buscar transações dos últimos 30 dias para o relatório
+            var startDate = DateTime.UtcNow.AddDays(-30);
+            var endDate = DateTime.UtcNow;
+            var allTransactions = await _transactionRepository.GetByDateRangeAsync(startDate, endDate);
+            var transactionsList = allTransactions.ToList();
+
+            // Calcular estatísticas
+            var totalTransactions = transactionsList.Count;
+            var totalVolume = transactionsList.Sum(t => t.Amount.Amount);
+            var successfulTransactions = transactionsList.Count(t => t.Status == TransactionStatus.CONFIRMED);
+            var failedTransactions = transactionsList.Count(t => t.Status == TransactionStatus.FAILED || t.Status == TransactionStatus.REJECTED);
+            var pendingTransactions = transactionsList.Count(t => t.Status == TransactionStatus.PENDING || t.Status == TransactionStatus.PROCESSING || t.Status == TransactionStatus.INITIATED);
+            var averageAmount = totalTransactions > 0 ? totalVolume / totalTransactions : 0;
+
+            // Agrupar por tipo
+            var transactionsByType = transactionsList
+                .GroupBy(t => t.Type)
+                .Select(g => new
+                {
+                    type = g.Key.ToString().ToLower(),
+                    count = g.Count(),
+                    volume = g.Sum(t => t.Amount.Amount)
+                })
+                .ToArray();
+
+            // Agrupar por status
+            var transactionsByStatus = transactionsList
+                .GroupBy(t => t.Status)
+                .Select(g => new
+                {
+                    status = g.Key.ToString().ToLower(),
+                    count = g.Count(),
+                    percentage = totalTransactions > 0 ? Math.Round((double)g.Count() / totalTransactions * 100, 1) : 0
+                })
+                .ToArray();
+
+            var report = new
+            {
+                totalTransactions,
+                totalVolume,
+                successfulTransactions,
+                failedTransactions,
+                pendingTransactions,
+                averageAmount = Math.Round(averageAmount, 2),
+                transactionsByType,
+                transactionsByStatus,
+                reportPeriod = new
+                {
+                    startDate = startDate.ToString("yyyy-MM-dd"),
+                    endDate = endDate.ToString("yyyy-MM-dd")
+                }
+            };
+
+            return Ok(report);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao gerar relatório de transações para admin");
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -232,35 +265,60 @@ public class AdminTransactionController : ControllerBase
     [HttpGet("{transactionId}")]
     public async Task<IActionResult> GetTransactionDetails([FromRoute] string transactionId)
     {
-        _logger.LogInformation("Admin obtendo detalhes da transação {TransactionId}", transactionId);
-        
-        await Task.Delay(30); // Simular consulta DB
-        
-        var transaction = new
+        try
         {
-            id = transactionId,
-            externalId = "TXN-001",
-            type = "pix",
-            amount = 150.00m,
-            description = "Pagamento PIX",
-            status = "completed",
-            clienteId = Guid.NewGuid().ToString(),
-            contaId = Guid.NewGuid().ToString(),
-            bankCode = "001",
-            createdAt = DateTime.UtcNow.AddHours(-2),
-            completedAt = DateTime.UtcNow.AddHours(-2).AddMinutes(1),
-            pixKey = "user@example.com",
-            endToEndId = "E12345678202312151400000000001",
-            webhookUrl = "https://api.cliente.com/webhook",
-            events = new[]
-            {
-                new { timestamp = DateTime.UtcNow.AddHours(-2), status = "created", message = "Transação criada" },
-                new { timestamp = DateTime.UtcNow.AddHours(-2).AddSeconds(30), status = "processing", message = "Enviando para o banco" },
-                new { timestamp = DateTime.UtcNow.AddHours(-2).AddMinutes(1), status = "completed", message = "Transação concluída com sucesso" }
-            }
-        };
+            _logger.LogInformation("Admin obtendo detalhes da transação {TransactionId}", transactionId);
 
-        return Ok(transaction);
+            if (!Guid.TryParse(transactionId, out var transactionGuid))
+            {
+                return BadRequest(new { message = "ID da transação inválido" });
+            }
+
+            var transaction = await _transactionRepository.GetByIdAsync(transactionGuid);
+
+            if (transaction == null)
+            {
+                return NotFound(new { message = "Transação não encontrada" });
+            }
+
+            var response = new
+            {
+                id = transaction.TransactionId.ToString(),
+                externalId = transaction.ExternalId,
+                type = transaction.Type.ToString().ToLower(),
+                amount = transaction.Amount.Amount,
+                currency = transaction.Amount.Currency,
+                description = transaction.Description,
+                status = transaction.Status.ToString().ToLower(),
+                bankCode = transaction.BankCode,
+                createdAt = transaction.CreatedAt,
+                updatedAt = transaction.UpdatedAt,
+                webhookUrl = transaction.WebhookUrl,
+                // Campos específicos por tipo
+                pixKey = transaction.PixKey,
+                endToEndId = transaction.EndToEndId,
+                accountBranch = transaction.AccountBranch,
+                accountNumber = transaction.AccountNumber,
+                taxId = transaction.TaxId,
+                name = transaction.Name,
+                dueDate = transaction.DueDate,
+                payerTaxId = transaction.PayerTaxId,
+                payerName = transaction.PayerName,
+                instructions = transaction.Instructions,
+                boletoBarcode = transaction.BoletoBarcode,
+                boletoUrl = transaction.BoletoUrl,
+                cryptoType = transaction.CryptoType,
+                walletAddress = transaction.WalletAddress,
+                cryptoTxHash = transaction.CryptoTxHash
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao obter detalhes da transação {TransactionId}", transactionId);
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -269,17 +327,45 @@ public class AdminTransactionController : ControllerBase
     [HttpPost("{transactionId}/reprocess")]
     public async Task<IActionResult> ReprocessTransaction([FromRoute] string transactionId)
     {
-        _logger.LogInformation("Admin reprocessando transação {TransactionId}", transactionId);
-        
-        await Task.Delay(100); // Simular reprocessamento
-        
-        return Ok(new
+        try
         {
-            transactionId,
-            status = "processing",
-            message = "Transação enviada para reprocessamento",
-            timestamp = DateTime.UtcNow
-        });
+            _logger.LogInformation("Admin reprocessando transação {TransactionId}", transactionId);
+
+            if (!Guid.TryParse(transactionId, out var transactionGuid))
+            {
+                return BadRequest(new { message = "ID da transação inválido" });
+            }
+
+            var transaction = await _transactionRepository.GetByIdAsync(transactionGuid);
+
+            if (transaction == null)
+            {
+                return NotFound(new { message = "Transação não encontrada" });
+            }
+
+            // Verificar se a transação pode ser reprocessada
+            if (transaction.Status != TransactionStatus.FAILED && transaction.Status != TransactionStatus.REJECTED)
+            {
+                return BadRequest(new { message = "Apenas transações falhadas ou rejeitadas podem ser reprocessadas" });
+            }
+
+            // Atualizar status para reprocessamento
+            transaction.UpdateStatus(TransactionStatus.PROCESSING, "Reprocessamento iniciado pelo admin");
+            await _transactionRepository.UpdateAsync(transaction);
+
+            return Ok(new
+            {
+                transactionId,
+                status = "processing",
+                message = "Transação enviada para reprocessamento",
+                timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao reprocessar transação {TransactionId}", transactionId);
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
     }
 
     /// <summary>
@@ -288,18 +374,49 @@ public class AdminTransactionController : ControllerBase
     [HttpPost("{transactionId}/cancel")]
     public async Task<IActionResult> CancelTransaction([FromRoute] string transactionId, [FromBody] CancelTransactionRequest request)
     {
-        _logger.LogInformation("Admin cancelando transação {TransactionId}", transactionId);
-        
-        await Task.Delay(50); // Simular cancelamento
-        
-        return Ok(new
+        try
         {
-            transactionId,
-            status = "cancelled",
-            reason = request.Reason,
-            message = "Transação cancelada com sucesso",
-            timestamp = DateTime.UtcNow
-        });
+            _logger.LogInformation("Admin cancelando transação {TransactionId}", transactionId);
+
+            if (!Guid.TryParse(transactionId, out var transactionGuid))
+            {
+                return BadRequest(new { message = "ID da transação inválido" });
+            }
+
+            var transaction = await _transactionRepository.GetByIdAsync(transactionGuid);
+
+            if (transaction == null)
+            {
+                return NotFound(new { message = "Transação não encontrada" });
+            }
+
+            // Verificar se a transação pode ser cancelada
+            if (transaction.Status == TransactionStatus.CONFIRMED ||
+                transaction.Status == TransactionStatus.CANCELLED ||
+                transaction.Status == TransactionStatus.FAILED)
+            {
+                return BadRequest(new { message = "Transação não pode ser cancelada no status atual" });
+            }
+
+            // Cancelar a transação
+            var cancelReason = !string.IsNullOrEmpty(request.Reason) ? request.Reason : "Cancelado pelo admin";
+            transaction.UpdateStatus(TransactionStatus.CANCELLED, cancelReason);
+            await _transactionRepository.UpdateAsync(transaction);
+
+            return Ok(new
+            {
+                transactionId,
+                status = "cancelled",
+                reason = cancelReason,
+                message = "Transação cancelada com sucesso",
+                timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao cancelar transação {TransactionId}", transactionId);
+            return StatusCode(500, new { message = "Erro interno do servidor" });
+        }
     }
 }
 

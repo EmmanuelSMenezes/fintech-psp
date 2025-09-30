@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FintechPSP.WebhookService.Commands;
 using FintechPSP.WebhookService.DTOs;
 using FintechPSP.WebhookService.Queries;
+using FintechPSP.WebhookService.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +20,16 @@ public class AdminWebhookController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<AdminWebhookController> _logger;
+    private readonly IWebhookRepository _webhookRepository;
 
-    public AdminWebhookController(IMediator mediator, ILogger<AdminWebhookController> logger)
+    public AdminWebhookController(
+        IMediator mediator,
+        ILogger<AdminWebhookController> logger,
+        IWebhookRepository webhookRepository)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _webhookRepository = webhookRepository ?? throw new ArgumentNullException(nameof(webhookRepository));
     }
 
     /// <summary>
@@ -46,47 +52,46 @@ public class AdminWebhookController : ControllerBase
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 50;
 
-            // Simular consulta de webhooks
-            await Task.Delay(100);
+            // Implementação real usando repositório
+            IEnumerable<FintechPSP.WebhookService.Models.Webhook> webhooks;
+            int totalCount;
 
-            var webhooks = new[]
+            if (clientId.HasValue)
             {
-                new
-                {
-                    id = Guid.NewGuid(),
-                    clientId = clientId ?? Guid.NewGuid(),
-                    url = "https://webhook.site/unique-id-1",
-                    events = new[] { "transaction.completed", "transaction.failed" },
-                    isActive = true,
-                    createdAt = DateTime.UtcNow.AddDays(-10),
-                    lastDelivery = DateTime.UtcNow.AddHours(-2),
-                    successCount = 45,
-                    failureCount = 2
-                },
-                new
-                {
-                    id = Guid.NewGuid(),
-                    clientId = clientId ?? Guid.NewGuid(),
-                    url = "https://api.example.com/webhooks/fintech",
-                    events = new[] { "balance.updated" },
-                    isActive = true,
-                    createdAt = DateTime.UtcNow.AddDays(-5),
-                    lastDelivery = DateTime.UtcNow.AddMinutes(-30),
-                    successCount = 23,
-                    failureCount = 0
-                }
-            };
+                webhooks = await _webhookRepository.GetByClientIdAsync(clientId.Value, page, pageSize);
+                totalCount = await _webhookRepository.CountByClientIdAsync(clientId.Value);
+            }
+            else
+            {
+                // Para admin, buscar todos os webhooks (implementação simplificada)
+                // Em produção, seria necessário um método específico para admin
+                webhooks = new List<FintechPSP.WebhookService.Models.Webhook>();
+                totalCount = 0;
+                _logger.LogWarning("Listagem de todos os webhooks para admin não implementada completamente");
+            }
 
-            var total = webhooks.Length;
-            var pagedWebhooks = webhooks.Skip((page - 1) * pageSize).Take(pageSize);
+            var webhookList = webhooks.Select(w => new
+            {
+                id = w.Id,
+                clientId = w.ClientId,
+                url = w.Url,
+                events = w.Events,
+                isActive = w.IsActive,
+                createdAt = w.CreatedAt,
+                updatedAt = w.UpdatedAt,
+                // Campos de estatísticas seriam obtidos de outro repositório em produção
+                lastDelivery = (DateTime?)null,
+                successCount = 0,
+                failureCount = 0
+            });
 
             return Ok(new
             {
-                webhooks = pagedWebhooks,
-                total,
+                webhooks = webhookList,
+                total = totalCount,
                 page,
                 pageSize,
-                totalPages = (int)Math.Ceiling((double)total / pageSize)
+                totalPages = (int)Math.Ceiling((double)totalCount / pageSize)
             });
         }
         catch (Exception ex)
@@ -108,7 +113,8 @@ public class AdminWebhookController : ControllerBase
         {
             _logger.LogInformation("Admin obtendo webhook {WebhookId}", id);
 
-            await Task.Delay(50);
+            // Implementação administrativa - dados mock sem delay
+            // Em produção, seria necessário um repositório administrativo específico
 
             var webhook = new
             {
@@ -169,7 +175,8 @@ public class AdminWebhookController : ControllerBase
                 return BadRequest(new { message = "Pelo menos um evento deve ser especificado" });
             }
 
-            await Task.Delay(100);
+            // Implementação administrativa - dados mock sem delay
+            // Em produção, seria necessário validar e criar via repositório
 
             var webhook = new
             {
@@ -208,7 +215,8 @@ public class AdminWebhookController : ControllerBase
         {
             _logger.LogInformation("Admin atualizando webhook {WebhookId}", id);
 
-            await Task.Delay(50);
+            // Implementação administrativa - dados mock sem delay
+            // Em produção, seria necessário buscar, validar e atualizar via repositório
 
             var webhook = new
             {
@@ -243,7 +251,8 @@ public class AdminWebhookController : ControllerBase
         {
             _logger.LogInformation("Admin excluindo webhook {WebhookId}", id);
 
-            await Task.Delay(50);
+            // Implementação administrativa - dados mock sem delay
+            // Em produção, seria necessário buscar e excluir via repositório
 
             return Ok(new { message = "Webhook excluído com sucesso", webhookId = id });
         }
@@ -265,7 +274,8 @@ public class AdminWebhookController : ControllerBase
         {
             _logger.LogInformation("Admin obtendo estatísticas de webhooks");
 
-            await Task.Delay(100);
+            // Implementação administrativa - dados mock sem delay
+            // Em produção, seria necessário consultar estatísticas via repositório específico
 
             var stats = new
             {

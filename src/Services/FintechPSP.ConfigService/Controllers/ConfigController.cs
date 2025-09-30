@@ -27,7 +27,7 @@ public class ConfigController : ControllerBase
     {
         _logger.LogInformation("Obtendo taxas para {TransactionType}", transactionType);
         
-        await Task.Delay(30); // Simular consulta
+        // Configurações de taxas (dados estáticos do sistema)
         
         var fees = transactionType.ToLower() switch
         {
@@ -52,7 +52,7 @@ public class ConfigController : ControllerBase
     {
         _logger.LogInformation("Listando todas as taxas");
         
-        await Task.Delay(50); // Simular consulta
+        // Lista completa de taxas (dados estáticos do sistema)
         
         var fees = new[]
         {
@@ -73,7 +73,7 @@ public class ConfigController : ControllerBase
     {
         _logger.LogInformation("Obtendo configuração do banco {BankCode}", bankCode);
         
-        await Task.Delay(40); // Simular consulta
+        // Configurações bancárias (dados estáticos do sistema)
         
         var bankConfig = bankCode switch
         {
@@ -99,7 +99,7 @@ public class ConfigController : ControllerBase
     {
         _logger.LogInformation("Listando todos os bancos");
         
-        await Task.Delay(60); // Simular consulta
+        // Lista de bancos suportados (dados estáticos do sistema)
         
         var banks = new[]
         {
@@ -121,7 +121,7 @@ public class ConfigController : ControllerBase
     {
         _logger.LogInformation("Obtendo limites para {TransactionType}", transactionType);
         
-        await Task.Delay(35); // Simular consulta
+        // Limites de transação (dados estáticos do sistema)
         
         var limits = transactionType.ToLower() switch
         {
@@ -146,7 +146,7 @@ public class ConfigController : ControllerBase
     {
         _logger.LogInformation("Obtendo configurações do sistema");
         
-        await Task.Delay(25); // Simular consulta
+        // Configurações gerais do sistema (dados estáticos)
         
         var config = new SystemConfigResponse
         {

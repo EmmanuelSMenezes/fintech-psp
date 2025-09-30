@@ -202,7 +202,10 @@ public class QrCodeController : ControllerBase
                 return Unauthorized("Cliente não identificado");
             }
 
-            await Task.Delay(50); // Simular consulta DB
+            _logger.LogInformation("Listando QR Codes para cliente {ClientId}", clientId);
+
+            // TODO: Implementar repositório para QR Codes quando necessário
+            // Por enquanto, usando dados mock sem Task.Delay
 
             var qrCodes = new object[]
             {
@@ -251,7 +254,10 @@ public class QrCodeController : ControllerBase
                 return Unauthorized("Cliente não identificado");
             }
 
-            await Task.Delay(50); // Simular consulta DB
+            _logger.LogInformation("Listando chaves PIX para cliente {ClientId}", clientId);
+
+            // TODO: Implementar repositório para chaves PIX quando necessário
+            // Por enquanto, usando dados mock sem Task.Delay
 
             var pixKeys = new object[]
             {
