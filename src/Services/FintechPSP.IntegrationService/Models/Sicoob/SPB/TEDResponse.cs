@@ -7,38 +7,56 @@ namespace FintechPSP.IntegrationService.Models.Sicoob.SPB;
 /// </summary>
 public class TEDResponse
 {
-    [JsonPropertyName("numeroDocumento")]
-    public string? NumeroDocumento { get; set; }
+    [JsonPropertyName("idTransferencia")]
+    public string IdTransferencia { get; set; } = string.Empty;
 
-    [JsonPropertyName("codigoTransacao")]
-    public string? CodigoTransacao { get; set; }
+    [JsonPropertyName("numeroContaCorrenteDebito")]
+    public string NumeroContaCorrenteDebito { get; set; } = string.Empty;
 
     [JsonPropertyName("valor")]
-    public string? Valor { get; set; }
-
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
-
-    [JsonPropertyName("dataHoraSolicitacao")]
-    public DateTime? DataHoraSolicitacao { get; set; }
-
-    [JsonPropertyName("dataHoraEfetivacao")]
-    public DateTime? DataHoraEfetivacao { get; set; }
-
-    [JsonPropertyName("contaOrigem")]
-    public ContaTEDResponse? ContaOrigem { get; set; }
-
-    [JsonPropertyName("contaDestino")]
-    public ContaTEDResponse? ContaDestino { get; set; }
+    public decimal Valor { get; set; }
 
     [JsonPropertyName("finalidade")]
-    public string? Finalidade { get; set; }
+    public int Finalidade { get; set; }
+
+    [JsonPropertyName("dataTransferencia")]
+    public string DataTransferencia { get; set; } = string.Empty;
+
+    [JsonPropertyName("situacao")]
+    public string Situacao { get; set; } = string.Empty;
+
+    [JsonPropertyName("favorecido")]
+    public FavorecidoTED Favorecido { get; set; } = new();
 
     [JsonPropertyName("descricao")]
     public string? Descricao { get; set; }
 
-    [JsonPropertyName("tarifa")]
-    public decimal? Tarifa { get; set; }
+    [JsonPropertyName("numeroDocumento")]
+    public string? NumeroDocumento { get; set; }
+}
+
+/// <summary>
+/// Dados do favorecido da TED
+/// </summary>
+public class FavorecidoTED
+{
+    [JsonPropertyName("numeroCpfCnpj")]
+    public string NumeroCpfCnpj { get; set; } = string.Empty;
+
+    [JsonPropertyName("nome")]
+    public string Nome { get; set; } = string.Empty;
+
+    [JsonPropertyName("codigoBanco")]
+    public string CodigoBanco { get; set; } = string.Empty;
+
+    [JsonPropertyName("numeroAgencia")]
+    public string NumeroAgencia { get; set; } = string.Empty;
+
+    [JsonPropertyName("numeroContaCorrente")]
+    public string NumeroContaCorrente { get; set; } = string.Empty;
+
+    [JsonPropertyName("tipoConta")]
+    public string TipoConta { get; set; } = string.Empty;
 }
 
 /// <summary>

@@ -226,4 +226,67 @@ public class Transaction : AggregateRoot
         var sequential = Random.Shared.Next(1000000000, int.MaxValue).ToString();
         return $"E{ispb}{date}{sequential}";
     }
+
+    // Métodos Apply para Event Sourcing
+    public void Apply(PixIniciado @event)
+    {
+        TransactionId = @event.TransactionId;
+        ExternalId = @event.ExternalId;
+        Type = TransactionType.PIX;
+        Status = TransactionStatus.PENDING;
+        Amount = new Money(@event.Amount, "BRL");
+        PixKey = @event.PixKey;
+        BankCode = @event.BankCode;
+        Description = @event.Description;
+        WebhookUrl = @event.WebhookUrl;
+        EndToEndId = @event.EndToEndId;
+        CreatedAt = @event.OccurredAt;
+    }
+
+    public void Apply(TedIniciado @event)
+    {
+        TransactionId = @event.TransactionId;
+        ExternalId = @event.ExternalId;
+        Type = TransactionType.TED;
+        Status = TransactionStatus.PENDING;
+        Amount = new Money(@event.Amount, "BRL");
+        BankCode = @event.BankCode;
+        AccountBranch = @event.AccountBranch;
+        AccountNumber = @event.AccountNumber;
+        TaxId = @event.TaxId;
+        Name = @event.Name;
+        CreatedAt = @event.OccurredAt;
+    }
+
+    public void Apply(BoletoEmitido @event)
+    {
+        TransactionId = @event.TransactionId;
+        ExternalId = @event.ExternalId;
+        Type = TransactionType.BOLETO;
+        Status = TransactionStatus.ISSUED;
+        Amount = new Money(@event.Amount, "BRL");
+        DueDate = @event.DueDate;
+        PayerTaxId = @event.PayerTaxId;
+        PayerName = @event.PayerName;
+        Instructions = @event.Instructions;
+        CreatedAt = @event.OccurredAt;
+    }
+
+    public void Apply(CriptoIniciado @event)
+    {
+        TransactionId = @event.TransactionId;
+        ExternalId = @event.ExternalId;
+        Type = TransactionType.CRYPTO;
+        Status = TransactionStatus.PENDING;
+        Amount = new Money(@event.Amount, @event.FiatCurrency);
+        CryptoType = @event.CryptoType;
+        WalletAddress = @event.WalletAddress;
+        CreatedAt = @event.OccurredAt;
+    }
+
+    public void Apply(StatusTransacaoAlterado @event)
+    {
+        Status = @event.NewStatus;
+        UpdatedAt = @event.OccurredAt;
+    }
 }

@@ -23,16 +23,16 @@ public class PixRecebimentosService : SicoobServiceBase, IPixRecebimentosService
     }
 
     public async Task<CobrancaResponse?> CriarCobrancaImediataAsync(
-        CobrancaRequest dadosCobranca, 
+        CobrancaImediataRequest dadosCobranca,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            Logger.LogInformation("Criando cobrança PIX imediata para chave: {Chave}, valor: {Valor}", 
+            Logger.LogInformation("Criando cobrança PIX imediata para chave: {Chave}, valor: {Valor}",
                 dadosCobranca.Chave, dadosCobranca.Valor.Original);
 
             var url = $"{_baseEndpoint}/cob";
-            var response = await PostAsync<CobrancaRequest, CobrancaResponse>(url, dadosCobranca, cancellationToken);
+            var response = await PostAsync<CobrancaImediataRequest, CobrancaResponse>(url, dadosCobranca, cancellationToken);
 
             if (response != null)
             {
@@ -76,31 +76,7 @@ public class PixRecebimentosService : SicoobServiceBase, IPixRecebimentosService
         }
     }
 
-    public async Task<CobrancaResponse?> ConsultarCobrancaAsync(
-        string txId, 
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            Logger.LogInformation("Consultando cobrança PIX com TxId: {TxId}", txId);
 
-            var url = $"{_baseEndpoint}/cob/{txId}";
-            var response = await GetAsync<CobrancaResponse>(url, cancellationToken);
-
-            if (response != null)
-            {
-                Logger.LogInformation("Cobrança PIX consultada. Status: {Status}, Valor: {Valor}", 
-                    response.Status, response.Valor?.Original);
-            }
-
-            return response;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Erro ao consultar cobrança PIX com TxId: {TxId}", txId);
-            throw;
-        }
-    }
 
     public async Task<object?> ListarCobrancasAsync(
         DateTime dataInicio, 
@@ -150,6 +126,59 @@ public class PixRecebimentosService : SicoobServiceBase, IPixRecebimentosService
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao consultar PIX recebidos de {DataInicio} até {DataFim}", dataInicio, dataFim);
+            throw;
+        }
+    }
+
+    public async Task<CobrancaResponse?> ConsultarCobrancaAsync(string txId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Logger.LogInformation("Consultando cobrança PIX imediata: {TxId}", txId);
+
+            var url = $"{_baseEndpoint}/cob/{txId}";
+            var response = await GetAsync<CobrancaResponse>(url, cancellationToken);
+
+            if (response != null)
+            {
+                Logger.LogInformation("Cobrança PIX consultada com sucesso. TxId: {TxId}, Status: {Status}, Location: {Location}, QrCode: {QrCode}, PixCopiaECola: {PixCopiaECola}",
+                    response.TxId, response.Status,
+                    response.Location ?? response.Loc?.Location ?? "N/A",
+                    string.IsNullOrEmpty(response.QrCode) ? "VAZIO" : "PRESENTE",
+                    string.IsNullOrEmpty(response.PixCopiaECola) ? "VAZIO" : "PRESENTE");
+            }
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao consultar cobrança PIX imediata: {TxId}", txId);
+            throw;
+        }
+    }
+
+    public async Task<QrCodeResponse?> ConsultarQrCodeAsync(int locationId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Logger.LogInformation("Consultando QR Code PIX para Location ID: {LocationId}", locationId);
+
+            var url = $"{_baseEndpoint}/loc/{locationId}/qrcode";
+            var response = await GetAsync<QrCodeResponse>(url, cancellationToken);
+
+            if (response != null)
+            {
+                Logger.LogInformation("QR Code PIX consultado com sucesso. Location ID: {LocationId}, QrCode: {QrCode}, Imagem: {Imagem}",
+                    locationId,
+                    string.IsNullOrEmpty(response.QrCode) ? "VAZIO" : $"{response.QrCode.Length} caracteres",
+                    string.IsNullOrEmpty(response.ImagemQrCode) ? "VAZIO" : "PRESENTE");
+            }
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao consultar QR Code PIX para Location ID: {LocationId}", locationId);
             throw;
         }
     }

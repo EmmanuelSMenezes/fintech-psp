@@ -36,24 +36,28 @@ public class AccountDataService : IAccountDataService
     {
         try
         {
-            // Em produção, fazer chamada HTTP para UserService
-            // Por enquanto, retornar dados mock para demonstração
-            
             _logger.LogDebug("Obtendo dados da conta {ContaId}", contaId);
-            
-            // Mock data - em produção substituir por chamada HTTP real
-            return new AccountData
+
+            // Fazer chamada HTTP real para UserService
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+            // TODO: Configurar URL base do UserService via configuração
+            var userServiceUrl = "http://localhost:5006"; // ou via IConfiguration
+            var response = await httpClient.GetAsync($"{userServiceUrl}/admin/contas/{contaId}");
+
+            if (response.IsSuccessStatusCode)
             {
-                ContaId = contaId,
-                ClienteId = Guid.NewGuid(), // Seria obtido da API
-                BankCode = "STARK",
-                AccountNumber = "12345-6",
-                Description = "Conta Principal Stark Bank",
-                CredentialsTokenId = $"token_{contaId:N}",
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow.AddDays(-30),
-                UpdatedAt = DateTime.UtcNow.AddDays(-1)
-            };
+                var json = await response.Content.ReadAsStringAsync();
+                var accountData = System.Text.Json.JsonSerializer.Deserialize<AccountData>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return accountData;
+            }
+
+            _logger.LogWarning("Conta {ContaId} não encontrada no UserService", contaId);
+            return null;
         }
         catch (Exception ex)
         {
@@ -176,23 +180,37 @@ public class PriorityConfigService : IPriorityConfigService
         {
             _logger.LogDebug("Obtendo configuração de prioridade para cliente {ClienteId}", clienteId);
 
-            // Em produção, fazer chamada HTTP para ConfigService
-            // GET /banking/configs/roteamento (com JWT do cliente) ou endpoint interno
+            // Fazer chamada HTTP real para ConfigService
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
 
-            // Mock data - em produção substituir por chamada HTTP real
-            var mockPriorities = new List<AccountPriority>
+            // TODO: Configurar URL base do ConfigService via configuração
+            var configServiceUrl = "http://localhost:5007"; // ou via IConfiguration
+            var response = await httpClient.GetAsync($"{configServiceUrl}/banking/configs/roteamento?clienteId={clienteId}");
+
+            if (response.IsSuccessStatusCode)
             {
-                new() { ContaId = Guid.NewGuid(), BankCode = "STARK", Percentual = 50.0m },
-                new() { ContaId = Guid.NewGuid(), BankCode = "EFI", Percentual = 30.0m },
-                new() { ContaId = Guid.NewGuid(), BankCode = "SICOOB", Percentual = 20.0m }
+                var json = await response.Content.ReadAsStringAsync();
+                var priorityConfig = System.Text.Json.JsonSerializer.Deserialize<PriorityConfiguration>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return priorityConfig;
+            }
+
+            // Se não encontrar configuração, retornar configuração padrão
+            _logger.LogInformation("Configuração de prioridade não encontrada para cliente {ClienteId}, usando padrão", clienteId);
+            var defaultPriorities = new List<AccountPriority>
+            {
+                new() { ContaId = Guid.NewGuid(), BankCode = "SICOOB", Percentual = 100.0m }
             };
 
             return new PriorityConfiguration
             {
                 ConfigId = Guid.NewGuid(),
                 ClienteId = clienteId,
-                Prioridades = mockPriorities,
-                TotalPercentual = mockPriorities.Sum(p => p.Percentual),
+                Prioridades = defaultPriorities,
+                TotalPercentual = defaultPriorities.Sum(p => p.Percentual),
                 IsValid = true
             };
         }

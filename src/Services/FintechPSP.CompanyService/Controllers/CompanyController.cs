@@ -7,6 +7,7 @@ using FintechPSP.CompanyService.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Dapper;
 
 namespace FintechPSP.CompanyService.Controllers;
 
@@ -38,6 +39,38 @@ public class CompanyController : ControllerBase
     {
         return Ok(new { message = "CompanyService está funcionando!", timestamp = DateTime.UtcNow });
     }
+
+    /// <summary>
+    /// Endpoint de debug para testar consulta SQL direta
+    /// </summary>
+    [HttpGet("debugsql")]
+    [AllowAnonymous]
+    public async Task<IActionResult> DebugSql()
+    {
+        try
+        {
+            using var connection = new Npgsql.NpgsqlConnection("Host=localhost:5433;Database=fintech_psp;Username=postgres;Password=postgres");
+            await connection.OpenAsync();
+
+            var sql = "SELECT id, razao_social, cnpj, status FROM company_service.companies ORDER BY created_at DESC";
+            var companies = await connection.QueryAsync(sql);
+
+            return Ok(new {
+                message = "Consulta SQL direta executada com sucesso",
+                count = companies.Count(),
+                companies = companies.ToList()
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new {
+                error = ex.Message,
+                stackTrace = ex.StackTrace
+            });
+        }
+    }
+
+
 
     /// <summary>
     /// Debug do token JWT
@@ -76,18 +109,20 @@ public class CompanyController : ControllerBase
             _logger.LogInformation("Listando empresas - Página: {Page}, Limite: {Limit}, Busca: {Search}, Status: {Status}",
                 page, limit, search, status);
 
-            var result = await _companyRepository.GetPagedAsync(page, limit, status, search);
+            var result = await _companyRepository.GetPagedAsync(page, limit, search, status);
+
+            var totalPages = (int)Math.Ceiling((double)result.TotalCount / limit);
 
             _logger.LogInformation("Encontradas {TotalCount} empresas (página {Page}/{TotalPages})",
-                result.TotalCount, result.CurrentPage, result.TotalPages);
+                result.TotalCount, page, totalPages);
 
             return Ok(new
             {
-                companies = result.Data,
+                companies = result.Companies,
                 total = result.TotalCount,
-                page = result.CurrentPage,
-                limit = result.PageSize,
-                totalPages = result.TotalPages
+                page = page,
+                limit = limit,
+                totalPages = totalPages
             });
         }
         catch (Exception ex)

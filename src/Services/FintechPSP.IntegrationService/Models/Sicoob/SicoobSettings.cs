@@ -9,6 +9,7 @@ public class SicoobSettings
     public string AuthUrl { get; set; } = string.Empty;
     public string ClientId { get; set; } = string.Empty;
     public string ClientSecret { get; set; } = string.Empty;
+    public string AccessToken { get; set; } = string.Empty; // Para sandbox
     public string CertificatePath { get; set; } = string.Empty;
     public string CertificatePassword { get; set; } = string.Empty;
     public ScopesSettings Scopes { get; set; } = new();

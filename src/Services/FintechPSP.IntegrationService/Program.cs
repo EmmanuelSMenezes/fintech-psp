@@ -6,9 +6,11 @@ using FintechPSP.IntegrationService.Services.Sicoob.Pix;
 using FintechPSP.IntegrationService.Services.Sicoob.ContaCorrente;
 using FintechPSP.IntegrationService.Services.Sicoob.SPB;
 using FintechPSP.IntegrationService.Helpers;
+using FintechPSP.IntegrationService.Consumers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,6 +77,32 @@ builder.Services.AddScoped<IPixPagamentosService, PixPagamentosService>();
 builder.Services.AddScoped<IPixRecebimentosService, PixRecebimentosService>();
 builder.Services.AddScoped<IContaCorrenteService, ContaCorrenteService>();
 builder.Services.AddScoped<ISPBService, SPBService>();
+
+// MassTransit para consumir eventos de transação
+builder.Services.AddMassTransit(x =>
+{
+    // Registrar consumers
+    x.AddConsumer<PixTransactionConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitMqUri = builder.Configuration.GetConnectionString("RabbitMQ");
+        if (!string.IsNullOrEmpty(rabbitMqUri))
+        {
+            cfg.Host(rabbitMqUri);
+        }
+        else
+        {
+            cfg.Host("localhost", "/", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+        }
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

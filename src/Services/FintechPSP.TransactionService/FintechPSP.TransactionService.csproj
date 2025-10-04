@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\FintechPSP.Shared.Domain\FintechPSP.Shared.Domain.csproj" />
     <ProjectReference Include="..\..\Shared\FintechPSP.Shared.Infrastructure\FintechPSP.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\FintechPSP.IntegrationService\FintechPSP.IntegrationService.csproj" />
   </ItemGroup>
 
 </Project>

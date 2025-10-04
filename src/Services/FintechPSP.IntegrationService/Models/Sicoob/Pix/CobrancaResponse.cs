@@ -16,6 +16,9 @@ public class CobrancaResponse
     [JsonPropertyName("loc")]
     public LocationInfo? Loc { get; set; }
 
+    [JsonPropertyName("location")]
+    public string? Location { get; set; }
+
     [JsonPropertyName("status")]
     public string? Status { get; set; }
 

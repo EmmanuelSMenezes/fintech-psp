@@ -273,11 +273,11 @@ public class AdminUserController : ControllerBase
                 Id = systemUser.Id,
                 Name = systemUser.Name,
                 Email = systemUser.Email,
-                Document = systemUser.Document,
-                Active = systemUser.Active,
+                Document = systemUser.Document ?? "",
+                Active = systemUser.IsActive,
                 CreatedAt = systemUser.CreatedAt,
-                Phone = systemUser.Phone,
-                Address = systemUser.Address
+                Phone = systemUser.Phone ?? "",
+                Address = systemUser.Address ?? ""
             };
 
             return Ok(user);

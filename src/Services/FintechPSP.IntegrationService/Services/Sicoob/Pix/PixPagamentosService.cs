@@ -36,8 +36,8 @@ public class PixPagamentosService : SicoobServiceBase, IPixPagamentosService
 
             if (response != null)
             {
-                Logger.LogInformation("Pagamento PIX realizado com sucesso. E2E ID: {E2eId}, Status: {Status}", 
-                    response.E2eId, response.Status);
+                Logger.LogInformation("Pagamento PIX realizado com sucesso. EndToEndId: {EndToEndId}, Status: {Status}",
+                    response.EndToEndId, response.Status);
             }
 
             return response;

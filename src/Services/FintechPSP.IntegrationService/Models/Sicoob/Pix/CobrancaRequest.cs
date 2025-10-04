@@ -27,6 +27,24 @@ public class CobrancaRequest
 }
 
 /// <summary>
+/// Request para criar cobrança PIX imediata (formato Sicoob com chave obrigatória)
+/// </summary>
+public class CobrancaImediataRequest
+{
+    [JsonPropertyName("calendario")]
+    public CalendarioCobranca Calendario { get; set; } = new();
+
+    [JsonPropertyName("valor")]
+    public ValorCobranca Valor { get; set; } = new();
+
+    [JsonPropertyName("chave")]
+    public string Chave { get; set; } = string.Empty;
+
+    [JsonPropertyName("solicitacaoPagador")]
+    public string? SolicitacaoPagador { get; set; }
+}
+
+/// <summary>
 /// Calendário da cobrança
 /// </summary>
 public class CalendarioCobranca
@@ -64,8 +82,9 @@ public class ValorCobranca
     [JsonPropertyName("original")]
     public string Original { get; set; } = string.Empty;
 
-    [JsonPropertyName("modalidadeAlteracao")]
-    public int? ModalidadeAlteracao { get; set; }
+    // Não incluir modalidadeAlteracao por padrão para evitar erro de schema
+    // [JsonPropertyName("modalidadeAlteracao")]
+    // public int? ModalidadeAlteracao { get; set; }
 }
 
 /// <summary>
@@ -78,4 +97,13 @@ public class InfoAdicional
 
     [JsonPropertyName("valor")]
     public string Valor { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Location para cobrança
+/// </summary>
+public class LocationRequest
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
 }

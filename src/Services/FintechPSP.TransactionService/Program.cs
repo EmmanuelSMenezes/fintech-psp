@@ -58,6 +58,103 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 // Services
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 
+// Sicoob Integration (sandbox)
+try
+{
+    var sicoobSettings = builder.Configuration.GetSection("SicoobSettings");
+    if (sicoobSettings.Exists() && !string.IsNullOrEmpty(sicoobSettings["ClientId"]))
+    {
+        // Registrar configurações Sicoob
+        builder.Services.Configure<FintechPSP.IntegrationService.Models.Sicoob.SicoobSettings>(sicoobSettings);
+
+        // HTTP Client para Sicoob Produção com mTLS
+        builder.Services.AddHttpClient("SicoobApi", client =>
+        {
+            client.BaseAddress = new Uri(sicoobSettings["BaseUrl"] ?? "https://api.sicoob.com.br");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            var handler = new HttpClientHandler();
+
+            // Configurar mTLS se certificado estiver disponível
+            var certPath = sicoobSettings["CertificatePath"];
+            var certPassword = sicoobSettings["CertificatePassword"];
+
+            if (!string.IsNullOrEmpty(certPath) && !string.IsNullOrEmpty(certPassword))
+            {
+                try
+                {
+                    var certBytes = File.ReadAllBytes(certPath);
+                    var certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(certBytes, certPassword);
+                    handler.ClientCertificates.Add(certificate);
+                    Console.WriteLine($"✅ Certificado mTLS carregado: {certificate.Subject}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Erro ao carregar certificado: {ex.Message}");
+                }
+            }
+
+            return handler;
+        });
+
+        // HTTP Client para autenticação Sicoob (também com mTLS)
+        builder.Services.AddHttpClient("SicoobAuth", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            var handler = new HttpClientHandler();
+
+            // Configurar mTLS se certificado estiver disponível
+            var certPath = sicoobSettings["CertificatePath"];
+            var certPassword = sicoobSettings["CertificatePassword"];
+
+            if (!string.IsNullOrEmpty(certPath) && !string.IsNullOrEmpty(certPassword))
+            {
+                try
+                {
+                    var certBytes = File.ReadAllBytes(certPath);
+                    var certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(certBytes, certPassword);
+                    handler.ClientCertificates.Add(certificate);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Erro ao carregar certificado para auth: {ex.Message}");
+                }
+            }
+
+            return handler;
+        });
+
+        // Registrar serviços Sicoob
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.ISicoobAuthService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.SicoobAuthService>();
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.Pix.IPixPagamentosService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.Pix.PixPagamentosService>();
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.Pix.IPixRecebimentosService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.Pix.PixRecebimentosService>();
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.Pix.IPixQrCodeService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.Pix.PixQrCodeService>();
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.SPB.ISPBService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.SPB.SPBService>();
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.TransactionIntegration.ITransactionIntegrationService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.TransactionIntegration.TransactionIntegrationService>();
+
+        Console.WriteLine("✅ Sicoob Production integration configured successfully");
+    }
+    else
+    {
+        Console.WriteLine("⚠️ Sicoob integration not configured - missing ClientId");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Warning: Sicoob integration configuration failed: {ex.Message}");
+}
+
 // Marten para Event Store
 builder.Services.AddMarten(options =>
 {

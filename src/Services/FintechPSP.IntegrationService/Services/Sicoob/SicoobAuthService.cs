@@ -32,6 +32,13 @@ public class SicoobAuthService : ISicoobAuthService
 
     public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
     {
+        // Para sandbox, usar token fixo
+        if (!string.IsNullOrEmpty(_settings.AccessToken))
+        {
+            _logger.LogDebug("Usando token fixo do Sandbox: {Token}", _settings.AccessToken.Substring(0, 8) + "...");
+            return _settings.AccessToken;
+        }
+
         // Verifica se tem token em cache e se está válido
         if (_cachedToken != null && !_cachedToken.IsExpired && !_cachedToken.IsExpiringSoon)
         {

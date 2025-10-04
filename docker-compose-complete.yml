@@ -240,6 +240,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres:5432;Database=fintech_psp;Username=postgres;Password=postgres
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - Jwt__Key=mortadela-super-secret-key-that-should-be-at-least-256-bits-long-for-production
       - Jwt__Issuer=Mortadela
       - Jwt__Audience=Mortadela

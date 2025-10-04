@@ -14,17 +14,7 @@ public interface IPixRecebimentosService
     /// <param name="cancellationToken">Token de cancelamento</param>
     /// <returns>Resposta da cobrança criada</returns>
     Task<CobrancaResponse?> CriarCobrancaImediataAsync(
-        CobrancaRequest dadosCobranca, 
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Cria uma cobrança PIX com vencimento
-    /// </summary>
-    /// <param name="dadosCobranca">Dados da cobrança com vencimento</param>
-    /// <param name="cancellationToken">Token de cancelamento</param>
-    /// <returns>Resposta da cobrança criada</returns>
-    Task<CobrancaResponse?> CriarCobrancaComVencimentoAsync(
-        CobrancaRequest dadosCobranca, 
+        CobrancaImediataRequest dadosCobranca,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -34,7 +24,27 @@ public interface IPixRecebimentosService
     /// <param name="cancellationToken">Token de cancelamento</param>
     /// <returns>Dados da cobrança</returns>
     Task<CobrancaResponse?> ConsultarCobrancaAsync(
-        string txId, 
+        string txId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Consulta o QR Code de uma location PIX
+    /// </summary>
+    /// <param name="locationId">ID da location (loc.id)</param>
+    /// <param name="cancellationToken">Token de cancelamento</param>
+    /// <returns>Dados do QR Code</returns>
+    Task<QrCodeResponse?> ConsultarQrCodeAsync(
+        int locationId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cria uma cobrança PIX com vencimento
+    /// </summary>
+    /// <param name="dadosCobranca">Dados da cobrança com vencimento</param>
+    /// <param name="cancellationToken">Token de cancelamento</param>
+    /// <returns>Resposta da cobrança criada</returns>
+    Task<CobrancaResponse?> CriarCobrancaComVencimentoAsync(
+        CobrancaRequest dadosCobranca,
         CancellationToken cancellationToken = default);
 
     /// <summary>

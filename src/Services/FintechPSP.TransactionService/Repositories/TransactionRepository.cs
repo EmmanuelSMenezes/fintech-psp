@@ -234,4 +234,32 @@ public class TransactionRepository : ITransactionRepository
         
         return transaction;
     }
+
+    public async Task<(IEnumerable<Transaction> transactions, int totalCount)> GetPagedAsync(int page, int pageSize)
+    {
+        const string countSql = "SELECT COUNT(*) FROM transactions";
+        const string dataSql = @"
+            SELECT transaction_id as TransactionId, external_id as ExternalId, type, status,
+                   amount, currency, bank_code as BankCode, pix_key as PixKey,
+                   end_to_end_id as EndToEndId, account_branch as AccountBranch,
+                   account_number as AccountNumber, tax_id as TaxId, name, description,
+                   webhook_url as WebhookUrl, due_date as DueDate, payer_tax_id as PayerTaxId,
+                   payer_name as PayerName, instructions, boleto_barcode as BoletoBarcode,
+                   boleto_url as BoletoUrl, crypto_type as CryptoType,
+                   wallet_address as WalletAddress, crypto_tx_hash as CryptoTxHash,
+                   created_at as CreatedAt, updated_at as UpdatedAt
+            FROM transactions
+            ORDER BY created_at DESC
+            LIMIT @PageSize OFFSET @Offset";
+
+        using var connection = _connectionFactory.CreateConnection();
+
+        var totalCount = await connection.QuerySingleAsync<int>(countSql);
+        var offset = (page - 1) * pageSize;
+        var results = await connection.QueryAsync(dataSql, new { PageSize = pageSize, Offset = offset });
+
+        var transactions = results.Select(MapToTransaction);
+
+        return (transactions, totalCount);
+    }
 }

@@ -37,8 +37,8 @@ public class SPBService : SicoobServiceBase, ISPBService
 
             if (response != null)
             {
-                Logger.LogInformation("TED realizada com sucesso. Documento: {NumeroDocumento}, Status: {Status}", 
-                    response.NumeroDocumento, response.Status);
+                Logger.LogInformation("TED realizada com sucesso. Documento: {NumeroDocumento}, Status: {Situacao}",
+                    response.NumeroDocumento, response.Situacao);
             }
 
             return response;
@@ -64,8 +64,8 @@ public class SPBService : SicoobServiceBase, ISPBService
 
             if (response != null)
             {
-                Logger.LogInformation("TED consultada. Status: {Status}, Valor: {Valor}", 
-                    response.Status, response.Valor);
+                Logger.LogInformation("TED consultada. Status: {Situacao}, Valor: {Valor}",
+                    response.Situacao, response.Valor);
             }
 
             return response;

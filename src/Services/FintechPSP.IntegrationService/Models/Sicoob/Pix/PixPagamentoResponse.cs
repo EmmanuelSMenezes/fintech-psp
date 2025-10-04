@@ -7,11 +7,11 @@ namespace FintechPSP.IntegrationService.Models.Sicoob.Pix;
 /// </summary>
 public class PixPagamentoResponse
 {
-    [JsonPropertyName("e2eId")]
-    public string? E2eId { get; set; }
+    [JsonPropertyName("endToEndId")]
+    public string? EndToEndId { get; set; }
 
     [JsonPropertyName("txid")]
-    public string? TxId { get; set; }
+    public string? Txid { get; set; }
 
     [JsonPropertyName("valor")]
     public string? Valor { get; set; }
@@ -19,54 +19,20 @@ public class PixPagamentoResponse
     [JsonPropertyName("status")]
     public string? Status { get; set; }
 
-    [JsonPropertyName("dataHoraSolicitacao")]
-    public DateTime? DataHoraSolicitacao { get; set; }
-
-    [JsonPropertyName("dataHoraEfetivacao")]
-    public DateTime? DataHoraEfetivacao { get; set; }
+    [JsonPropertyName("horario")]
+    public string? Horario { get; set; }
 
     [JsonPropertyName("pagador")]
-    public PagadorPixResponse? Pagador { get; set; }
+    public PagadorPix? Pagador { get; set; }
 
     [JsonPropertyName("favorecido")]
-    public FavorecidoPixResponse? Favorecido { get; set; }
+    public FavorecidoPix? Favorecido { get; set; }
+
+    [JsonPropertyName("infoPagador")]
+    public string? InfoPagador { get; set; }
 }
 
-/// <summary>
-/// Dados do pagador na resposta
-/// </summary>
-public class PagadorPixResponse
-{
-    [JsonPropertyName("cpf")]
-    public string? Cpf { get; set; }
 
-    [JsonPropertyName("cnpj")]
-    public string? Cnpj { get; set; }
-
-    [JsonPropertyName("nome")]
-    public string? Nome { get; set; }
-
-    [JsonPropertyName("contaCorrente")]
-    public string? ContaCorrente { get; set; }
-}
-
-/// <summary>
-/// Dados do favorecido na resposta
-/// </summary>
-public class FavorecidoPixResponse
-{
-    [JsonPropertyName("cpf")]
-    public string? Cpf { get; set; }
-
-    [JsonPropertyName("cnpj")]
-    public string? Cnpj { get; set; }
-
-    [JsonPropertyName("nome")]
-    public string? Nome { get; set; }
-
-    [JsonPropertyName("chave")]
-    public string? Chave { get; set; }
-}
 
 /// <summary>
 /// Lista de pagamentos PIX

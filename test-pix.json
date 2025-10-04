@@ -1,0 +1,8 @@
+{
+    "externalId": "PIX-TEST-20251002231100",
+    "amount": 50.00,
+    "pixKey": "11999887766",
+    "bankCode": "756",
+    "description": "Teste PIX integração Sicoob",
+    "webhookUrl": "https://webhook.site/test"
+}

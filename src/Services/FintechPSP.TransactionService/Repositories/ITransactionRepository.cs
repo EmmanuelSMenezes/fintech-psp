@@ -41,4 +41,9 @@ public interface ITransactionRepository
     /// Lista transações por período
     /// </summary>
     Task<IEnumerable<Transaction>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Lista transações com paginação
+    /// </summary>
+    Task<(IEnumerable<Transaction> transactions, int totalCount)> GetPagedAsync(int page, int pageSize);
 }

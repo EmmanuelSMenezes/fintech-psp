@@ -2,6 +2,7 @@ using Dapper;
 using FintechPSP.CompanyService.Models;
 using FintechPSP.Shared.Infrastructure.Database;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace FintechPSP.CompanyService.Repositories;
 
@@ -11,10 +12,12 @@ namespace FintechPSP.CompanyService.Repositories;
 public class CompanyRepository : ICompanyRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
+    private readonly ILogger<CompanyRepository> _logger;
 
-    public CompanyRepository(IDbConnectionFactory connectionFactory)
+    public CompanyRepository(IDbConnectionFactory connectionFactory, ILogger<CompanyRepository> logger)
     {
         _connectionFactory = connectionFactory;
+        _logger = logger;
     }
 
     public async Task<Company?> GetByIdAsync(Guid id)
@@ -27,9 +30,7 @@ public class CompanyRepository : ICompanyRepository
                 cnpj, inscricao_estadual as InscricaoEstadual, inscricao_municipal as InscricaoMunicipal,
                 cep, logradouro, numero, complemento, bairro, cidade, estado, pais,
                 telefone, email, website,
-                capital_social as CapitalSocial, data_constituicao as DataConstituicao,
-                natureza_juridica as NaturezaJuridica, atividade_principal as AtividadePrincipal,
-                regime_tributario as RegimeTributario,
+                capital_social as CapitalSocial, atividade_principal as AtividadePrincipal,
                 status, observacoes,
                 created_at as CreatedAt, updated_at as UpdatedAt, 
                 approved_at as ApprovedAt, approved_by as ApprovedBy
@@ -57,10 +58,7 @@ public class CompanyRepository : ICompanyRepository
             company.ContractData = new ContractData
             {
                 CapitalSocial = company.ContractData?.CapitalSocial ?? 0,
-                DataConstituicao = company.ContractData?.DataConstituicao,
-                NaturezaJuridica = company.ContractData?.NaturezaJuridica,
-                AtividadePrincipal = company.ContractData?.AtividadePrincipal,
-                RegimeTributario = company.ContractData?.RegimeTributario
+                AtividadePrincipal = company.ContractData?.AtividadePrincipal
             };
         }
 
@@ -77,9 +75,7 @@ public class CompanyRepository : ICompanyRepository
                 cnpj, inscricao_estadual as InscricaoEstadual, inscricao_municipal as InscricaoMunicipal,
                 cep, logradouro, numero, complemento, bairro, cidade, estado, pais,
                 telefone, email, website,
-                capital_social as CapitalSocial, data_constituicao as DataConstituicao,
-                natureza_juridica as NaturezaJuridica, atividade_principal as AtividadePrincipal,
-                regime_tributario as RegimeTributario,
+                capital_social as CapitalSocial, atividade_principal as AtividadePrincipal,
                 status, observacoes,
                 created_at as CreatedAt, updated_at as UpdatedAt, 
                 approved_at as ApprovedAt, approved_by as ApprovedBy
@@ -93,31 +89,38 @@ public class CompanyRepository : ICompanyRepository
         int page, int limit, string? search = null, CompanyStatus? status = null)
     {
         using var connection = _connectionFactory.CreateConnection();
-        
+
         var whereConditions = new List<string>();
         var parameters = new DynamicParameters();
+
+        _logger.LogInformation("[DEBUG] GetPagedAsync called with: page={Page}, limit={Limit}, search='{Search}', status={Status}", page, limit, search, status);
 
         if (!string.IsNullOrEmpty(search))
         {
             whereConditions.Add("(razao_social ILIKE @Search OR nome_fantasia ILIKE @Search OR cnpj LIKE @Search)");
             parameters.Add("Search", $"%{search}%");
+            _logger.LogInformation("[DEBUG] Added search condition with parameter: %{SearchParam}%", search);
         }
 
         if (status.HasValue)
         {
             whereConditions.Add("status = @Status");
             parameters.Add("Status", status.Value.ToString());
+            _logger.LogInformation("[DEBUG] Added status condition: {Status}", status.Value);
         }
 
         var whereClause = whereConditions.Any() ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+        _logger.LogInformation("[DEBUG] WHERE clause: {WhereClause}", whereClause);
 
         // Count query
         var countSql = $@"
-            SELECT COUNT(*) 
-            FROM company_service.companies 
+            SELECT COUNT(*)
+            FROM company_service.companies
             {whereClause}";
 
+        _logger.LogInformation("[DEBUG] Count SQL: {CountSql}", countSql);
         var totalCount = await connection.QuerySingleAsync<int>(countSql, parameters);
+        _logger.LogInformation("[DEBUG] Total count result: {TotalCount}", totalCount);
 
         // Data query
         var offset = (page - 1) * limit;
@@ -138,7 +141,9 @@ public class CompanyRepository : ICompanyRepository
             ORDER BY created_at DESC
             LIMIT @Limit OFFSET @Offset";
 
+        _logger.LogInformation("[DEBUG] Data SQL: {DataSql}", dataSql);
         var companies = await connection.QueryAsync<Company>(dataSql, parameters);
+        _logger.LogInformation("[DEBUG] Companies result count: {CompaniesCount}", companies.Count());
 
         return (companies, totalCount);
     }
@@ -152,13 +157,13 @@ public class CompanyRepository : ICompanyRepository
                 id, razao_social, nome_fantasia, cnpj, inscricao_estadual, inscricao_municipal,
                 cep, logradouro, numero, complemento, bairro, cidade, estado, pais,
                 telefone, email, website,
-                capital_social, data_constituicao, natureza_juridica, atividade_principal, regime_tributario,
+                capital_social, atividade_principal,
                 status, observacoes, created_at
             ) VALUES (
                 @Id, @RazaoSocial, @NomeFantasia, @Cnpj, @InscricaoEstadual, @InscricaoMunicipal,
                 @Cep, @Logradouro, @Numero, @Complemento, @Bairro, @Cidade, @Estado, @Pais,
                 @Telefone, @Email, @Website,
-                @CapitalSocial, @DataConstituicao, @NaturezaJuridica, @AtividadePrincipal, @RegimeTributario,
+                @CapitalSocial, @AtividadePrincipal,
                 @Status, @Observacoes, @CreatedAt
             )
             RETURNING 
@@ -186,10 +191,7 @@ public class CompanyRepository : ICompanyRepository
             company.Email,
             company.Website,
             CapitalSocial = company.ContractData.CapitalSocial,
-            DataConstituicao = company.ContractData.DataConstituicao,
-            NaturezaJuridica = company.ContractData.NaturezaJuridica,
             AtividadePrincipal = company.ContractData.AtividadePrincipal,
-            RegimeTributario = company.ContractData.RegimeTributario,
             Status = company.Status.ToString(),
             company.Observacoes,
             company.CreatedAt

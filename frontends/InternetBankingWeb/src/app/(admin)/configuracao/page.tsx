@@ -27,21 +27,21 @@ const ConfiguracaoPage: React.FC = () => {
       console.error('Erro ao carregar configurações:', error);
       toast.error('Erro ao carregar configurações da empresa');
 
-      // Usar dados mock para demonstração
-      const mockSettings: CompanySettings = {
-        settingsId: 'settings-1',
-        companyId: 'company-1',
-        companyName: 'Minha Empresa Ltda',
-        cnpj: '12.345.678/0001-90',
-        email: 'contato@minhaempresa.com',
-        phone: '(11) 99999-9999',
-        maxDailyTransactionAmount: 50000,
-        maxSingleTransactionAmount: 10000,
+      // Usar configurações padrão quando não conseguir carregar da API
+      const defaultSettings: CompanySettings = {
+        settingsId: '',
+        companyId: '',
+        companyName: 'Empresa',
+        cnpj: '',
+        email: '',
+        phone: '',
+        maxDailyTransactionAmount: 10000,
+        maxSingleTransactionAmount: 5000,
         requireTwoFactorAuth: true,
-        sessionTimeoutMinutes: 60,
+        sessionTimeoutMinutes: 30,
         emailNotifications: {
           transactionConfirmation: true,
-          dailyReport: true,
+          dailyReport: false,
           securityAlerts: true,
           systemMaintenance: false,
         },
@@ -55,10 +55,10 @@ const ConfiguracaoPage: React.FC = () => {
           fromName: '',
           useTLS: true,
         },
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-20T10:30:00Z',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      setSettings(mockSettings);
+      setSettings(defaultSettings);
     } finally {
       setIsLoading(false);
     }
