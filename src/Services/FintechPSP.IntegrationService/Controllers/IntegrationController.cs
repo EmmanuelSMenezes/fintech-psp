@@ -6,6 +6,7 @@ using FintechPSP.IntegrationService.Services.Sicoob;
 using FintechPSP.IntegrationService.Services.Sicoob.Pix;
 using FintechPSP.IntegrationService.Services.Sicoob.ContaCorrente;
 using FintechPSP.IntegrationService.Services.Sicoob.SPB;
+using FintechPSP.IntegrationService.Services.ReceitaFederal;
 using FintechPSP.IntegrationService.Models.Sicoob.Pix;
 using FintechPSP.IntegrationService.Models.Sicoob.SPB;
 using FintechPSP.Shared.Domain.Events;
@@ -31,6 +32,9 @@ public class IntegrationController : ControllerBase
     private readonly IContaCorrenteService _contaCorrenteService;
     private readonly ISPBService _spbService;
     private readonly ISicoobAuthService _sicoobAuthService;
+    private readonly IReceitaFederalService _receitaFederalService;
+    private readonly ISicoobTokenCache _tokenCache;
+    private readonly ICertificateMonitoringService _certificateMonitoring;
 
     public IntegrationController(
         ILogger<IntegrationController> logger,
@@ -39,7 +43,10 @@ public class IntegrationController : ControllerBase
         IPixRecebimentosService pixRecebimentosService,
         IContaCorrenteService contaCorrenteService,
         ISPBService spbService,
-        ISicoobAuthService sicoobAuthService)
+        ISicoobAuthService sicoobAuthService,
+        IReceitaFederalService receitaFederalService,
+        ISicoobTokenCache tokenCache,
+        ICertificateMonitoringService certificateMonitoring)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _routingService = routingService ?? throw new ArgumentNullException(nameof(routingService));
@@ -48,6 +55,9 @@ public class IntegrationController : ControllerBase
         _contaCorrenteService = contaCorrenteService ?? throw new ArgumentNullException(nameof(contaCorrenteService));
         _spbService = spbService ?? throw new ArgumentNullException(nameof(spbService));
         _sicoobAuthService = sicoobAuthService ?? throw new ArgumentNullException(nameof(sicoobAuthService));
+        _receitaFederalService = receitaFederalService ?? throw new ArgumentNullException(nameof(receitaFederalService));
+        _tokenCache = tokenCache ?? throw new ArgumentNullException(nameof(tokenCache));
+        _certificateMonitoring = certificateMonitoring ?? throw new ArgumentNullException(nameof(certificateMonitoring));
     }
 
     /// <summary>
@@ -867,6 +877,191 @@ public class IntegrationController : ControllerBase
             return false;
         }
     }
+
+    /// <summary>
+    /// Validar CNPJ via Receita Federal
+    /// </summary>
+    /// <param name="request">Dados do CNPJ para validação</param>
+    /// <returns>Resultado da validação</returns>
+    [HttpPost("receita-federal/cnpj/validate")]
+    public async Task<ActionResult<CnpjValidationResult>> ValidateCnpj([FromBody] ValidateCnpjRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Validando CNPJ: {Cnpj}", request.Cnpj);
+
+            var result = await _receitaFederalService.ValidateCnpjAsync(request.Cnpj);
+
+            if (result.IsValid)
+            {
+                _logger.LogInformation("CNPJ válido - Empresa: {CompanyName}, Status: {Status}",
+                    result.CompanyName, result.Status);
+            }
+            else
+            {
+                _logger.LogWarning("CNPJ inválido: {ErrorMessage}", result.ErrorMessage);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao validar CNPJ: {Cnpj}", request.Cnpj);
+            return StatusCode(500, new { error = "Erro interno na validação do CNPJ" });
+        }
+    }
+
+
+
+    /// <summary>
+    /// Status do cache de tokens
+    /// </summary>
+    /// <returns>Status do cache</returns>
+    [HttpGet("sicoob/token/cache/status")]
+    public ActionResult<TokenCacheStatus> GetTokenCacheStatus()
+    {
+        try
+        {
+            var status = _tokenCache.GetCacheStatus();
+            return Ok(status);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao consultar status do cache de tokens");
+            return StatusCode(500, new { error = "Erro interno na consulta do cache" });
+        }
+    }
+
+    /// <summary>
+    /// Invalidar cache de tokens
+    /// </summary>
+    /// <returns>Confirmação</returns>
+    [HttpPost("sicoob/token/cache/invalidate")]
+    public IActionResult InvalidateTokenCache()
+    {
+        try
+        {
+            _tokenCache.InvalidateToken();
+            _logger.LogInformation("Cache de tokens invalidado manualmente");
+            return Ok(new { message = "Cache de tokens invalidado com sucesso" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao invalidar cache de tokens");
+            return StatusCode(500, new { error = "Erro interno na invalidação do cache" });
+        }
+    }
+
+    /// <summary>
+    /// Refresh forçado do token
+    /// </summary>
+    /// <returns>Novo token</returns>
+    [HttpPost("sicoob/token/refresh")]
+    public async Task<IActionResult> RefreshToken()
+    {
+        try
+        {
+            var newToken = await _tokenCache.RefreshTokenAsync();
+            _logger.LogInformation("Token OAuth renovado manualmente");
+
+            return Ok(new
+            {
+                message = "Token renovado com sucesso",
+                tokenPreview = $"{newToken[..10]}..."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao renovar token");
+            return StatusCode(500, new { error = "Erro interno na renovação do token" });
+        }
+    }
+
+    /// <summary>
+    /// Status dos certificados mTLS
+    /// </summary>
+    /// <returns>Status dos certificados</returns>
+    [HttpGet("sicoob/certificates/status")]
+    public async Task<ActionResult<CertificateStatus>> GetCertificateStatus()
+    {
+        try
+        {
+            var status = await _certificateMonitoring.CheckCertificateStatusAsync();
+
+            if (!status.IsValid)
+            {
+                _logger.LogWarning("Certificado inválido: {ErrorMessage}", status.ErrorMessage);
+            }
+            else if (status.NeedsRenewal)
+            {
+                _logger.LogWarning("Certificado precisa ser renovado em {Days} dias", status.DaysUntilExpiry);
+            }
+
+            return Ok(status);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao verificar status dos certificados");
+            return StatusCode(500, new { error = "Erro interno na verificação de certificados" });
+        }
+    }
+
+    /// <summary>
+    /// Configuração de retry policy
+    /// </summary>
+    /// <returns>Configuração atual</returns>
+    [HttpGet("sicoob/retry/config")]
+    public IActionResult GetRetryConfig()
+    {
+        try
+        {
+            var config = new
+            {
+                retryCount = 3,
+                backoffType = "Exponential",
+                baseDelay = "2 seconds",
+                circuitBreakerThreshold = 5,
+                circuitBreakerDuration = "30 seconds",
+                timeout = "60 seconds"
+            };
+
+            return Ok(config);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao consultar configuração de retry");
+            return StatusCode(500, new { error = "Erro interno na consulta de configuração" });
+        }
+    }
+
+    /// <summary>
+    /// Rate limiting status
+    /// </summary>
+    /// <returns>Status do rate limiting</returns>
+    [HttpGet("sicoob/rate-limit/status")]
+    public IActionResult GetRateLimitStatus()
+    {
+        try
+        {
+            // Por enquanto, retornar configuração estática
+            // Em produção, implementar rate limiting real
+            var status = new
+            {
+                enabled = false,
+                requestsPerMinute = 60,
+                currentUsage = 0,
+                resetTime = DateTime.UtcNow.AddMinutes(1),
+                message = "Rate limiting não implementado ainda"
+            };
+
+            return Ok(status);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao consultar status de rate limiting");
+            return StatusCode(500, new { error = "Erro interno na consulta de rate limiting" });
+        }
+    }
 }
 
 /// <summary>
@@ -876,4 +1071,12 @@ public class SelectAccountRequest
 {
     public string? BankCode { get; set; }
     public decimal? Amount { get; set; }
+}
+
+/// <summary>
+/// Request para validação de CNPJ
+/// </summary>
+public class ValidateCnpjRequest
+{
+    public string Cnpj { get; set; } = string.Empty;
 }

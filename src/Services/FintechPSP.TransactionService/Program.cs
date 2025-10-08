@@ -56,6 +56,10 @@ builder.Services.AddSingleton<IDbConnectionFactory, PostgreSqlConnectionFactory>
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 // Services
+builder.Services.AddScoped<IReconciliationService, ReconciliationService>();
+builder.Services.AddHttpClient<ReconciliationService>();
+
+// Services
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 
 // Sicoob Integration (sandbox)
@@ -138,6 +142,8 @@ try
                                    FintechPSP.IntegrationService.Services.Sicoob.Pix.PixRecebimentosService>();
         builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.Pix.IPixQrCodeService,
                                    FintechPSP.IntegrationService.Services.Sicoob.Pix.PixQrCodeService>();
+        builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.CobrancaBancaria.ICobrancaBancariaService,
+                                   FintechPSP.IntegrationService.Services.Sicoob.CobrancaBancaria.CobrancaBancariaService>();
         builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.SPB.ISPBService,
                                    FintechPSP.IntegrationService.Services.Sicoob.SPB.SPBService>();
         builder.Services.AddScoped<FintechPSP.IntegrationService.Services.Sicoob.TransactionIntegration.ITransactionIntegrationService,

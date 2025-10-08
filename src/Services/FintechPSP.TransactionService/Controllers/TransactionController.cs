@@ -670,6 +670,55 @@ CREATE INDEX IF NOT EXISTS idx_transactions_tax_id ON transactions(tax_id);
                 }
             });
 
+            // 2. Teste Boleto com Sicoob Real
+            _logger.LogInformation("2. Testando boleto com Sicoob...");
+            var boletoTransaction = Transaction.CreateBoletoTransaction(
+                $"empresateste-boleto-sicoob-{DateTime.Now:yyyyMMddHHmmss}",
+                250.00m, // Valor menor para teste
+                DateTime.Now.AddDays(30),
+                "39745467820", // CPF Emmanuel Santos Menezes
+                "Emmanuel Santos Menezes",
+                "Pagamento referente a serviços prestados - Integração Real Sicoob",
+                "https://api.fintechpsp.com/webhooks/boleto",
+                "756"
+            );
+
+            // Salvar no PostgreSQL
+            var savedBoleto = await _transactionRepository.CreateAsync(boletoTransaction);
+
+            // Integrar com Sicoob Sandbox (REAL)
+            var boletoDto = MapToTransactionDto(savedBoleto);
+            var boletoSicoobResult = await _transactionIntegrationService.ProcessBoletoTransactionAsync(boletoDto);
+
+            ((List<object>)testResults.tests).Add(new
+            {
+                test = "Boleto Transaction - Sicoob Integration",
+                status = boletoSicoobResult.Success ? "success" : "failed",
+                message = boletoSicoobResult.Success ? "Boleto enviado para Sicoob com sucesso" : $"Erro: {boletoSicoobResult.ErrorMessage}",
+                details = new
+                {
+                    localTransactionId = savedBoleto.TransactionId,
+                    externalId = savedBoleto.ExternalId,
+                    valor = savedBoleto.Amount.Amount,
+                    status = savedBoleto.Status.ToString(),
+                    dueDate = savedBoleto.DueDate,
+                    payerTaxId = savedBoleto.PayerTaxId,
+                    payerName = savedBoleto.PayerName,
+                    instructions = savedBoleto.Instructions,
+                    bankCode = savedBoleto.BankCode,
+                    createdAt = savedBoleto.CreatedAt,
+                    sicoobIntegration = new
+                    {
+                        success = boletoSicoobResult.Success,
+                        sicoobTransactionId = boletoSicoobResult.SicoobTransactionId,
+                        sicoobStatus = boletoSicoobResult.Status,
+                        errorMessage = boletoSicoobResult.ErrorMessage,
+                        processedAt = boletoSicoobResult.ProcessedAt,
+                        additionalData = boletoSicoobResult.AdditionalData
+                    }
+                }
+            });
+
             _logger.LogInformation("Teste de transações com integração Sicoob concluído");
 
             return Ok(new {

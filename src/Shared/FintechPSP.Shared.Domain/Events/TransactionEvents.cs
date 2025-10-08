@@ -58,15 +58,27 @@ public class PixConfirmado : DomainEvent
 {
     [JsonPropertyName("transactionId")]
     public Guid TransactionId { get; set; }
-    
+
     [JsonPropertyName("endToEndId")]
     public string EndToEndId { get; set; } = string.Empty;
-    
+
     [JsonPropertyName("txId")]
     public string? TxId { get; set; }
-    
+
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }
+
+    [JsonPropertyName("payerDocument")]
+    public string? PayerDocument { get; set; }
+
+    [JsonPropertyName("payerName")]
+    public string? PayerName { get; set; }
+
+    [JsonPropertyName("confirmedAt")]
+    public DateTime ConfirmedAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
 
     public PixConfirmado() { }
 
@@ -76,6 +88,7 @@ public class PixConfirmado : DomainEvent
         EndToEndId = endToEndId;
         Amount = amount;
         TxId = txId;
+        ConfirmedAt = DateTime.UtcNow;
     }
 }
 
@@ -821,5 +834,178 @@ public class AcessoRemovido : DomainEvent
         Role = role;
         Motivo = motivo;
         RemovidoPor = removidoPor;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um PIX é rejeitado via webhook
+/// </summary>
+public class PixRejeitado : DomainEvent
+{
+    [JsonPropertyName("txId")]
+    public string TxId { get; set; } = string.Empty;
+
+    [JsonPropertyName("rejectionReason")]
+    public string RejectionReason { get; set; } = string.Empty;
+
+    [JsonPropertyName("rejectedAt")]
+    public DateTime RejectedAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    public PixRejeitado() { }
+
+    public PixRejeitado(string txId, string rejectionReason, string bankCode)
+    {
+        TxId = txId;
+        RejectionReason = rejectionReason;
+        RejectedAt = DateTime.UtcNow;
+        BankCode = bankCode;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um PIX expira via webhook
+/// </summary>
+public class PixExpirado : DomainEvent
+{
+    [JsonPropertyName("txId")]
+    public string TxId { get; set; } = string.Empty;
+
+    [JsonPropertyName("expiredAt")]
+    public DateTime ExpiredAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    public PixExpirado() { }
+
+    public PixExpirado(string txId, string bankCode)
+    {
+        TxId = txId;
+        ExpiredAt = DateTime.UtcNow;
+        BankCode = bankCode;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um Boleto é confirmado via webhook
+/// </summary>
+public class BoletoConfirmado : DomainEvent
+{
+    [JsonPropertyName("nossoNumero")]
+    public string NossoNumero { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    [JsonPropertyName("payerDocument")]
+    public string? PayerDocument { get; set; }
+
+    [JsonPropertyName("payerName")]
+    public string? PayerName { get; set; }
+
+    [JsonPropertyName("paidAt")]
+    public DateTime PaidAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    public BoletoConfirmado() { }
+
+    public BoletoConfirmado(string nossoNumero, decimal amount, string bankCode)
+    {
+        NossoNumero = nossoNumero;
+        Amount = amount;
+        PaidAt = DateTime.UtcNow;
+        BankCode = bankCode;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um Boleto expira via webhook
+/// </summary>
+public class BoletoExpirado : DomainEvent
+{
+    [JsonPropertyName("nossoNumero")]
+    public string NossoNumero { get; set; } = string.Empty;
+
+    [JsonPropertyName("expiredAt")]
+    public DateTime ExpiredAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    public BoletoExpirado() { }
+
+    public BoletoExpirado(string nossoNumero, string bankCode)
+    {
+        NossoNumero = nossoNumero;
+        ExpiredAt = DateTime.UtcNow;
+        BankCode = bankCode;
+    }
+}
+
+/// <summary>
+/// Evento disparado quando um Boleto é cancelado via webhook
+/// </summary>
+public class BoletoCancelado : DomainEvent
+{
+    [JsonPropertyName("nossoNumero")]
+    public string NossoNumero { get; set; } = string.Empty;
+
+    [JsonPropertyName("cancelledAt")]
+    public DateTime CancelledAt { get; set; }
+
+    [JsonPropertyName("bankCode")]
+    public string BankCode { get; set; } = string.Empty;
+
+    public BoletoCancelado() { }
+
+    public BoletoCancelado(string nossoNumero, string bankCode)
+    {
+        NossoNumero = nossoNumero;
+        CancelledAt = DateTime.UtcNow;
+        BankCode = bankCode;
+    }
+}
+
+
+
+/// <summary>
+/// Evento disparado para notificar frontend sobre PIX recebido
+/// </summary>
+public class NotificacaoPixRecebido : DomainEvent
+{
+    [JsonPropertyName("clientId")]
+    public Guid ClientId { get; set; }
+
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    [JsonPropertyName("payerName")]
+    public string PayerName { get; set; } = string.Empty;
+
+    [JsonPropertyName("payerDocument")]
+    public string? PayerDocument { get; set; }
+
+    [JsonPropertyName("txId")]
+    public string? TxId { get; set; }
+
+    [JsonPropertyName("newBalance")]
+    public decimal NewBalance { get; set; }
+
+    [JsonPropertyName("receivedAt")]
+    public DateTime ReceivedAt { get; set; }
+
+    public NotificacaoPixRecebido() { }
+
+    public NotificacaoPixRecebido(Guid clientId, decimal amount, string payerName)
+    {
+        ClientId = clientId;
+        Amount = amount;
+        PayerName = payerName;
+        ReceivedAt = DateTime.UtcNow;
     }
 }

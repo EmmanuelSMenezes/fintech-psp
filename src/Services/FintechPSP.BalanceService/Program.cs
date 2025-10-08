@@ -2,6 +2,7 @@ using System.Text;
 using FintechPSP.BalanceService.Consumers;
 using FintechPSP.BalanceService.Handlers;
 using FintechPSP.BalanceService.Repositories;
+using FintechPSP.Shared.Domain.Events;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.Shared.Infrastructure.EventStore;
 using Marten;
@@ -50,15 +51,16 @@ builder.Services.AddScoped<IEventStore, MartenEventStore>();
 // MassTransit para mensageria
 builder.Services.AddMassTransit(x =>
 {
-    // Registrar consumers
-    x.AddConsumer<QrCodeEventHandler>();
-    x.AddConsumer<ContaBancariaEventConsumer>();
-    x.AddConsumer<PriorizacaoEventConsumer>();
+    // Registrar consumers via assembly scanning
+    x.AddConsumers(typeof(Program).Assembly);
 
     x.UsingRabbitMq((context, cfg) =>
     {
         var rabbitMqUri = builder.Configuration.GetConnectionString("RabbitMQ") ?? "amqp://guest:guest@localhost:5672";
+        Console.WriteLine($"🔍 DEBUG: RabbitMQ URI: {rabbitMqUri}");
         cfg.Host(rabbitMqUri);
+
+        // Deixar o MassTransit configurar automaticamente TODOS os endpoints
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -136,6 +138,12 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Log dos consumers registrados
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("🔍 DEBUG: Verificando consumers registrados...");
+logger.LogInformation("🔍 DEBUG: PixConfirmadoConsumer registrado: {Type}", typeof(PixConfirmadoConsumer).FullName);
+logger.LogInformation("🔍 DEBUG: PixConfirmado event registrado: {Type}", typeof(PixConfirmado).FullName);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -147,13 +155,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-
 // Use CORS
 app.UseCors();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Remover completamente HTTPS redirection e authentication para debug
+// app.UseAuthentication();
+// app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

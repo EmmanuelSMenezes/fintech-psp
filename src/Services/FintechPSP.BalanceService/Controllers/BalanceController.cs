@@ -1,6 +1,9 @@
 using System.Security.Claims;
 using FintechPSP.BalanceService.DTOs;
 using FintechPSP.BalanceService.Queries;
+using FintechPSP.BalanceService.Repositories;
+using FintechPSP.BalanceService.Models;
+using FintechPSP.Shared.Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +20,19 @@ public class BalanceController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<BalanceController> _logger;
+    private readonly IAccountRepository _accountRepository;
+    private readonly ITransactionHistoryRepository _transactionHistoryRepository;
 
-    public BalanceController(IMediator mediator, ILogger<BalanceController> logger)
+    public BalanceController(
+        IMediator mediator,
+        ILogger<BalanceController> logger,
+        IAccountRepository accountRepository,
+        ITransactionHistoryRepository transactionHistoryRepository)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _accountRepository = accountRepository ?? throw new ArgumentNullException(nameof(accountRepository));
+        _transactionHistoryRepository = transactionHistoryRepository ?? throw new ArgumentNullException(nameof(transactionHistoryRepository));
     }
 
     /// <summary>
@@ -172,6 +183,157 @@ public class BalanceController : ControllerBase
     public IActionResult Health()
     {
         return Ok(new { status = "healthy", service = "BalanceService", timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Teste POST simples - NOVO ENDPOINT PARA DEBUG
+    /// </summary>
+    [HttpPost("health")]
+    [AllowAnonymous]
+    public IActionResult HealthPost()
+    {
+        return Ok(new { status = "POST funcionando!", service = "BalanceService", timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Endpoint universal que aceita qualquer método HTTP
+    /// </summary>
+    [Route("universal")]
+    [AllowAnonymous]
+    public IActionResult Universal()
+    {
+        var method = Request.Method;
+        return Ok(new {
+            message = $"Método {method} funcionando!",
+            service = "BalanceService",
+            timestamp = DateTime.UtcNow,
+            headers = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString())
+        });
+    }
+
+    /// <summary>
+    /// Endpoint POST super simples - SEM NENHUM ATRIBUTO ESPECIAL
+    /// </summary>
+    public IActionResult SimplePost()
+    {
+        return Ok(new { message = "POST SIMPLES FUNCIONANDO!", timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Teste simples de POST sem parâmetros
+    /// </summary>
+    [HttpPost("test")]
+    [AllowAnonymous]
+    public IActionResult Test()
+    {
+        return Ok(new { message = "POST funcionando", timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Teste simples de POST com parâmetros
+    /// </summary>
+    [HttpPost("test-data")]
+    [AllowAnonymous]
+    public IActionResult TestData([FromBody] dynamic data)
+    {
+        return Ok(new { message = "POST com dados funcionando", data = data, timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Endpoint para receber notificações de PIX confirmado
+    /// </summary>
+    [HttpPost("pix-confirmado")]
+    [AllowAnonymous]
+    public async Task<IActionResult> PixConfirmado([FromBody] PixConfirmadoNotification notification)
+    {
+        try
+        {
+            // Extrair dados do objeto
+            string txId = notification?.TxId ?? "UNKNOWN";
+            decimal amount = notification?.Amount ?? 0;
+            string payerName = notification?.PayerName ?? "N/A";
+            string payerDocument = notification?.PayerDocument ?? "";
+            DateTime confirmedAt = notification?.ConfirmedAt ?? DateTime.UtcNow;
+
+            _logger.LogInformation("💰 Recebendo notificação PIX confirmado via HTTP - TxId: {TxId}, Valor: R$ {Amount}",
+                txId, amount);
+
+            // 1. Buscar a transação original pelo TxId
+            var transactionHistory = await _transactionHistoryRepository.GetByExternalIdAsync(txId);
+
+            // Se não encontrar, criar nova entrada para PIX recebido
+            if (transactionHistory == null)
+            {
+                _logger.LogInformation("🔍 TxId {TxId} não encontrado, criando nova entrada para PIX recebido...", txId);
+
+                // Usar ClientId padrão para teste
+                var defaultClientId = Guid.Parse("550e8400-e29b-41d4-a716-446655440000");
+
+                // TEMPORÁRIO: HARDCODAR AccountId para testar
+                _logger.LogInformation("🔍 TEMPORÁRIO: Usando AccountId hardcoded para teste");
+                string hardcodedAccountId = "CONTA_PRINCIPAL";
+                _logger.LogInformation("✅ Usando AccountId hardcoded: {AccountId}", hardcodedAccountId);
+
+                // Criar entrada de histórico para o PIX recebido
+                var newTransactionId = Guid.NewGuid();
+                transactionHistory = new TransactionHistory
+                {
+                    TransactionId = newTransactionId,
+                    ClientId = defaultClientId,
+                    AccountId = hardcodedAccountId, // ✅ TEMPORÁRIO: Usando AccountId hardcoded
+                    ExternalId = txId,
+                    Type = "PIX_RECEIVED",
+                    Amount = amount,
+                    Description = $"PIX recebido de {payerName}",
+                    Status = "PENDING",
+                    Operation = "CREDIT",
+                    CreatedAt = confirmedAt
+                };
+
+                await _transactionHistoryRepository.AddTransactionAsync(transactionHistory);
+                _logger.LogInformation("📝 Nova entrada de histórico criada para PIX recebido - TxId: {TxId}", txId);
+            }
+
+            // 2. Buscar a conta do cliente
+            var account = await _accountRepository.GetByClientIdAsync(transactionHistory.ClientId);
+            if (account == null)
+            {
+                _logger.LogError("❌ Conta não encontrada para cliente: {ClientId}", transactionHistory.ClientId);
+                return BadRequest(new { error = "Conta não encontrada" });
+            }
+
+            // 3. Creditar o valor na conta
+            var oldBalance = account.AvailableBalance.Amount;
+            account.Credit(amount, $"PIX recebido - TxId: {txId}", transactionHistory.TransactionId.ToString());
+
+            // 4. Salvar a conta atualizada
+            await _accountRepository.UpdateAsync(account);
+
+            // 5. Atualizar o histórico da transação
+            await _transactionHistoryRepository.UpdateTransactionStatusAsync(
+                transactionHistory.TransactionId,
+                "CONFIRMED",
+                $"PIX confirmado - Pagador: {payerName}");
+
+            _logger.LogInformation("✅ PIX processado com sucesso via HTTP - Cliente: {ClientId}, Valor: R$ {Amount}, Saldo anterior: R$ {OldBalance}, Novo saldo: R$ {NewBalance}",
+                account.ClientId, amount, oldBalance, account.AvailableBalance.Amount);
+
+            return Ok(new {
+                success = true,
+                message = "PIX processado com sucesso",
+                txId = txId,
+                amount = amount,
+                newBalance = account.AvailableBalance.Amount
+            });
+        }
+        catch (Exception ex)
+        {
+            string txId = "UNKNOWN";
+            try { txId = notification?.TxId ?? "UNKNOWN"; } catch { }
+
+            _logger.LogError(ex, "💥 Erro ao processar PIX confirmado via HTTP - TxId: {TxId}", txId);
+            return StatusCode(500, new { error = "Erro interno do servidor" });
+        }
     }
 
     private Guid GetCurrentClientId()

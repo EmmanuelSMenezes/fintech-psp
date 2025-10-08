@@ -5,6 +5,7 @@ using FintechPSP.IntegrationService.Services.Sicoob;
 using FintechPSP.IntegrationService.Services.Sicoob.Pix;
 using FintechPSP.IntegrationService.Services.Sicoob.ContaCorrente;
 using FintechPSP.IntegrationService.Services.Sicoob.SPB;
+using FintechPSP.IntegrationService.Services.ReceitaFederal;
 using FintechPSP.IntegrationService.Helpers;
 using FintechPSP.IntegrationService.Consumers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -77,6 +78,37 @@ builder.Services.AddScoped<IPixPagamentosService, PixPagamentosService>();
 builder.Services.AddScoped<IPixRecebimentosService, PixRecebimentosService>();
 builder.Services.AddScoped<IContaCorrenteService, ContaCorrenteService>();
 builder.Services.AddScoped<ISPBService, SPBService>();
+
+// Receita Federal Service
+builder.Services.AddHttpClient<IReceitaFederalService, ReceitaFederalService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("User-Agent", "FintechPSP/1.0");
+});
+builder.Services.AddScoped<IReceitaFederalService, ReceitaFederalService>();
+
+// Token Cache e Performance Services
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 100; // Limite de 100 itens no cache
+});
+builder.Services.AddScoped<ICertificateMonitoringService, CertificateMonitoringService>();
+
+// Configurar HttpClient com Retry Policies para Sicoob
+builder.Services.AddHttpClient("SicoobClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("User-Agent", "FintechPSP-Sicoob/1.0");
+});
+
+// Registrar SicoobAuthService concreto primeiro (para SicoobTokenCache)
+builder.Services.AddScoped<SicoobAuthService>();
+
+// Registrar cache de tokens
+builder.Services.AddScoped<ISicoobTokenCache, SicoobTokenCache>();
+
+// Registrar versão com cache como interface principal
+builder.Services.AddScoped<ISicoobAuthService, CachedSicoobAuthService>();
 
 // MassTransit para consumir eventos de transação
 builder.Services.AddMassTransit(x =>
@@ -185,6 +217,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Middleware de monitoramento de tokens
+app.UseMiddleware<TokenMonitoringMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

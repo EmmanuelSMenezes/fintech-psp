@@ -6,6 +6,8 @@ namespace FintechPSP.BalanceService.Repositories;
 public class TransactionHistory
 {
     public Guid TransactionId { get; set; }
+    public Guid ClientId { get; set; }
+    public string AccountId { get; set; } = string.Empty; // ✅ Adicionado AccountId
     public string ExternalId { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public decimal Amount { get; set; }
@@ -54,4 +56,9 @@ public interface ITransactionHistoryRepository
     /// Atualiza status de uma transação
     /// </summary>
     Task UpdateTransactionStatusAsync(Guid transactionId, string status, string? description = null);
+
+    /// <summary>
+    /// Busca transação por ExternalId (TxId)
+    /// </summary>
+    Task<TransactionHistory?> GetByExternalIdAsync(string externalId);
 }

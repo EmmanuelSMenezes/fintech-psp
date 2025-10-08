@@ -7,6 +7,18 @@ using FintechPSP.Shared.Infrastructure.Database;
 
 namespace FintechPSP.BalanceService.Repositories;
 
+// DTO para mapeamento explícito do Dapper
+public class AccountDto
+{
+    public Guid ClientId { get; set; }
+    public string AccountId { get; set; } = string.Empty;
+    public decimal AvailableBalance { get; set; }
+    public decimal BlockedBalance { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime LastUpdated { get; set; }
+}
+
 /// <summary>
 /// Implementação do repository de contas usando Dapper
 /// </summary>
@@ -21,6 +33,8 @@ public class AccountRepository : IAccountRepository
 
     public async Task<Account?> GetByClientIdAsync(Guid clientId, string? accountId = null)
     {
+        Console.WriteLine($"🔍 DEBUG AccountRepository.GetByClientIdAsync - ClientId: {clientId}, AccountId: {accountId}");
+
         var sql = @"
             SELECT client_id as ClientId, account_id as AccountId,
                    balance as AvailableBalance, 0.00 as BlockedBalance,
@@ -38,10 +52,29 @@ public class AccountRepository : IAccountRepository
 
         sql += " LIMIT 1";
 
+        Console.WriteLine($"🔍 DEBUG SQL: {sql}");
+        Console.WriteLine($"🔍 DEBUG Parameters: ClientId={clientId}");
+
         using var connection = _connectionFactory.CreateConnection();
-        var result = await connection.QuerySingleOrDefaultAsync(sql, parameters);
-        
-        return result != null ? MapToAccount(result) : null;
+
+        Console.WriteLine($"🔍 DEBUG ANTES QuerySingleOrDefaultAsync<AccountDto>");
+
+        // Usar mapeamento explícito em vez de dynamic
+        var result = await connection.QuerySingleOrDefaultAsync<AccountDto>(sql, parameters);
+
+        Console.WriteLine($"🔍 DEBUG DEPOIS QuerySingleOrDefaultAsync - Result: {(result != null ? "FOUND" : "NOT FOUND")}");
+
+        if (result != null)
+        {
+            Console.WriteLine($"🔍 DEBUG AccountDto - ClientId: {result.ClientId}, AccountId: '{result.AccountId}'");
+
+            var account = MapFromDto(result);
+
+            Console.WriteLine($"🔍 DEBUG Account final - AccountId: '{account.AccountId}'");
+            return account;
+        }
+
+        return null;
     }
 
     public async Task<Account> CreateAsync(Account account)
@@ -98,38 +131,29 @@ public class AccountRepository : IAccountRepository
             ORDER BY created_at";
 
         using var connection = _connectionFactory.CreateConnection();
-        var results = await connection.QueryAsync(sql, new { ClientId = clientId });
-        
-        return results.Select(MapToAccount);
+        var results = await connection.QueryAsync<AccountDto>(sql, new { ClientId = clientId });
+
+        return results.Select(MapFromDto);
     }
 
-    private static Account MapToAccount(dynamic result)
+    private static Account MapFromDto(AccountDto dto)
     {
+        Console.WriteLine($"🔍 DEBUG MapFromDto - ClientId: {dto.ClientId}, AccountId: '{dto.AccountId}'");
+
         // Usar reflection para criar instância privada
         var account = (Account)Activator.CreateInstance(typeof(Account), true)!;
 
         // Mapear propriedades usando reflection
         var type = typeof(Account);
 
-        // Verificar se os valores não são null antes de converter
-        if (result.ClientId != null)
-            type.GetProperty("ClientId")?.SetValue(account, (Guid)result.ClientId);
+        type.GetProperty("ClientId")?.SetValue(account, dto.ClientId);
+        type.GetProperty("AccountId")?.SetValue(account, dto.AccountId);
+        type.GetProperty("AvailableBalance")?.SetValue(account, new Money(dto.AvailableBalance, dto.Currency));
+        type.GetProperty("BlockedBalance")?.SetValue(account, new Money(dto.BlockedBalance, dto.Currency));
+        type.GetProperty("CreatedAt")?.SetValue(account, dto.CreatedAt);
+        type.GetProperty("LastUpdated")?.SetValue(account, dto.LastUpdated);
 
-        if (result.AccountId != null)
-            type.GetProperty("AccountId")?.SetValue(account, (string)result.AccountId);
-
-        if (result.AvailableBalance != null && result.currency != null)
-            type.GetProperty("AvailableBalance")?.SetValue(account, new Money((decimal)result.AvailableBalance, (string)result.currency));
-
-        if (result.BlockedBalance != null && result.currency != null)
-            type.GetProperty("BlockedBalance")?.SetValue(account, new Money((decimal)result.BlockedBalance, (string)result.currency));
-
-        if (result.CreatedAt != null)
-            type.GetProperty("CreatedAt")?.SetValue(account, (DateTime)result.CreatedAt);
-
-        if (result.LastUpdated != null)
-            type.GetProperty("LastUpdated")?.SetValue(account, (DateTime)result.LastUpdated);
-
+        Console.WriteLine($"🔍 DEBUG Account criado - AccountId: '{account.AccountId}'");
         return account;
     }
 }

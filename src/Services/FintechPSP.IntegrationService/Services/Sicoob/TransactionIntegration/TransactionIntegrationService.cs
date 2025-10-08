@@ -2,8 +2,10 @@ using Microsoft.Extensions.Options;
 using FintechPSP.IntegrationService.Models.Sicoob;
 using FintechPSP.IntegrationService.Models.Sicoob.Pix;
 using FintechPSP.IntegrationService.Models.Sicoob.SPB;
+using FintechPSP.IntegrationService.Models.Sicoob.CobrancaBancaria;
 using FintechPSP.IntegrationService.Services.Sicoob.Pix;
 using FintechPSP.IntegrationService.Services.Sicoob.SPB;
+using FintechPSP.IntegrationService.Services.Sicoob.CobrancaBancaria;
 using FintechPSP.Shared.Domain.Enums;
 
 namespace FintechPSP.IntegrationService.Services.Sicoob.TransactionIntegration;
@@ -16,6 +18,7 @@ public class TransactionIntegrationService : ITransactionIntegrationService
     private readonly IPixPagamentosService _pixService;
     private readonly IPixRecebimentosService _pixRecebimentosService;
     private readonly IPixQrCodeService _pixQrCodeService;
+    private readonly ICobrancaBancariaService _cobrancaBancariaService;
     private readonly ISPBService _spbService;
     private readonly ILogger<TransactionIntegrationService> _logger;
     private readonly SicoobSettings _settings;
@@ -24,6 +27,7 @@ public class TransactionIntegrationService : ITransactionIntegrationService
         IPixPagamentosService pixService,
         IPixRecebimentosService pixRecebimentosService,
         IPixQrCodeService pixQrCodeService,
+        ICobrancaBancariaService cobrancaBancariaService,
         ISPBService spbService,
         IOptions<SicoobSettings> settings,
         ILogger<TransactionIntegrationService> logger)
@@ -31,6 +35,7 @@ public class TransactionIntegrationService : ITransactionIntegrationService
         _pixService = pixService ?? throw new ArgumentNullException(nameof(pixService));
         _pixRecebimentosService = pixRecebimentosService ?? throw new ArgumentNullException(nameof(pixRecebimentosService));
         _pixQrCodeService = pixQrCodeService ?? throw new ArgumentNullException(nameof(pixQrCodeService));
+        _cobrancaBancariaService = cobrancaBancariaService ?? throw new ArgumentNullException(nameof(cobrancaBancariaService));
         _spbService = spbService ?? throw new ArgumentNullException(nameof(spbService));
         _settings = settings.Value ?? throw new ArgumentNullException(nameof(settings));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -276,23 +281,83 @@ public class TransactionIntegrationService : ITransactionIntegrationService
     {
         try
         {
-            _logger.LogInformation("Processando boleto no Sicoob: {ExternalId}", transaction.ExternalId);
+            _logger.LogInformation("Criando boleto bancário no Sicoob: {ExternalId}", transaction.ExternalId);
 
-            // Para boletos, vamos implementar quando tivermos o serviço de cobrança bancária
-            // Por enquanto, retornamos sucesso simulado
-            _logger.LogWarning("Processamento de boleto ainda não implementado completamente");
+            // Criar request de boleto bancário
+            var boletoRequest = new BoletoRequest
+            {
+                NumeroCliente = 25546454, // Número do cliente no Sicoob (exemplo do Postman)
+                CodigoModalidade = 1, // Simples
+                NumeroContaCorrente = 0, // Conta corrente (exemplo do Postman)
+                CodigoEspecieDocumento = "DM", // Duplicata Mercantil
+                DataEmissao = DateTime.Now.ToString("yyyy-MM-dd"),
+                SeuNumero = transaction.ExternalId,
+                IdentificacaoBoletoEmpresa = transaction.ExternalId,
+                IdentificacaoEmissaoBoleto = 2, // Banco emite
+                IdentificacaoDistribuicaoBoleto = 2, // Cliente via internet
+                Valor = transaction.Amount,
+                DataVencimento = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd"), // 30 dias
+                Pagador = new PagadorBoleto
+                {
+                    NumeroCpfCnpj = "39745467820", // CPF Emmanuel Santos Menezes
+                    Nome = "Emmanuel Santos Menezes",
+                    Endereco = "Rua Exemplo, 123",
+                    Bairro = "Centro",
+                    Cidade = "São Paulo",
+                    Cep = "01234567",
+                    Uf = "SP",
+                    Email = "emmanuel@exemplo.com"
+                    // Telefone = "(11) 99999-9999"
+                },
+                // NumeroContratoCobranca = 1,
+                Aceite = true,
+                NumeroParcela = 1,
+                MensagensInstrucao = new List<string>
+                {
+                    "Pagamento referente a serviços prestados",
+                    "Após o vencimento cobrar multa de 2%",
+                    "Após o vencimento cobrar juros de 1% ao mês"
+                }
+            };
+
+            // Criar boleto no Sicoob
+            var response = await _cobrancaBancariaService.IncluirBoletoAsync(boletoRequest, cancellationToken);
+
+            if (response != null)
+            {
+                _logger.LogInformation("Boleto criado com sucesso no Sicoob. NossoNumero: {NossoNumero}, CodigoBarras: {CodigoBarras}",
+                    response.NossoNumero,
+                    string.IsNullOrEmpty(response.CodigoBarras) ? "N/A" : "PRESENTE");
+
+                return new SicoobTransactionResult
+                {
+                    Success = true,
+                    SicoobTransactionId = response.NossoNumero,
+                    Status = response.Situacao ?? "ATIVO",
+                    AdditionalData = new Dictionary<string, object>
+                    {
+                        ["nossoNumero"] = response.NossoNumero,
+                        ["codigoBarras"] = response.CodigoBarras ?? "",
+                        ["linhaDigitavel"] = response.LinhaDigitavel ?? "",
+                        ["valor"] = response.Valor,
+                        ["dataVencimento"] = response.DataVencimento,
+                        ["situacao"] = response.Situacao ?? "",
+                        ["urlBoleto"] = response.UrlBoleto ?? "",
+                        ["pagador"] = new Dictionary<string, object>
+                        {
+                            ["nome"] = response.Pagador.Nome,
+                            ["documento"] = response.Pagador.NumeroCpfCnpj,
+                            ["email"] = response.Pagador.Email ?? ""
+                            // ["telefone"] = response.Pagador.Telefone ?? ""
+                        }
+                    }
+                };
+            }
 
             return new SicoobTransactionResult
             {
-                Success = true,
-                SicoobTransactionId = $"BOL-{transaction.ExternalId}",
-                Status = "ISSUED",
-                AdditionalData = new Dictionary<string, object>
-                {
-                    ["nossoNumero"] = $"BOL-{DateTime.Now:yyyyMMddHHmmss}",
-                    ["valor"] = transaction.Amount.ToString("F2"),
-                    ["dataVencimento"] = transaction.DueDate?.ToString("yyyy-MM-dd") ?? ""
-                }
+                Success = false,
+                ErrorMessage = "Resposta vazia do Sicoob"
             };
         }
         catch (Exception ex)
