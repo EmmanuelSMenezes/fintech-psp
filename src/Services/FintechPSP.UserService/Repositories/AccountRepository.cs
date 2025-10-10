@@ -17,8 +17,8 @@ public class AccountRepository : IAccountRepository
     private readonly IDbConnectionFactory _connectionFactory;
     private readonly ICredentialsProtector _protector;
 
-    private const string AccountsTable = "user_service.contas_bancarias";
-    private const string TokensTable = "user_service.credentials_tokens";
+    private const string AccountsTable = "contas_bancarias";
+    private const string TokensTable = "conta_credentials_tokens";
 
     public AccountRepository(IDbConnectionFactory connectionFactory, ICredentialsProtector protector)
     {
@@ -33,7 +33,7 @@ public class AccountRepository : IAccountRepository
         await EnsureOpenAsync(conn);
 
         string where = clienteId.HasValue ? "WHERE cliente_id = @ClienteId" : string.Empty;
-        var sql = $@"SELECT conta_id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
+        var sql = $@"SELECT id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
                             description as Description, credentials_token_id as CredentialsTokenId, is_active as IsActive,
                             created_at as CreatedAt, updated_at as UpdatedAt
                      FROM {AccountsTable} {where}
@@ -51,7 +51,7 @@ public class AccountRepository : IAccountRepository
     {
         using var conn = _connectionFactory.CreateConnection();
         await EnsureOpenAsync(conn);
-        var sql = $@"SELECT conta_id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
+        var sql = $@"SELECT id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
                             description as Description, credentials_token_id as CredentialsTokenId, is_active as IsActive,
                             created_at as CreatedAt, updated_at as UpdatedAt
                      FROM {AccountsTable}
@@ -65,11 +65,11 @@ public class AccountRepository : IAccountRepository
     {
         using var conn = _connectionFactory.CreateConnection();
         await EnsureOpenAsync(conn);
-        var sql = $@"SELECT conta_id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
+        var sql = $@"SELECT id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
                             description as Description, credentials_token_id as CredentialsTokenId, is_active as IsActive,
                             created_at as CreatedAt, updated_at as UpdatedAt
                      FROM {AccountsTable}
-                     WHERE conta_id = @ContaId";
+                     WHERE id = @ContaId";
         return await conn.QueryFirstOrDefaultAsync<BankAccount>(sql, new { ContaId = contaId });
     }
 
@@ -90,7 +90,7 @@ public class AccountRepository : IAccountRepository
 
         // Insert account
         var contaId = Guid.NewGuid();
-        var insertAccount = $@"INSERT INTO {AccountsTable} (conta_id, cliente_id, bank_code, account_number, description, credentials_token_id, is_active, created_at)
+        var insertAccount = $@"INSERT INTO {AccountsTable} (id, cliente_id, bank_code, account_number, description, credentials_token_id, is_active, created_at)
                                VALUES (@ContaId, @ClienteId, @BankCode, @AccountNumber, @Description, @CredentialsTokenId, true, NOW())";
         await conn.ExecuteAsync(insertAccount, new {
             ContaId = contaId,
@@ -101,11 +101,11 @@ public class AccountRepository : IAccountRepository
             CredentialsTokenId = tokenId
         }, tx);
 
-        var created = await conn.QueryFirstAsync<BankAccount>($@"SELECT conta_id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
+        var created = await conn.QueryFirstAsync<BankAccount>($@"SELECT id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
                                                                        description as Description, credentials_token_id as CredentialsTokenId, is_active as IsActive,
                                                                        created_at as CreatedAt, updated_at as UpdatedAt
                                                                 FROM {AccountsTable}
-                                                                WHERE conta_id = @ContaId", new { ContaId = contaId }, tx);
+                                                                WHERE id = @ContaId", new { ContaId = contaId }, tx);
 
         tx.Commit();
         return created;
@@ -127,26 +127,26 @@ public class AccountRepository : IAccountRepository
                                  VALUES (@TokenId, @Encrypted, @KeyId, NOW())";
             await conn.ExecuteAsync(insertToken, new { TokenId = tokenId, Encrypted = cipher, KeyId = keyId }, tx);
 
-            var updateToken = $@"UPDATE {AccountsTable} SET credentials_token_id = @TokenId, updated_at = NOW() WHERE conta_id = @ContaId";
+            var updateToken = $@"UPDATE {AccountsTable} SET credentials_token_id = @TokenId, updated_at = NOW() WHERE id = @ContaId";
             await conn.ExecuteAsync(updateToken, new { TokenId = tokenId, ContaId = contaId }, tx);
         }
 
         if (request.Description is not null)
         {
-            await conn.ExecuteAsync($@"UPDATE {AccountsTable} SET description = @Description, updated_at = NOW() WHERE conta_id = @ContaId",
+            await conn.ExecuteAsync($@"UPDATE {AccountsTable} SET description = @Description, updated_at = NOW() WHERE id = @ContaId",
                 new { request.Description, ContaId = contaId }, tx);
         }
         if (request.IsActive.HasValue)
         {
-            await conn.ExecuteAsync($@"UPDATE {AccountsTable} SET is_active = @IsActive, updated_at = NOW() WHERE conta_id = @ContaId",
+            await conn.ExecuteAsync($@"UPDATE {AccountsTable} SET is_active = @IsActive, updated_at = NOW() WHERE id = @ContaId",
                 new { IsActive = request.IsActive.Value, ContaId = contaId }, tx);
         }
 
-        var updated = await conn.QueryFirstAsync<BankAccount>($@"SELECT conta_id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
+        var updated = await conn.QueryFirstAsync<BankAccount>($@"SELECT id as ContaId, cliente_id as ClienteId, bank_code as BankCode, account_number as AccountNumber,
                                                                        description as Description, credentials_token_id as CredentialsTokenId, is_active as IsActive,
                                                                        created_at as CreatedAt, updated_at as UpdatedAt
                                                                 FROM {AccountsTable}
-                                                                WHERE conta_id = @ContaId", new { ContaId = contaId }, tx);
+                                                                WHERE id = @ContaId", new { ContaId = contaId }, tx);
         tx.Commit();
         return updated;
     }
@@ -155,7 +155,7 @@ public class AccountRepository : IAccountRepository
     {
         using var conn = _connectionFactory.CreateConnection();
         await EnsureOpenAsync(conn);
-        var sql = $"DELETE FROM {AccountsTable} WHERE conta_id = @ContaId";
+        var sql = $"DELETE FROM {AccountsTable} WHERE id = @ContaId";
         var rows = await conn.ExecuteAsync(sql, new { ContaId = contaId });
         return rows > 0;
     }

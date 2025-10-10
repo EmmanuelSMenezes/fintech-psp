@@ -46,4 +46,19 @@ public interface ITransactionRepository
     /// Lista transações com paginação
     /// </summary>
     Task<(IEnumerable<Transaction> transactions, int totalCount)> GetPagedAsync(int page, int pageSize);
+
+    /// <summary>
+    /// Busca histórico de reconciliação
+    /// </summary>
+    Task<IEnumerable<object>> GetReconciliationHistoryAsync(DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Busca transações por período para reconciliação
+    /// </summary>
+    Task<IEnumerable<Transaction>> GetTransactionsByDateRangeAsync(DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Salva resultado de reconciliação
+    /// </summary>
+    Task SaveReconciliationResultAsync(object reconciliationResult);
 }

@@ -37,8 +37,8 @@ public class AccountRepository : IAccountRepository
 
         var sql = @"
             SELECT client_id as ClientId, account_id as AccountId,
-                   balance as AvailableBalance, 0.00 as BlockedBalance,
-                   currency, created_at as CreatedAt, updated_at as LastUpdated
+                   available_balance as AvailableBalance, blocked_balance as BlockedBalance,
+                   currency, created_at as CreatedAt, last_updated as LastUpdated
             FROM accounts
             WHERE client_id = @ClientId";
 
@@ -134,6 +134,70 @@ public class AccountRepository : IAccountRepository
         var results = await connection.QueryAsync<AccountDto>(sql, new { ClientId = clientId });
 
         return results.Select(MapFromDto);
+    }
+
+    public async Task<bool> DebitAsync(Guid clientId, decimal amount, string description)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+
+            var sql = @"
+                UPDATE accounts
+                SET available_balance = available_balance - @Amount,
+                    last_updated = @UpdatedAt
+                WHERE client_id = @ClientId";
+
+            var parameters = new
+            {
+                ClientId = clientId,
+                Amount = amount,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var rowsAffected = await connection.ExecuteAsync(sql, parameters);
+
+            Console.WriteLine($"💸 DEBUG DebitAsync - ClientId: {clientId}, Amount: {amount}, Rows affected: {rowsAffected}");
+
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"💥 ERROR DebitAsync - ClientId: {clientId}, Amount: {amount}, Error: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<bool> CreditAsync(Guid clientId, decimal amount, string description)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+
+            var sql = @"
+                UPDATE accounts
+                SET available_balance = available_balance + @Amount,
+                    last_updated = @UpdatedAt
+                WHERE client_id = @ClientId";
+
+            var parameters = new
+            {
+                ClientId = clientId,
+                Amount = amount,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var rowsAffected = await connection.ExecuteAsync(sql, parameters);
+
+            Console.WriteLine($"💰 DEBUG CreditAsync - ClientId: {clientId}, Amount: {amount}, Rows affected: {rowsAffected}");
+
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"💥 ERROR CreditAsync - ClientId: {clientId}, Amount: {amount}, Error: {ex.Message}");
+            throw;
+        }
     }
 
     private static Account MapFromDto(AccountDto dto)

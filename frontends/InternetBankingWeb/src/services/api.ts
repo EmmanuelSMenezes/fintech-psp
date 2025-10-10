@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Configuração base da API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:5001';
 
 // Instância do axios
 const api: AxiosInstance = axios.create({
@@ -253,7 +254,7 @@ export interface CreateSubUserRequest {
 // Serviços da API
 export const authService = {
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    api.post('/auth/login', data),
+    axios.post(`${AUTH_SERVICE_URL}/auth/login`, data),
 
   logout: () => {
     localStorage.removeItem('internetbanking_access_token');

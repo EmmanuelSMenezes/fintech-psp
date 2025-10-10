@@ -76,9 +76,9 @@ public class AdminWebhookController : ControllerBase
                 clientId = w.ClientId,
                 url = w.Url,
                 events = w.Events,
-                isActive = w.IsActive,
+                isActive = w.Active,
                 createdAt = w.CreatedAt,
-                updatedAt = w.UpdatedAt,
+                updatedAt = w.CreatedAt, // Usando CreatedAt como fallback
                 // Campos de estatísticas seriam obtidos de outro repositório em produção
                 lastDelivery = (DateTime?)null,
                 successCount = 0,

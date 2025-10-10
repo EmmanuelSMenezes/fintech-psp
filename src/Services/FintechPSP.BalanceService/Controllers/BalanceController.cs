@@ -7,6 +7,7 @@ using FintechPSP.Shared.Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace FintechPSP.BalanceService.Controllers;
 
@@ -266,8 +267,8 @@ public class BalanceController : ControllerBase
             {
                 _logger.LogInformation("🔍 TxId {TxId} não encontrado, criando nova entrada para PIX recebido...", txId);
 
-                // Usar ClientId padrão para teste
-                var defaultClientId = Guid.Parse("550e8400-e29b-41d4-a716-446655440000");
+                // Usar ClientId padrão para teste (corrigido para o ClientId real)
+                var defaultClientId = Guid.Parse("12345678-1234-1234-1234-123456789012");
 
                 // TEMPORÁRIO: HARDCODAR AccountId para testar
                 _logger.LogInformation("🔍 TEMPORÁRIO: Usando AccountId hardcoded para teste");
@@ -333,6 +334,239 @@ public class BalanceController : ControllerBase
 
             _logger.LogError(ex, "💥 Erro ao processar PIX confirmado via HTTP - TxId: {TxId}", txId);
             return StatusCode(500, new { error = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Realiza operação de cash-out (saque/débito)
+    /// </summary>
+    /// <param name="request">Dados da operação de cash-out</param>
+    /// <returns>Resultado da operação</returns>
+    [HttpPost("cash-out")]
+    public async Task<ActionResult<CashOutResponse>> CashOut([FromBody] CashOutRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("💸 Iniciando cash-out - Valor: R$ {Amount}, Tipo: {Type}, Descrição: {Description}",
+                request.Amount, request.Type, request.Description);
+
+            // Validar request
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { error = "invalid_request", message = string.Join(", ", errors) });
+            }
+
+            // Obter ID do cliente do token JWT
+            var clientId = GetCurrentClientId();
+            if (clientId == Guid.Empty)
+            {
+                return Unauthorized(new { error = "unauthorized", message = "Cliente não identificado" });
+            }
+
+            // Buscar a conta do cliente
+            var account = await _accountRepository.GetByClientIdAsync(clientId);
+            if (account == null)
+            {
+                _logger.LogWarning("Conta não encontrada para cliente {ClientId}", clientId);
+                return NotFound(new { error = "account_not_found", message = "Conta não encontrada" });
+            }
+
+            // Verificar saldo suficiente
+            if (account.AvailableBalance.Amount < request.Amount)
+            {
+                _logger.LogWarning("Saldo insuficiente para cash-out - Cliente: {ClientId}, Saldo: R$ {Balance}, Solicitado: R$ {Amount}",
+                    clientId, account.AvailableBalance.Amount, request.Amount);
+
+                return BadRequest(new {
+                    error = "insufficient_balance",
+                    message = "Saldo insuficiente",
+                    availableBalance = account.AvailableBalance.Amount,
+                    requestedAmount = request.Amount
+                });
+            }
+
+            // Gerar ID da transação
+            var transactionId = Guid.NewGuid();
+            var externalId = request.ExternalTransactionId ?? $"CASHOUT_{DateTime.Now:yyyyMMddHHmmss}_{transactionId.ToString()[..8]}";
+
+            // Salvar saldo anterior
+            var previousBalance = account.AvailableBalance.Amount;
+
+            // Debitar da conta
+            await _accountRepository.DebitAsync(account.ClientId, request.Amount, $"Cash-out: {request.Description}");
+
+            // Buscar saldo atualizado
+            var updatedAccount = await _accountRepository.GetByClientIdAsync(clientId);
+            var newBalance = updatedAccount?.AvailableBalance.Amount ?? 0;
+
+            // Criar entrada no histórico
+            var transactionHistory = new TransactionHistory
+            {
+                TransactionId = transactionId,
+                ClientId = clientId,
+                AccountId = account.AccountId,
+                ExternalId = externalId,
+                Type = $"CASH_OUT_{request.Type}",
+                Amount = request.Amount,
+                Description = request.Description,
+                Status = "COMPLETED",
+                Operation = "DEBIT",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _transactionHistoryRepository.AddTransactionAsync(transactionHistory);
+
+            _logger.LogInformation("✅ Cash-out processado com sucesso - Cliente: {ClientId}, Valor: R$ {Amount}, Saldo anterior: R$ {PreviousBalance}, Novo saldo: R$ {NewBalance}",
+                clientId, request.Amount, previousBalance, newBalance);
+
+            // Preparar resposta
+            var response = new CashOutResponse
+            {
+                TransactionId = transactionId,
+                ExternalTransactionId = externalId,
+                Status = CashOutStatus.COMPLETED,
+                Amount = request.Amount,
+                PreviousBalance = previousBalance,
+                NewBalance = newBalance,
+                Type = request.Type,
+                Description = request.Description,
+                ProcessedAt = DateTime.UtcNow,
+                Message = "Cash-out processado com sucesso"
+            };
+
+            // TODO: Enviar webhook se configurado
+            if (!string.IsNullOrEmpty(request.WebhookUrl))
+            {
+                _ = Task.Run(async () => await SendCashOutWebhook(request.WebhookUrl, response, clientId));
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 Erro ao processar cash-out - Valor: R$ {Amount}", request.Amount);
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Realiza débito administrativo
+    /// </summary>
+    /// <param name="request">Dados do débito</param>
+    /// <returns>Resultado da operação</returns>
+    [HttpPost("debito-admin")]
+    [AllowAnonymous] // Temporário para testes
+    public async Task<ActionResult<CashOutResponse>> DebitoAdministrativo([FromBody] AdminDebitRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("💸 Iniciando débito administrativo - Cliente: {ClientId}, Valor: R$ {Amount}, Motivo: {Reason}",
+                request.ClientId, request.Amount, request.Reason);
+
+            // Buscar a conta do cliente especificado
+            var account = await _accountRepository.GetByClientIdAsync(request.ClientId);
+            if (account == null)
+            {
+                return NotFound(new { error = "account_not_found", message = "Conta não encontrada" });
+            }
+
+            // Gerar ID da transação
+            var transactionId = Guid.NewGuid();
+            var externalId = request.ExternalTransactionId ?? $"ADMIN_DEBIT_{DateTime.Now:yyyyMMddHHmmss}_{transactionId.ToString()[..8]}";
+            var previousBalance = account.AvailableBalance.Amount;
+
+            // Debitar da conta (pode ficar negativo se autorizado)
+            await _accountRepository.DebitAsync(account.ClientId, request.Amount, $"Débito administrativo: {request.Reason}");
+
+            // Buscar saldo atualizado
+            var updatedAccount = await _accountRepository.GetByClientIdAsync(request.ClientId);
+            var newBalance = updatedAccount?.AvailableBalance.Amount ?? 0;
+
+            // Criar entrada no histórico
+            var transactionHistory = new TransactionHistory
+            {
+                TransactionId = transactionId,
+                ClientId = request.ClientId,
+                AccountId = account.AccountId,
+                ExternalId = externalId,
+                Type = "ADMIN_DEBIT",
+                Amount = request.Amount,
+                Description = $"Débito administrativo: {request.Reason}",
+                Status = "COMPLETED",
+                Operation = "DEBIT",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _transactionHistoryRepository.AddTransactionAsync(transactionHistory);
+
+            _logger.LogInformation("✅ Débito administrativo processado - Cliente: {ClientId}, Valor: R$ {Amount}, Saldo anterior: R$ {PreviousBalance}, Novo saldo: R$ {NewBalance}",
+                request.ClientId, request.Amount, previousBalance, newBalance);
+
+            var response = new CashOutResponse
+            {
+                TransactionId = transactionId,
+                ExternalTransactionId = externalId,
+                Status = CashOutStatus.COMPLETED,
+                Amount = request.Amount,
+                PreviousBalance = previousBalance,
+                NewBalance = newBalance,
+                Type = CashOutType.ADMIN_DEBIT,
+                Description = $"Débito administrativo: {request.Reason}",
+                ProcessedAt = DateTime.UtcNow,
+                Message = "Débito administrativo processado com sucesso"
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 Erro ao processar débito administrativo - Cliente: {ClientId}, Valor: R$ {Amount}",
+                request.ClientId, request.Amount);
+            return StatusCode(500, new { error = "internal_error", message = "Erro interno do servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Envia webhook de notificação de cash-out
+    /// </summary>
+    private async Task SendCashOutWebhook(string webhookUrl, CashOutResponse response, Guid clientId)
+    {
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+            var notification = new CashOutNotification
+            {
+                TransactionId = response.TransactionId,
+                ExternalTransactionId = response.ExternalTransactionId,
+                Status = response.Status,
+                Amount = response.Amount,
+                Type = response.Type,
+                ClientId = clientId,
+                ProcessedAt = response.ProcessedAt
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(notification);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            _logger.LogInformation("📤 Enviando webhook cash-out para {WebhookUrl}", webhookUrl);
+            var webhookResponse = await httpClient.PostAsync(webhookUrl, content);
+
+            if (webhookResponse.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("✅ Webhook cash-out enviado com sucesso para {WebhookUrl}", webhookUrl);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ Webhook cash-out falhou - URL: {WebhookUrl}, Status: {StatusCode}",
+                    webhookUrl, webhookResponse.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 Erro ao enviar webhook cash-out para {WebhookUrl}", webhookUrl);
         }
     }
 

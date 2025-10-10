@@ -171,9 +171,9 @@ services:
       - fintech-network
 
 volumes:
-  postgres_data:
-  rabbitmq_data:
-  redis_data:
+  fintech_postgres_data:
+  fintech_rabbitmq_data:
+  fintech_redis_data:
 
 networks:
   fintech-network:

@@ -319,11 +319,11 @@ export interface CreateSubUserRequest {
 export const authService = {
   // Login de usuário com email/senha
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    axios.post(`${SERVICE_URLS.API_GATEWAY}/auth/login`, data),
+    axios.post(`${SERVICE_URLS.AUTH_SERVICE}/auth/login`, data),
 
   // Obter token OAuth2 (para aplicações)
   getToken: (data: TokenRequest): Promise<AxiosResponse<TokenResponse>> =>
-    axios.post(`${SERVICE_URLS.API_GATEWAY}/auth/token`, data),
+    axios.post(`${SERVICE_URLS.AUTH_SERVICE}/auth/token`, data),
 
   logout: () => {
     if (typeof window !== 'undefined') {

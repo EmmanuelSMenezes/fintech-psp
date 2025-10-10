@@ -66,15 +66,58 @@ public class ReconciliationService : IReconciliationService
             // Buscar resultados de conciliação salvos
             var reconciliationHistory = await _transactionRepository.GetReconciliationHistoryAsync(startDate, endDate);
 
+            // Converter objetos dinâmicos para ReconciledTransaction
+            var reconciledList = new List<ReconciledTransaction>();
+            var divergentList = new List<ReconciledTransaction>();
+            var missingInSicoobList = new List<ReconciledTransaction>();
+            var missingInInternalList = new List<ReconciledTransaction>();
+
+            foreach (dynamic item in reconciliationHistory)
+            {
+                var reconciledTx = new ReconciledTransaction
+                {
+                    InternalTransaction = new InternalTransaction
+                    {
+                        TransactionId = item.transaction_id,
+                        ExternalId = item.external_id,
+                        Amount = item.amount,
+                        Status = item.status,
+                        CreatedAt = item.created_at
+                    },
+                    Status = ReconciliationStatus.Reconciled,
+                    ReconciledAt = DateTime.UtcNow
+                };
+
+                string status = item.status;
+                switch (status)
+                {
+                    case "CONFIRMED":
+                        reconciledList.Add(reconciledTx);
+                        break;
+                    case "FAILED":
+                        reconciledTx.Status = ReconciliationStatus.Divergent;
+                        divergentList.Add(reconciledTx);
+                        break;
+                    case "PENDING":
+                        reconciledTx.Status = ReconciliationStatus.MissingInBank;
+                        missingInSicoobList.Add(reconciledTx);
+                        break;
+                    case "CANCELLED":
+                        reconciledTx.Status = ReconciliationStatus.MissingInInternal;
+                        missingInInternalList.Add(reconciledTx);
+                        break;
+                }
+            }
+
             return new ReconciliationResult
             {
                 StartDate = startDate,
                 EndDate = endDate,
                 ProcessedAt = DateTime.UtcNow,
-                ReconciledTransactions = reconciliationHistory.Where(r => r.Status == ReconciliationStatus.Reconciled).ToList(),
-                DivergentTransactions = reconciliationHistory.Where(r => r.Status == ReconciliationStatus.Divergent).ToList(),
-                MissingInSicoob = reconciliationHistory.Where(r => r.Status == ReconciliationStatus.MissingInBank).ToList(),
-                MissingInInternal = reconciliationHistory.Where(r => r.Status == ReconciliationStatus.MissingInInternal).ToList()
+                ReconciledTransactions = reconciledList,
+                DivergentTransactions = divergentList,
+                MissingInSicoob = missingInSicoobList,
+                MissingInInternal = missingInInternalList
             };
         }
         catch (Exception ex)
@@ -94,13 +137,13 @@ public class ReconciliationService : IReconciliationService
             {
                 TransactionId = t.TransactionId,
                 ExternalId = t.ExternalId,
-                Amount = t.Amount,
+                Amount = t.Amount.Amount,
                 Type = t.Type.ToString(),
                 Status = t.Status.ToString(),
                 CreatedAt = t.CreatedAt,
-                TxId = t.TxId,
+                TxId = t.ExternalId, // Usando ExternalId como TxId
                 EndToEndId = t.EndToEndId,
-                NossoNumero = t.NossoNumero
+                NossoNumero = t.ExternalId // Usando ExternalId como NossoNumero
             })
             .ToList();
     }

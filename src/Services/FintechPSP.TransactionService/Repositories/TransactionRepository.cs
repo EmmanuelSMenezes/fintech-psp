@@ -262,4 +262,37 @@ public class TransactionRepository : ITransactionRepository
 
         return (transactions, totalCount);
     }
+
+    public async Task<IEnumerable<object>> GetReconciliationHistoryAsync(DateTime startDate, DateTime endDate)
+    {
+        const string sql = @"
+            SELECT transaction_id, external_id, status, amount, created_at, updated_at
+            FROM transactions
+            WHERE created_at >= @StartDate AND created_at <= @EndDate
+            ORDER BY created_at DESC";
+
+        using var connection = _connectionFactory.CreateConnection();
+        var results = await connection.QueryAsync(sql, new { StartDate = startDate, EndDate = endDate });
+
+        return results;
+    }
+
+    public async Task<IEnumerable<Transaction>> GetTransactionsByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        return await GetByDateRangeAsync(startDate, endDate);
+    }
+
+    public async Task SaveReconciliationResultAsync(object reconciliationResult)
+    {
+        // Implementação básica - pode ser expandida conforme necessário
+        const string sql = @"
+            INSERT INTO reconciliation_history (data, created_at)
+            VALUES (@Data, @CreatedAt)";
+
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(sql, new {
+            Data = System.Text.Json.JsonSerializer.Serialize(reconciliationResult),
+            CreatedAt = DateTime.UtcNow
+        });
+    }
 }
