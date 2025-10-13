@@ -37,8 +37,8 @@ public class AccountRepository : IAccountRepository
 
         var sql = @"
             SELECT client_id as ClientId, account_id as AccountId,
-                   available_balance as AvailableBalance, blocked_balance as BlockedBalance,
-                   currency, created_at as CreatedAt, last_updated as LastUpdated
+                   balance as AvailableBalance, 0.00 as BlockedBalance,
+                   currency, created_at as CreatedAt, updated_at as LastUpdated
             FROM accounts
             WHERE client_id = @ClientId";
 
@@ -144,8 +144,8 @@ public class AccountRepository : IAccountRepository
 
             var sql = @"
                 UPDATE accounts
-                SET available_balance = available_balance - @Amount,
-                    last_updated = @UpdatedAt
+                SET balance = balance - @Amount,
+                    updated_at = @UpdatedAt
                 WHERE client_id = @ClientId";
 
             var parameters = new
@@ -176,8 +176,8 @@ public class AccountRepository : IAccountRepository
 
             var sql = @"
                 UPDATE accounts
-                SET available_balance = available_balance + @Amount,
-                    last_updated = @UpdatedAt
+                SET balance = balance + @Amount,
+                    updated_at = @UpdatedAt
                 WHERE client_id = @ClientId";
 
             var parameters = new

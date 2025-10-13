@@ -98,10 +98,12 @@ const createApiInstance = (baseURL: string): AxiosInstance => {
 
 // Instância única via API Gateway para todos os serviços
 const gatewayApi = createApiInstance(SERVICE_URLS.API_GATEWAY);
-const userApi = gatewayApi;
-const transactionApi = gatewayApi;
-const configApi = gatewayApi;
-const companyApi = gatewayApi;
+
+// Instâncias dedicadas para cada serviço via API Gateway
+const userApi = createApiInstance(SERVICE_URLS.API_GATEWAY);
+const transactionApi = createApiInstance(SERVICE_URLS.API_GATEWAY);
+const configApi = createApiInstance(SERVICE_URLS.API_GATEWAY);
+const companyApi = createApiInstance(SERVICE_URLS.API_GATEWAY);
 
 // Instância principal (para compatibilidade)
 const api = userApi;
@@ -315,15 +317,24 @@ export interface CreateSubUserRequest {
   permissions: string[];
 }
 
+// Criar instância específica para AuthService (sem interceptor de token)
+const authApiInstance = axios.create({
+  baseURL: SERVICE_URLS.AUTH_SERVICE,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Serviços da API
 export const authService = {
   // Login de usuário com email/senha
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    axios.post(`${SERVICE_URLS.AUTH_SERVICE}/auth/login`, data),
+    authApiInstance.post('/auth/login', data),
 
   // Obter token OAuth2 (para aplicações)
   getToken: (data: TokenRequest): Promise<AxiosResponse<TokenResponse>> =>
-    axios.post(`${SERVICE_URLS.AUTH_SERVICE}/auth/token`, data),
+    authApiInstance.post('/auth/token', data),
 
   logout: () => {
     if (typeof window !== 'undefined') {
@@ -636,7 +647,7 @@ export const transactionService = {
     page?: number;
     limit?: number;
   }): Promise<AxiosResponse<{ transactions: Transaction[]; total: number; page: number; limit: number }>> =>
-    api.get('/admin/transacoes', { params }),
+    transactionApi.get('/admin/transacoes', { params }),
 
   getTransactionStatus: (id: string): Promise<AxiosResponse<{ status: string; details: any }>> =>
     transactionApi.get(`/transacoes/${id}/status`),

@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using FintechPSP.Shared.Domain.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using FintechPSP.BalanceService.Repositories;
+using FintechPSP.BalanceService.Models;
 
 namespace FintechPSP.BalanceService.Consumers;
 
@@ -15,10 +17,12 @@ public class ContaBancariaEventConsumer :
     IConsumer<ContaBancariaRemovida>
 {
     private readonly ILogger<ContaBancariaEventConsumer> _logger;
+    private readonly IAccountRepository _accountRepository;
 
-    public ContaBancariaEventConsumer(ILogger<ContaBancariaEventConsumer> logger)
+    public ContaBancariaEventConsumer(ILogger<ContaBancariaEventConsumer> logger, IAccountRepository accountRepository)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _accountRepository = accountRepository ?? throw new ArgumentNullException(nameof(accountRepository));
     }
 
     public async Task Consume(ConsumeContext<ContaBancariaCriada> context)
@@ -27,13 +31,15 @@ public class ContaBancariaEventConsumer :
         {
             var evento = context.Message;
             
-            _logger.LogInformation("Conta bancária criada: {ContaId} para cliente {ClienteId} no banco {BankCode}", 
+            _logger.LogInformation("Conta bancária criada: {ContaId} para cliente {ClienteId} no banco {BankCode}",
                 evento.ContaId, evento.ClienteId, evento.BankCode);
 
-            // Aqui você pode implementar lógica específica para quando uma conta é criada
-            // Por exemplo, atualizar cache de contas, notificar outros serviços, etc.
-            
-            await Task.CompletedTask;
+            // Criar conta no BalanceService
+            var account = new Account(evento.ClienteId, evento.ContaId.ToString());
+            await _accountRepository.CreateAsync(account);
+
+            _logger.LogInformation("Conta criada no BalanceService: {ContaId} para cliente {ClienteId}",
+                evento.ContaId, evento.ClienteId);
         }
         catch (Exception ex)
         {

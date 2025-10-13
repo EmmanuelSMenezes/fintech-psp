@@ -67,10 +67,18 @@ public class TransactionController : ControllerBase
                 page, limit, type, status);
 
             // Obter ID do usuário do token JWT
-            var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value;
+            _logger.LogInformation("Claims disponíveis no token:");
+            foreach (var claim in User.Claims)
+            {
+                _logger.LogInformation("  {Type}: {Value}", claim.Type, claim.Value);
+            }
+
+            var userIdClaim = User.FindFirst("sub")?.Value ??
+                             User.FindFirst("userId")?.Value ??
+                             User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogWarning("ID do usuário não encontrado no token");
+                _logger.LogWarning("ID do usuário não encontrado no token. UserIdClaim: {UserIdClaim}", userIdClaim);
                 return Unauthorized("Usuário não identificado");
             }
 

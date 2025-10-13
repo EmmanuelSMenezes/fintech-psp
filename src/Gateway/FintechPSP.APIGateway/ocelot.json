@@ -1,4 +1,4 @@
-{
+﻿{
   "Routes": [
     {
       "UpstreamPathTemplate": "/banking/contas",
@@ -57,8 +57,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5006
         }
       ]
     },
@@ -159,8 +159,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -172,8 +172,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -185,8 +185,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -199,8 +199,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -212,8 +212,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -225,8 +225,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -238,8 +238,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -252,8 +252,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -266,8 +266,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -346,8 +346,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "company-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5010
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -359,8 +359,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "company-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5010
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -458,14 +458,27 @@
     },
 
     {
+      "UpstreamPathTemplate": "/banking/transacoes/historico",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/transacoes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
       "UpstreamPathTemplate": "/banking/transacoes",
       "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/transacoes",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -477,8 +490,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -491,8 +504,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -504,22 +517,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
-        }
-      ],
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
-    },
-
-    {
-      "UpstreamPathTemplate": "/banking/transacoes/historico",
-      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/admin/transacoes/historico",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -532,8 +531,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -545,8 +544,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -559,8 +558,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -572,8 +571,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "balance-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5003
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -614,8 +613,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -627,8 +626,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "transaction-service",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5004
         }
       ],
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
@@ -681,5 +680,6 @@
     "BaseUrl": "http://localhost:5000"
   }
 }
+
 
 

@@ -4,10 +4,10 @@ services:
     container_name: fintech-postgres
     environment:
       POSTGRES_DB: fintech_psp
-      POSTGRES_USER: fintech_user
-      POSTGRES_PASSWORD: fintech_pass
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -20,8 +20,8 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5673:5672"
+      - "15673:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -31,7 +31,7 @@ services:
     image: redis:7-alpine
     container_name: fintech-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:

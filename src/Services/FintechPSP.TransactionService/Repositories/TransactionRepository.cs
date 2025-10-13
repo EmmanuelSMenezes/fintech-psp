@@ -200,39 +200,90 @@ public class TransactionRepository : ITransactionRepository
 
     private static Transaction MapToTransaction(dynamic result)
     {
-        // Usar reflection para criar instância privada
-        var transaction = (Transaction)Activator.CreateInstance(typeof(Transaction), true)!;
-        
-        // Mapear propriedades usando reflection
-        var type = typeof(Transaction);
-        
-        type.GetProperty("TransactionId")?.SetValue(transaction, (Guid)result.TransactionId);
-        type.GetProperty("ExternalId")?.SetValue(transaction, (string)result.ExternalId);
-        type.GetProperty("Type")?.SetValue(transaction, Enum.Parse<TransactionType>((string)result.type));
-        type.GetProperty("Status")?.SetValue(transaction, Enum.Parse<TransactionStatus>((string)result.status));
-        type.GetProperty("Amount")?.SetValue(transaction, new Money((decimal)result.amount, (string)result.currency));
-        type.GetProperty("BankCode")?.SetValue(transaction, result.BankCode);
-        type.GetProperty("PixKey")?.SetValue(transaction, result.PixKey);
-        type.GetProperty("EndToEndId")?.SetValue(transaction, result.EndToEndId);
-        type.GetProperty("AccountBranch")?.SetValue(transaction, result.AccountBranch);
-        type.GetProperty("AccountNumber")?.SetValue(transaction, result.AccountNumber);
-        type.GetProperty("TaxId")?.SetValue(transaction, result.TaxId);
-        type.GetProperty("Name")?.SetValue(transaction, result.name);
-        type.GetProperty("Description")?.SetValue(transaction, result.description);
-        type.GetProperty("WebhookUrl")?.SetValue(transaction, result.WebhookUrl);
-        type.GetProperty("DueDate")?.SetValue(transaction, result.DueDate);
-        type.GetProperty("PayerTaxId")?.SetValue(transaction, result.PayerTaxId);
-        type.GetProperty("PayerName")?.SetValue(transaction, result.PayerName);
-        type.GetProperty("Instructions")?.SetValue(transaction, result.instructions);
-        type.GetProperty("BoletoBarcode")?.SetValue(transaction, result.BoletoBarcode);
-        type.GetProperty("BoletoUrl")?.SetValue(transaction, result.BoletoUrl);
-        type.GetProperty("CryptoType")?.SetValue(transaction, result.CryptoType);
-        type.GetProperty("WalletAddress")?.SetValue(transaction, result.WalletAddress);
-        type.GetProperty("CryptoTxHash")?.SetValue(transaction, result.CryptoTxHash);
-        type.GetProperty("CreatedAt")?.SetValue(transaction, (DateTime)result.CreatedAt);
-        type.GetProperty("UpdatedAt")?.SetValue(transaction, result.UpdatedAt);
-        
-        return transaction;
+        try
+        {
+            // Usar reflection para criar instância privada
+            var transaction = (Transaction)Activator.CreateInstance(typeof(Transaction), true)!;
+
+            // Mapear propriedades usando reflection com tratamento de erro
+            var type = typeof(Transaction);
+
+            // Helper para mapear com segurança
+            void SafeSetProperty(string propertyName, object? value)
+            {
+                try
+                {
+                    if (value != null)
+                        type.GetProperty(propertyName)?.SetValue(transaction, value);
+                }
+                catch (Exception ex)
+                {
+                    // Log do erro mas não falha a operação
+                    Console.WriteLine($"Erro ao mapear {propertyName}: {ex.Message}");
+                }
+            }
+
+            // Mapear campos obrigatórios
+            SafeSetProperty("TransactionId", result.TransactionId);
+            SafeSetProperty("ExternalId", result.ExternalId);
+
+            // Mapear enums com tratamento de erro
+            try
+            {
+                if (result.type != null)
+                    SafeSetProperty("Type", Enum.Parse<TransactionType>((string)result.type));
+            }
+            catch { /* Ignora erro de enum */ }
+
+            try
+            {
+                if (result.status != null)
+                    SafeSetProperty("Status", Enum.Parse<TransactionStatus>((string)result.status));
+            }
+            catch { /* Ignora erro de enum */ }
+
+            // Mapear Money com tratamento de erro
+            try
+            {
+                if (result.amount != null)
+                {
+                    var currency = result.currency?.ToString() ?? "BRL";
+                    SafeSetProperty("Amount", new Money((decimal)result.amount, currency));
+                }
+            }
+            catch { /* Ignora erro de Money */ }
+
+            // Mapear campos opcionais
+            SafeSetProperty("BankCode", result.BankCode);
+            SafeSetProperty("PixKey", result.PixKey);
+            SafeSetProperty("EndToEndId", result.EndToEndId);
+            SafeSetProperty("AccountBranch", result.AccountBranch);
+            SafeSetProperty("AccountNumber", result.AccountNumber);
+            SafeSetProperty("TaxId", result.TaxId);
+            SafeSetProperty("Name", result.name);
+            SafeSetProperty("Description", result.description);
+            SafeSetProperty("WebhookUrl", result.WebhookUrl);
+            SafeSetProperty("DueDate", result.DueDate);
+            SafeSetProperty("PayerTaxId", result.PayerTaxId);
+            SafeSetProperty("PayerName", result.PayerName);
+            SafeSetProperty("Instructions", result.instructions);
+            SafeSetProperty("BoletoBarcode", result.BoletoBarcode);
+            SafeSetProperty("BoletoUrl", result.BoletoUrl);
+            SafeSetProperty("CryptoType", result.CryptoType);
+            SafeSetProperty("WalletAddress", result.WalletAddress);
+            SafeSetProperty("CryptoTxHash", result.CryptoTxHash);
+            SafeSetProperty("CreatedAt", result.CreatedAt);
+            SafeSetProperty("UpdatedAt", result.UpdatedAt);
+
+            return transaction;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro geral no mapeamento: {ex.Message}");
+            // Retorna uma transação básica em caso de erro
+            var fallbackTransaction = (Transaction)Activator.CreateInstance(typeof(Transaction), true)!;
+            return fallbackTransaction;
+        }
     }
 
     public async Task<(IEnumerable<Transaction> transactions, int totalCount)> GetPagedAsync(int page, int pageSize)

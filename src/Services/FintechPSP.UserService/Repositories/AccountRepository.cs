@@ -79,17 +79,19 @@ public class AccountRepository : IAccountRepository
         await EnsureOpenAsync(conn);
         using var tx = conn.BeginTransaction();
 
-        // Store credentials token
+        // Generate IDs first
+        var contaId = Guid.NewGuid();
         var tokenId = $"acct_{Guid.NewGuid():N}";
+
+        // Store credentials token
         var credentialsJson = JsonSerializer.Serialize(request.Credentials);
         var cipher = _protector.Encrypt(credentialsJson, out var keyId);
 
-        var insertToken = $@"INSERT INTO {TokensTable} (token_id, encrypted_data, encryption_key_id, created_at)
-                             VALUES (@TokenId, @Encrypted, @KeyId, NOW())";
-        await conn.ExecuteAsync(insertToken, new { TokenId = tokenId, Encrypted = cipher, KeyId = keyId }, tx);
+        var insertToken = $@"INSERT INTO {TokensTable} (token_id, conta_id, encrypted_credentials, created_at)
+                             VALUES (@TokenId, @ContaId, @Encrypted, NOW())";
+        await conn.ExecuteAsync(insertToken, new { TokenId = tokenId, ContaId = contaId, Encrypted = cipher }, tx);
 
         // Insert account
-        var contaId = Guid.NewGuid();
         var insertAccount = $@"INSERT INTO {AccountsTable} (id, cliente_id, bank_code, account_number, description, credentials_token_id, is_active, created_at)
                                VALUES (@ContaId, @ClienteId, @BankCode, @AccountNumber, @Description, @CredentialsTokenId, true, NOW())";
         await conn.ExecuteAsync(insertAccount, new {
@@ -123,9 +125,9 @@ public class AccountRepository : IAccountRepository
             var tokenId = $"acct_{Guid.NewGuid():N}";
             var credentialsJson = System.Text.Json.JsonSerializer.Serialize(request.Credentials);
             var cipher = _protector.Encrypt(credentialsJson, out var keyId);
-            var insertToken = $@"INSERT INTO {TokensTable} (token_id, encrypted_data, encryption_key_id, created_at)
-                                 VALUES (@TokenId, @Encrypted, @KeyId, NOW())";
-            await conn.ExecuteAsync(insertToken, new { TokenId = tokenId, Encrypted = cipher, KeyId = keyId }, tx);
+            var insertToken = $@"INSERT INTO {TokensTable} (token_id, conta_id, encrypted_credentials, created_at)
+                                 VALUES (@TokenId, @ContaId, @Encrypted, NOW())";
+            await conn.ExecuteAsync(insertToken, new { TokenId = tokenId, ContaId = contaId, Encrypted = cipher }, tx);
 
             var updateToken = $@"UPDATE {AccountsTable} SET credentials_token_id = @TokenId, updated_at = NOW() WHERE id = @ContaId";
             await conn.ExecuteAsync(updateToken, new { TokenId = tokenId, ContaId = contaId }, tx);

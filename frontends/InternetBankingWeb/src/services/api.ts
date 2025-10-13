@@ -251,10 +251,19 @@ export interface CreateSubUserRequest {
   permissions: string[];
 }
 
+// Criar instância específica para AuthService (sem interceptor de token)
+const authApiInstance = axios.create({
+  baseURL: AUTH_SERVICE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Serviços da API
 export const authService = {
   login: (data: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    axios.post(`${AUTH_SERVICE_URL}/auth/login`, data),
+    authApiInstance.post('/auth/login', data),
 
   logout: () => {
     localStorage.removeItem('internetbanking_access_token');

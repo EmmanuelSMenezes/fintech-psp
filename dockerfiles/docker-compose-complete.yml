@@ -1,0 +1,265 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # INFRAESTRUTURA
+  # ===========================================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: fintech-postgres
+    environment:
+      POSTGRES_DB: fintech_psp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - fintech_postgres_data:/var/lib/postgresql/data
+      - ../init-database.sql:/docker-entrypoint-initdb.d/init-database.sql
+    networks:
+      - fintech-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: fintech-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - fintech_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - fintech-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fintech-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - fintech_redis_data:/data
+    networks:
+      - fintech-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # MICROSERVIÇOS
+  # ===========================================
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.AuthService
+    container_name: fintech-auth-service
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  balance-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.BalanceService
+    container_name: fintech-balance-service
+    ports:
+      - "5003:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  transaction-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.TransactionService
+    container_name: fintech-transaction-service
+    ports:
+      - "5004:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  integration-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.IntegrationService
+    container_name: fintech-integration-service
+    ports:
+      - "5005:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.UserService
+    container_name: fintech-user-service
+    ports:
+      - "5006:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  config-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.ConfigService
+    container_name: fintech-config-service
+    ports:
+      - "5007:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  webhook-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.WebhookService
+    container_name: fintech-webhook-service
+    ports:
+      - "5008:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  company-service:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.CompanyService
+    container_name: fintech-company-service
+    ports:
+      - "5010:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  # ===========================================
+  # API GATEWAY
+  # ===========================================
+
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.APIGateway
+    container_name: fintech-api-gateway
+    ports:
+      - "5000:8080"
+    depends_on:
+      - auth-service
+      - balance-service
+      - transaction-service
+      - integration-service
+      - user-service
+      - config-service
+      - webhook-service
+      - company-service
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  # ===========================================
+  # FRONTENDS
+  # ===========================================
+
+  backoffice-web:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.BackofficeWeb
+    container_name: fintech-backoffice-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+  internet-banking-web:
+    build:
+      context: ..
+      dockerfile: dockerfiles/Dockerfile.InternetBankingWeb
+    container_name: fintech-internet-banking-web
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api-gateway
+    networks:
+      - fintech-network
+    restart: unless-stopped
+
+# ===========================================
+# VOLUMES E NETWORKS
+# ===========================================
+
+volumes:
+  fintech_postgres_data:
+  fintech_rabbitmq_data:
+  fintech_redis_data:
+
+networks:
+  fintech-network:
+    driver: bridge
