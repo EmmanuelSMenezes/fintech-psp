@@ -80,9 +80,12 @@ api.interceptors.response.use(
       const token = localStorage.getItem('internetbanking_access_token');
       console.error('🚫 [InternetBanking] Token rejeitado (401):', token?.substring(0, 20) + '...');
 
-      // Fazer logout automático em caso de 401
-      console.log('🚪 [InternetBanking] Fazendo logout automático devido ao erro 401...');
-      clearInvalidAuth();
+      // TEMPORÁRIO: Desabilitar logout automático enquanto AuthService está com problemas
+      console.log('⚠️ [InternetBanking] Erro 401 detectado, mas logout automático DESABILITADO temporariamente');
+      console.log('🔧 Para reabilitar, descomente a linha abaixo');
+
+      // DESABILITADO TEMPORARIAMENTE - AuthService com problemas
+      // clearInvalidAuth();
     }
 
     return Promise.reject(error);

@@ -81,12 +81,16 @@ const createApiInstance = (baseURL: string): AxiosInstance => {
         console.log('🚫 Erro 401 - Token inválido ou ausente');
         console.log('🔍 Headers enviados na requisição:', error.config?.headers?.Authorization ? 'Authorization PRESENTE' : 'Authorization AUSENTE');
 
+        // TEMPORÁRIO: Desabilitar logout automático enquanto AuthService está com problemas
         // Token expirado ou inválido - só executar no cliente
         if (typeof window !== 'undefined') {
-          console.log('🚪 [BackofficeWeb] Fazendo logout automático devido ao erro 401...');
-          localStorage.removeItem('backoffice_access_token');
-          localStorage.removeItem('backoffice_user_data');
-          window.location.href = '/auth/signin';
+          console.log('⚠️ [BackofficeWeb] Erro 401 detectado, mas logout automático DESABILITADO temporariamente');
+          console.log('🔧 Para reabilitar, remova este comentário e descomente as linhas abaixo');
+
+          // DESABILITADO TEMPORARIAMENTE - AuthService com problemas
+          // localStorage.removeItem('backoffice_access_token');
+          // localStorage.removeItem('backoffice_user_data');
+          // window.location.href = '/auth/signin';
         }
       }
       return Promise.reject(error);
