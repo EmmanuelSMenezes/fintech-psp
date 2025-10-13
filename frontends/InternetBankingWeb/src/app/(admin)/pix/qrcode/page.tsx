@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRequireAuth, useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import QRCode from 'qrcode.react';
+import QRCode from 'qrcode';
 
 interface QrCodeData {
   transactionId: string;
@@ -30,6 +30,7 @@ const QrCodePixPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [qrCodeData, setQrCodeData] = useState<QrCodeData | null>(null);
+  const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string>('');
   const [pixKeys, setPixKeys] = useState<PixKeyData[]>([]);
   const [formData, setFormData] = useState({
     amount: '',
@@ -102,6 +103,22 @@ const QrCodePixPage: React.FC = () => {
 
       const data = await response.json();
       setQrCodeData(data);
+
+      // Gerar QR Code como imagem
+      try {
+        const qrCodeUrl = await QRCode.toDataURL(data.qrcodePayload, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        setQrCodeImageUrl(qrCodeUrl);
+      } catch (qrError) {
+        console.error('Erro ao gerar QR Code:', qrError);
+      }
+
       toast.success('QR Code gerado com sucesso!');
       
     } catch (error) {
@@ -121,6 +138,7 @@ const QrCodePixPage: React.FC = () => {
 
   const handleNewQrCode = () => {
     setQrCodeData(null);
+    setQrCodeImageUrl('');
     setFormData({
       amount: '',
       pixKey: pixKeys[0]?.key || '',
@@ -288,12 +306,17 @@ const QrCodePixPage: React.FC = () => {
               </h3>
               <div className="flex justify-center mb-4">
                 <div className="p-4 bg-white border-2 border-gray-200 rounded-lg">
-                  <QRCode
-                    value={qrCodeData.qrcodePayload}
-                    size={200}
-                    level="M"
-                    includeMargin={true}
-                  />
+                  {qrCodeImageUrl ? (
+                    <img
+                      src={qrCodeImageUrl}
+                      alt="QR Code PIX"
+                      className="w-50 h-50"
+                    />
+                  ) : (
+                    <div className="w-50 h-50 bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500">Carregando QR Code...</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <p className="text-sm text-gray-600">

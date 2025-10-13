@@ -10,7 +10,7 @@ RUN apk add --no-cache libc6-compat
 COPY frontends/InternetBankingWeb/package*.json ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY frontends/InternetBankingWeb/ .

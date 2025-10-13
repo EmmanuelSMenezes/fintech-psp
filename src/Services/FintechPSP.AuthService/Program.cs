@@ -1,5 +1,6 @@
 using System.Text;
 using FintechPSP.AuthService.Repositories;
+using FintechPSP.AuthService.Services;
 using FintechPSP.Shared.Infrastructure.Database;
 using FintechPSP.Shared.Infrastructure.Messaging;
 using MassTransit;
@@ -72,6 +73,13 @@ builder.Services.AddMassTransit(x =>
 
 // Event Publisher
 builder.Services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
+
+// JWT Service
+builder.Services.AddScoped<IJwtService, JwtService>();
+
+// API Key Services
+builder.Services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

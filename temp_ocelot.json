@@ -155,7 +155,7 @@
     {
       "UpstreamPathTemplate": "/accounts/{clientId}/balance",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo/{clientId}",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -166,9 +166,9 @@
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
     },
     {
-      "UpstreamPathTemplate": "/saldo/{clientId}",
+      "UpstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo/{clientId}",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -179,9 +179,9 @@
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
     },
     {
-      "UpstreamPathTemplate": "/saldo/{clientId}/extrato",
+      "UpstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}/extrato",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo/{clientId}/extrato",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}/extrato",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -500,7 +500,7 @@
     {
       "UpstreamPathTemplate": "/banking/balance/{clientId}",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo/{clientId}",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -513,7 +513,7 @@
     {
       "UpstreamPathTemplate": "/banking/balance/{clientId}/extrato",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo/{clientId}/extrato",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{clientId}/extrato",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -554,7 +554,7 @@
     {
       "UpstreamPathTemplate": "/admin/reports",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -567,7 +567,7 @@
     {
       "UpstreamPathTemplate": "/admin/reports/{everything}",
       "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
-      "DownstreamPathTemplate": "/saldo/{everything}",
+      "DownstreamPathTemplate": ""Host": "fintech-balance-service", "Port": 8080/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {

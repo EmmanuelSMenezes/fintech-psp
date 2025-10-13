@@ -44,6 +44,9 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
 
 // Repositories
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+
+// HTTP Client para validação de CNPJ
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<ILegalRepresentativeRepository, LegalRepresentativeRepository>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

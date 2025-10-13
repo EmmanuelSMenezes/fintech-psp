@@ -21,13 +21,16 @@ public class CompanyController : ControllerBase
 {
     private readonly ILogger<CompanyController> _logger;
     private readonly ICompanyRepository _companyRepository;
+    private readonly HttpClient _httpClient;
 
     public CompanyController(
         ILogger<CompanyController> logger,
-        ICompanyRepository companyRepository)
+        ICompanyRepository companyRepository,
+        HttpClient httpClient)
     {
         _logger = logger;
         _companyRepository = companyRepository;
+        _httpClient = httpClient;
     }
 
     /// <summary>
@@ -175,6 +178,17 @@ public class CompanyController : ControllerBase
             {
                 _logger.LogWarning("CNPJ {Cnpj} já existe", request.Company.Cnpj);
                 return BadRequest(new { error = "cnpj_exists", message = "CNPJ já cadastrado" });
+            }
+
+            // Validar CNPJ via Receita Federal
+            var cnpjValidation = await ValidateCnpjAsync(request.Company.Cnpj);
+            if (!cnpjValidation.IsValid)
+            {
+                _logger.LogWarning("CNPJ inválido: {Cnpj} - {Error}", request.Company.Cnpj, cnpjValidation.ErrorMessage);
+                return BadRequest(new {
+                    error = "invalid_cnpj",
+                    message = cnpjValidation.ErrorMessage ?? "CNPJ inválido"
+                });
             }
 
             var company = new Company
@@ -362,6 +376,129 @@ public class CompanyController : ControllerBase
         var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value;
         return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
     }
+
+    /// <summary>
+    /// Valida CNPJ via Receita Federal
+    /// </summary>
+    private async Task<CnpjValidationResult> ValidateCnpjAsync(string cnpj)
+    {
+        try
+        {
+            // Limpar CNPJ (remover pontos, barras, etc.)
+            var cnpjLimpo = new string(cnpj.Where(char.IsDigit).ToArray());
+
+            _logger.LogInformation("Validando CNPJ via Receita Federal: {Cnpj}", cnpjLimpo);
+
+            // Validação básica de formato
+            if (!IsValidCnpjFormat(cnpjLimpo))
+            {
+                return new CnpjValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Formato de CNPJ inválido",
+                    ValidationSource = "FORMAT_CHECK"
+                };
+            }
+
+            // Consulta na Receita Federal (API pública)
+            var url = $"https://receitaws.com.br/v1/cnpj/{cnpjLimpo}";
+
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Erro na consulta Receita Federal - Status: {StatusCode}", response.StatusCode);
+
+                // Fallback para validação de formato apenas
+                return new CnpjValidationResult
+                {
+                    IsValid = true, // Se formato OK, considera válido
+                    ErrorMessage = "Consulta Receita Federal indisponível, validação por formato",
+                    ValidationSource = "FORMAT_FALLBACK",
+                    CompanyName = "Não disponível",
+                    Status = "Não verificado"
+                };
+            }
+
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var receitaData = System.Text.Json.JsonSerializer.Deserialize<ReceitaFederalResponse>(jsonContent);
+
+            if (receitaData?.Status == "ERROR")
+            {
+                return new CnpjValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = receitaData.Message ?? "CNPJ não encontrado na Receita Federal",
+                    ValidationSource = "RECEITA_FEDERAL"
+                };
+            }
+
+            _logger.LogInformation("CNPJ validado com sucesso - Empresa: {Nome}, Situação: {Situacao}",
+                receitaData?.Nome, receitaData?.Situacao);
+
+            return new CnpjValidationResult
+            {
+                IsValid = receitaData?.Situacao?.ToUpper() == "ATIVA",
+                CompanyName = receitaData?.Nome,
+                TradeName = receitaData?.Fantasia,
+                Status = receitaData?.Situacao,
+                ValidationSource = "RECEITA_FEDERAL"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao validar CNPJ: {Cnpj}", cnpj);
+
+            // Em caso de erro, fazer validação básica de formato
+            var cnpjLimpo = new string(cnpj.Where(char.IsDigit).ToArray());
+            return new CnpjValidationResult
+            {
+                IsValid = IsValidCnpjFormat(cnpjLimpo),
+                ErrorMessage = "Erro na validação online, validação por formato apenas",
+                ValidationSource = "FORMAT_FALLBACK"
+            };
+        }
+    }
+
+    private static bool IsValidCnpjFormat(string cnpj)
+    {
+        if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14)
+            return false;
+
+        // Verificar se todos os dígitos são iguais
+        if (cnpj.All(c => c == cnpj[0]))
+            return false;
+
+        // Validação dos dígitos verificadores
+        var digits = cnpj.Select(c => int.Parse(c.ToString())).ToArray();
+
+        // Primeiro dígito verificador
+        var sum = 0;
+        var multiplier = 5;
+        for (int i = 0; i < 12; i++)
+        {
+            sum += digits[i] * multiplier;
+            multiplier = multiplier == 2 ? 9 : multiplier - 1;
+        }
+        var remainder = sum % 11;
+        var digit1 = remainder < 2 ? 0 : 11 - remainder;
+
+        if (digits[12] != digit1)
+            return false;
+
+        // Segundo dígito verificador
+        sum = 0;
+        multiplier = 6;
+        for (int i = 0; i < 13; i++)
+        {
+            sum += digits[i] * multiplier;
+            multiplier = multiplier == 2 ? 9 : multiplier - 1;
+        }
+        remainder = sum % 11;
+        var digit2 = remainder < 2 ? 0 : 11 - remainder;
+
+        return digits[13] == digit2;
+    }
 }
 
 /// <summary>
@@ -371,4 +508,47 @@ public class UpdateStatusRequest
 {
     public CompanyStatus Status { get; set; }
     public string? Observacoes { get; set; }
+}
+
+/// <summary>
+/// Resultado da validação de CNPJ
+/// </summary>
+public class CnpjValidationResult
+{
+    public bool IsValid { get; set; }
+    public string? ErrorMessage { get; set; }
+    public string? CompanyName { get; set; }
+    public string? TradeName { get; set; }
+    public string? Status { get; set; }
+    public string ValidationSource { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Response da API da Receita Federal
+/// </summary>
+public class ReceitaFederalResponse
+{
+    public string? Status { get; set; }
+    public string? Message { get; set; }
+    public string? Nome { get; set; }
+    public string? Fantasia { get; set; }
+    public string? Situacao { get; set; }
+    public string? Abertura { get; set; }
+    public string? Logradouro { get; set; }
+    public string? Numero { get; set; }
+    public string? Complemento { get; set; }
+    public string? Bairro { get; set; }
+    public string? Municipio { get; set; }
+    public string? Uf { get; set; }
+    public string? Cep { get; set; }
+    public List<AtividadeEconomica>? AtividadePrincipal { get; set; }
+}
+
+/// <summary>
+/// Atividade econômica da empresa
+/// </summary>
+public class AtividadeEconomica
+{
+    public string? Code { get; set; }
+    public string? Text { get; set; }
 }

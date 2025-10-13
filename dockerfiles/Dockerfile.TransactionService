@@ -4,14 +4,21 @@ WORKDIR /src
 
 # Copy project files
 COPY ["src/Services/FintechPSP.TransactionService/FintechPSP.TransactionService.csproj", "src/Services/FintechPSP.TransactionService/"]
+COPY ["src/Services/FintechPSP.IntegrationService/FintechPSP.IntegrationService.csproj", "src/Services/FintechPSP.IntegrationService/"]
 COPY ["src/Shared/FintechPSP.Shared.Domain/FintechPSP.Shared.Domain.csproj", "src/Shared/FintechPSP.Shared.Domain/"]
 COPY ["src/Shared/FintechPSP.Shared.Infrastructure/FintechPSP.Shared.Infrastructure.csproj", "src/Shared/FintechPSP.Shared.Infrastructure/"]
 
 # Restore dependencies
 RUN dotnet restore "src/Services/FintechPSP.TransactionService/FintechPSP.TransactionService.csproj"
 
-# Copy source code
-COPY . .
+# Copy source code (specific folders to avoid conflicts)
+COPY ["src/Services/FintechPSP.TransactionService/", "src/Services/FintechPSP.TransactionService/"]
+COPY ["src/Services/FintechPSP.IntegrationService/", "src/Services/FintechPSP.IntegrationService/"]
+COPY ["src/Shared/", "src/Shared/"]
+
+# Remove conflicting appsettings files from IntegrationService
+RUN rm -f /src/src/Services/FintechPSP.IntegrationService/appsettings*.json
+
 WORKDIR "/src/src/Services/FintechPSP.TransactionService"
 
 # Build
@@ -19,7 +26,7 @@ RUN dotnet build "FintechPSP.TransactionService.csproj" -c Release -o /app/build
 
 # Publish
 FROM build AS publish
-RUN dotnet publish "FintechPSP.TransactionService.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "FintechPSP.TransactionService.csproj" -c Release -o /app/publish /p:UseAppHost=false /p:PublishSingleFile=false /p:ExcludeGeneratedDebugSymbol=false
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
